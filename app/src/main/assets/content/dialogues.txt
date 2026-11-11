@@ -1,0 +1,67 @@
+# Short dialogues written for this app. Format:
+# "# level | title", then lines "speaker | words | pinyin | English".
+
+# 1 | Meeting someone new
+A|你 好 ！|Nǐ hǎo!|Hello!
+B|你 好 ！ 你 叫 什么 名字 ？|Nǐ hǎo! Nǐ jiào shénme míngzi?|Hello! What is your name?
+A|我 叫 大卫 。 你 呢 ？|Wǒ jiào Dàwèi. Nǐ ne?|My name is David. And you?
+B|我 叫 李 月 。 你 是 学生 吗 ？|Wǒ jiào Lǐ Yuè. Nǐ shì xuésheng ma?|My name is Li Yue. Are you a student?
+A|是 ， 我 在 北京 学习 汉语 。|Shì, wǒ zài Běijīng xuéxí Hànyǔ.|Yes, I am studying Chinese in Beijing.
+B|认识 你 很 高兴 。|Rènshi nǐ hěn gāoxìng.|Nice to meet you.
+
+# 1 | My family
+A|你 家 有 几 个 人 ？|Nǐ jiā yǒu jǐ ge rén?|How many people are there in your family?
+B|我 家 有 四 个 人 。|Wǒ jiā yǒu sì ge rén.|There are four people in my family.
+A|你 爸爸 做 什么 工作 ？|Nǐ bàba zuò shénme gōngzuò?|What does your dad do?
+B|他 是 医生 ， 在 医院 工作 。|Tā shì yīshēng, zài yīyuàn gōngzuò.|He is a doctor and works at a hospital.
+A|你 妈妈 呢 ？|Nǐ māma ne?|And your mom?
+B|她 是 老师 。|Tā shì lǎoshī.|She is a teacher.
+
+# 1 | At the shop
+A|你 好 ， 你 想 买 什么 ？|Nǐ hǎo, nǐ xiǎng mǎi shénme?|Hello, what would you like to buy?
+B|我 想 买 一些 苹果 。 多少 钱 ？|Wǒ xiǎng mǎi yìxiē píngguǒ. Duōshao qián?|I'd like to buy some apples. How much are they?
+A|五 块 钱 。|Wǔ kuài qián.|Five yuan.
+B|好 ， 谢谢 。|Hǎo, xièxie.|OK, thank you.
+A|不客气 ， 再见 ！|Bú kèqi, zàijiàn!|You're welcome, goodbye!
+
+# 1 | What time is it?
+A|现在 几 点 ？|Xiànzài jǐ diǎn?|What time is it now?
+B|现在 三 点 。|Xiànzài sān diǎn.|It's three o'clock.
+A|你 什么 时候 回 家 ？|Nǐ shénme shíhou huí jiā?|When are you going home?
+B|我 下午 五 点 回 家 。|Wǒ xiàwǔ wǔ diǎn huí jiā.|I'm going home at five in the afternoon.
+A|明天 你 来 学校 吗 ？|Míngtiān nǐ lái xuéxiào ma?|Are you coming to school tomorrow?
+B|明天 是 星期 六 ， 我 不 来 。|Míngtiān shì xīngqī liù, wǒ bù lái.|Tomorrow is Saturday; I'm not coming.
+
+# 2 | Asking the way
+A|请 问 ， 火车站 离 这儿 远 吗 ？|Qǐng wèn, huǒchēzhàn lí zhèr yuǎn ma?|Excuse me, is the train station far from here?
+B|不 远 ， 一直 往 前 走 。|Bù yuǎn, yìzhí wǎng qián zǒu.|It's not far. Go straight ahead.
+A|可以 坐 公共汽车 去 吗 ？|Kěyǐ zuò gōnggòng qìchē qù ma?|Can I take the bus there?
+B|可以 ， 但是 走 路 也 很 快 。|Kěyǐ, dànshì zǒu lù yě hěn kuài.|You can, but walking is also quick.
+A|谢谢 你 的 帮助 。|Xièxie nǐ de bāngzhù.|Thank you for your help.
+
+# 2 | Feeling unwell
+A|你 怎么 了 ？ 为什么 没 去 上班 ？|Nǐ zěnme le? Wèishénme méi qù shàngbān?|What's wrong? Why didn't you go to work?
+B|我 生病 了 ， 身体 很 累 。|Wǒ shēngbìng le, shēntǐ hěn lèi.|I'm ill and my body feels very tired.
+A|你 吃 药 了 吗 ？|Nǐ chī yào le ma?|Have you taken any medicine?
+B|已经 吃 了 。|Yǐjīng chī le.|I already have.
+A|你 要 多 休息 ， 多 喝 水 。|Nǐ yào duō xiūxi, duō hē shuǐ.|You need to rest more and drink more water.
+
+# 2 | Weekend plans
+A|明天 你 有 时间 吗 ？|Míngtiān nǐ yǒu shíjiān ma?|Do you have time tomorrow?
+B|有 ， 你 想 做 什么 ？|Yǒu, nǐ xiǎng zuò shénme?|Yes. What do you want to do?
+A|我们 一起 去 游泳 吧 。|Wǒmen yìqǐ qù yóuyǒng ba.|Let's go swimming together.
+B|我 觉得 太 冷 了 。 去 看 电影 怎么样 ？|Wǒ juéde tài lěng le. Qù kàn diànyǐng zěnmeyàng?|I think it's too cold. How about going to see a movie?
+A|好 ， 电影 几 点 开始 ？|Hǎo, diànyǐng jǐ diǎn kāishǐ?|OK, what time does the movie start?
+
+# 3 | Planning a trip
+A|这 个 周末 你 有 空 吗 ？|Zhège zhōumò nǐ yǒu kòng ma?|Are you free this weekend?
+B|有 。 你 打算 做 什么 ？|Yǒu. Nǐ dǎsuàn zuò shénme?|Yes. What are you planning to do?
+A|如果 明天 不 下雨 ， 我们 就 去 公园 吧 。|Rúguǒ míngtiān bú xiàyǔ, wǒmen jiù qù gōngyuán ba.|If it doesn't rain tomorrow, let's go to the park.
+B|好 。 我们 先 吃 饭 ， 然后 骑 自行车 去 。|Hǎo. Wǒmen xiān chī fàn, ránhòu qí zìxíngchē qù.|OK. Let's eat first and then go by bike.
+A|别 忘记 带 水 。|Bié wàngjì dài shuǐ.|Don't forget to bring water.
+
+# 4 | A job interview
+A|你 为什么 想 来 我们 公司 工作 ？|Nǐ wèishénme xiǎng lái wǒmen gōngsī gōngzuò?|Why do you want to work at our company?
+B|我 对 这 里 的 环境 很 熟悉 ， 也 有 经验 。|Wǒ duì zhèlǐ de huánjìng hěn shúxī, yě yǒu jīngyàn.|I know the environment here well and I also have experience.
+A|这 个 工作 很 忙 ， 你 能 坚持 吗 ？|Zhège gōngzuò hěn máng, nǐ néng jiānchí ma?|This job is very busy. Can you keep it up?
+B|只要 努力 ， 就 会 成功 。|Zhǐyào nǔlì, jiù huì chénggōng.|As long as I work hard, I will succeed.

@@ -1,0 +1,217 @@
+# Example sentences written for this app. Format:
+# level|words separated by spaces, punctuation last|pinyin|English
+1|你 好 ！|Nǐ hǎo!|Hello!
+1|你 好 吗 ？|Nǐ hǎo ma?|How are you?
+1|我 很 好 ， 谢谢 。|Wǒ hěn hǎo, xièxie.|I'm fine, thank you.
+1|你 叫 什么 名字 ？|Nǐ jiào shénme míngzi?|What is your name?
+1|我 叫 大卫 。|Wǒ jiào Dàwèi.|My name is David.
+1|我 是 学生 。|Wǒ shì xuésheng.|I am a student.
+1|她 是 我 的 老师 。|Tā shì wǒ de lǎoshī.|She is my teacher.
+1|他 不 是 医生 。|Tā bú shì yīshēng.|He is not a doctor.
+1|你 是 中国 人 吗 ？|Nǐ shì Zhōngguó rén ma?|Are you Chinese?
+1|这 是 我 的 朋友 。|Zhè shì wǒ de péngyou.|This is my friend.
+1|那 是 谁 的 书 ？|Nà shì shéi de shū?|Whose book is that?
+1|我们 都 是 同学 。|Wǒmen dōu shì tóngxué.|We are all classmates.
+1|认识 你 很 高兴 。|Rènshi nǐ hěn gāoxìng.|Nice to meet you.
+1|对不起 ！|Duìbuqǐ!|Sorry!
+1|没关系 。|Méi guānxi.|It doesn't matter.
+1|谢谢 你 ！|Xièxie nǐ!|Thank you!
+1|不客气 。|Bú kèqi.|You're welcome.
+1|再见 ！|Zàijiàn!|Goodbye!
+1|我 家 有 四 个 人 。|Wǒ jiā yǒu sì ge rén.|There are four people in my family.
+1|我 没有 钱 。|Wǒ méiyǒu qián.|I don't have money.
+1|你 有 几 个 孩子 ？|Nǐ yǒu jǐ ge háizi?|How many children do you have?
+1|我 有 一 个 儿子 和 一 个 女儿 。|Wǒ yǒu yí ge érzi hé yí ge nǚ'ér.|I have a son and a daughter.
+1|我 爸爸 是 医生 。|Wǒ bàba shì yīshēng.|My dad is a doctor.
+1|我 妈妈 在 医院 工作 。|Wǒ māma zài yīyuàn gōngzuò.|My mom works at a hospital.
+1|你 女儿 几 岁 ？|Nǐ nǚ'ér jǐ suì?|How old is your daughter?
+1|她 今年 八 岁 。|Tā jīnnián bā suì.|She is eight years old this year.
+1|今天 几 月 几 号 ？|Jīntiān jǐ yuè jǐ hào?|What is the date today?
+1|今天 是 九 月 十 号 。|Jīntiān shì jiǔ yuè shí hào.|Today is September 10th.
+1|今天 星期 几 ？|Jīntiān xīngqī jǐ?|What day of the week is it today?
+1|明天 是 星期 六 。|Míngtiān shì xīngqī liù.|Tomorrow is Saturday.
+1|现在 几 点 ？|Xiànzài jǐ diǎn?|What time is it now?
+1|现在 三 点 十 分钟 。|Xiànzài sān diǎn shí fēnzhōng.|It is ten past three now.
+1|我 昨天 没 去 学校 。|Wǒ zuótiān méi qù xuéxiào.|I didn't go to school yesterday.
+1|你 住 在 哪儿 ？|Nǐ zhù zài nǎr?|Where do you live?
+1|我 住 在 北京 。|Wǒ zhù zài Běijīng.|I live in Beijing.
+1|你 去 哪儿 ？|Nǐ qù nǎr?|Where are you going?
+1|我 去 商店 买 东西 。|Wǒ qù shāngdiàn mǎi dōngxi.|I'm going to the shop to buy things.
+1|这 个 多少 钱 ？|Zhège duōshao qián?|How much is this?
+1|苹果 五 块 钱 。|Píngguǒ wǔ kuài qián.|The apples are five yuan.
+1|我 想 买 一些 水果 。|Wǒ xiǎng mǎi yìxiē shuǐguǒ.|I want to buy some fruit.
+1|这些 衣服 很 漂亮 。|Zhèxiē yīfu hěn piàoliang.|These clothes are very pretty.
+1|你 想 吃 什么 ？|Nǐ xiǎng chī shénme?|What would you like to eat?
+1|我 想 吃 米饭 。|Wǒ xiǎng chī mǐfàn.|I'd like to eat rice.
+1|你 喝 茶 吗 ？|Nǐ hē chá ma?|Do you drink tea?
+1|我 不 喝 茶 ， 我 喝 水 。|Wǒ bù hē chá, wǒ hē shuǐ.|I don't drink tea; I drink water.
+1|请 坐 ， 请 喝 茶 。|Qǐng zuò, qǐng hē chá.|Please sit down and have some tea.
+1|这 个 菜 很 好 吃 。|Zhège cài hěn hǎo chī.|This dish is delicious.
+1|我们 去 饭店 吃 饭 吧 。|Wǒmen qù fàndiàn chī fàn ba.|Let's go to a restaurant to eat.
+1|我 喜欢 看 电影 。|Wǒ xǐhuan kàn diànyǐng.|I like watching movies.
+1|他 喜欢 看 书 。|Tā xǐhuan kàn shū.|He likes reading books.
+1|我 爱 我 的 家 。|Wǒ ài wǒ de jiā.|I love my family.
+1|你 会 说 汉语 吗 ？|Nǐ huì shuō Hànyǔ ma?|Can you speak Chinese?
+1|我 会 说 一点儿 汉语 。|Wǒ huì shuō yìdiǎnr Hànyǔ.|I can speak a little Chinese.
+1|我 在 学习 汉语 。|Wǒ zài xuéxí Hànyǔ.|I am studying Chinese.
+1|这 个 字 怎么 读 ？|Zhège zì zěnme dú?|How do you read this character?
+1|你 会 写 这 个 字 吗 ？|Nǐ huì xiě zhège zì ma?|Can you write this character?
+1|我 听 不 懂 。|Wǒ tīng bu dǒng.|I don't understand (what I hear).
+1|今天 天气 怎么样 ？|Jīntiān tiānqì zěnmeyàng?|How is the weather today?
+1|今天 很 热 。|Jīntiān hěn rè.|It is very hot today.
+1|昨天 太 冷 了 。|Zuótiān tài lěng le.|It was too cold yesterday.
+1|明天 会 下雨 吗 ？|Míngtiān huì xiàyǔ ma?|Will it rain tomorrow?
+1|我 坐 出租车 去 医院 。|Wǒ zuò chūzūchē qù yīyuàn.|I take a taxi to the hospital.
+1|他 坐 飞机 来 中国 。|Tā zuò fēijī lái Zhōngguó.|He comes to China by plane.
+1|我 下午 回 家 。|Wǒ xiàwǔ huí jiā.|I go home in the afternoon.
+1|你 什么 时候 来 ？|Nǐ shénme shíhou lái?|When are you coming?
+1|我 上午 工作 ， 中午 睡觉 。|Wǒ shàngwǔ gōngzuò, zhōngwǔ shuìjiào.|I work in the morning and sleep at noon.
+1|妈妈 在 打电话 。|Māma zài dǎ diànhuà.|Mom is making a phone call.
+1|喂 ， 你 好 ！|Wèi, nǐ hǎo!|Hello! (on the phone)
+1|爸爸 在 看 电视 。|Bàba zài kàn diànshì.|Dad is watching TV.
+1|我 的 电脑 在 桌子 上 。|Wǒ de diànnǎo zài zhuōzi shang.|My computer is on the table.
+1|猫 在 椅子 下 。|Māo zài yǐzi xià.|The cat is under the chair.
+1|杯子 里 有 水 。|Bēizi li yǒu shuǐ.|There is water in the cup.
+1|学校 在 医院 前面 。|Xuéxiào zài yīyuàn qiánmiàn.|The school is in front of the hospital.
+1|商店 在 饭店 后面 。|Shāngdiàn zài fàndiàn hòumiàn.|The shop is behind the restaurant.
+1|我 看见 一 个 小 狗 。|Wǒ kànjiàn yí ge xiǎo gǒu.|I see a small dog.
+1|他 有 三 本 书 。|Tā yǒu sān běn shū.|He has three books.
+1|王 先生 能 来 吗 ？|Wáng xiānsheng néng lái ma?|Can Mr. Wang come?
+1|李 小姐 是 我 的 同学 。|Lǐ xiǎojiě shì wǒ de tóngxué.|Miss Li is my classmate.
+1|这 个 很 大 ， 那 个 很 小 。|Zhège hěn dà, nàge hěn xiǎo.|This one is big; that one is small.
+1|人 很 多 。|Rén hěn duō.|There are a lot of people.
+1|我 的 钱 很 少 。|Wǒ de qián hěn shǎo.|I have very little money.
+1|你 做 什么 工作 ？|Nǐ zuò shénme gōngzuò?|What work do you do?
+1|你 呢 ？|Nǐ ne?|And you?
+1|二 ， 七 ， 哪 个 大 ？|Èr, qī, nǎ ge dà?|Two or seven: which one is bigger?
+1|请 开 门 。|Qǐng kāi mén.|Please open the door.
+2|我 要 一 杯 咖啡 。|Wǒ yào yì bēi kāfēi.|I'd like a cup of coffee.
+2|你 知道 他 的 名字 吗 ？|Nǐ zhīdào tā de míngzi ma?|Do you know his name?
+2|我们 一起 去 吧 。|Wǒmen yìqǐ qù ba.|Let's go together.
+2|他 已经 到 了 。|Tā yǐjīng dào le.|He has already arrived.
+2|你 说 得 对 。|Nǐ shuō de duì.|You are right.
+2|我 也 喜欢 游泳 。|Wǒ yě xǐhuan yóuyǒng.|I like swimming too.
+2|他 还 没 起床 。|Tā hái méi qǐchuáng.|He hasn't gotten up yet.
+2|妈妈 让 我 早 一点儿 回 家 。|Māma ràng wǒ zǎo yìdiǎnr huí jiā.|Mom told me to come home a bit earlier.
+2|请 给 我 一 张 票 。|Qǐng gěi wǒ yì zhāng piào.|Please give me a ticket.
+2|我 去 过 北京 。|Wǒ qùguo Běijīng.|I have been to Beijing.
+2|她 跑 得 很 快 。|Tā pǎo de hěn kuài.|She runs very fast.
+2|今天 真 冷 。|Jīntiān zhēn lěng.|It's really cold today.
+2|门 开 着 。|Mén kāizhe.|The door is open.
+2|我 可以 进 来 吗 ？|Wǒ kěyǐ jìnlai ma?|May I come in?
+2|别 说话 ！|Bié shuōhuà!|Don't talk!
+2|请 告诉 我 你 的 问题 。|Qǐng gàosu wǒ nǐ de wèntí.|Please tell me your question.
+2|因为 下雨 ， 所以 我 没 去 。|Yīnwèi xiàyǔ, suǒyǐ wǒ méi qù.|Because it rained, I didn't go.
+2|请 再 说 一 次 。|Qǐng zài shuō yí cì.|Please say it once more.
+2|虽然 很 累 ， 但是 我 很 快乐 。|Suīrán hěn lèi, dànshì wǒ hěn kuàilè.|Although I'm tired, I'm happy.
+2|你 为什么 不 高兴 ？|Nǐ wèishénme bù gāoxìng?|Why are you unhappy?
+2|我 觉得 这 件 衣服 太 贵 了 。|Wǒ juéde zhè jiàn yīfu tài guì le.|I think this piece of clothing is too expensive.
+2|从 我 家 到 公司 很 近 。|Cóng wǒ jiā dào gōngsī hěn jìn.|It's very close from my home to the company.
+2|我 在 找 我 的 手机 。|Wǒ zài zhǎo wǒ de shǒujī.|I am looking for my phone.
+2|我 最 喜欢 红 颜色 。|Wǒ zuì xǐhuan hóng yánsè.|I like the color red the most.
+2|他 可能 生病 了 。|Tā kěnéng shēngbìng le.|He may have fallen ill.
+2|我 有 两 个 哥哥 。|Wǒ yǒu liǎng ge gēge.|I have two older brothers.
+2|对不起 ， 我 错 了 。|Duìbuqǐ, wǒ cuò le.|Sorry, I was wrong.
+2|请 等 一下 。|Qǐng děng yíxià.|Please wait a moment.
+2|我 可以 问 一 个 问题 吗 ？|Wǒ kěyǐ wèn yí ge wèntí ma?|May I ask a question?
+2|电影 几 点 开始 ？|Diànyǐng jǐ diǎn kāishǐ?|What time does the movie start?
+2|我 没有 时间 。|Wǒ méiyǒu shíjiān.|I don't have time.
+2|我 非常 喜欢 这 个 房间 。|Wǒ fēicháng xǐhuan zhège fángjiān.|I like this room very much.
+2|我 希望 你 身体 好 。|Wǒ xīwàng nǐ shēntǐ hǎo.|I hope you are in good health.
+2|你 准备 好 了 吗 ？|Nǐ zhǔnbèi hǎo le ma?|Are you ready?
+2|哥哥 比 弟弟 高 。|Gēge bǐ dìdi gāo.|The older brother is taller than the younger brother.
+2|这 个 字 是 什么 意思 ？|Zhège zì shì shénme yìsi?|What does this character mean?
+2|大家 好 ！|Dàjiā hǎo!|Hello, everyone!
+2|您 贵 姓 ？|Nín guì xìng?|What is your surname? (polite)
+2|她 穿 着 白 衣服 。|Tā chuānzhe bái yīfu.|She is wearing white clothes.
+2|我 送 你 去 机场 。|Wǒ sòng nǐ qù jīchǎng.|I'll take you to the airport.
+2|孩子 们 在 外 面 玩 。|Háizimen zài wàimiàn wán.|The children are playing outside.
+2|我 每 天 早上 跑步 。|Wǒ měi tiān zǎoshang pǎobù.|I go running every morning.
+2|我 睡 了 八 个 小时 。|Wǒ shuìle bā ge xiǎoshí.|I slept for eight hours.
+2|我 做 完 了 。|Wǒ zuòwán le.|I have finished.
+2|谢谢 你 的 帮助 。|Xièxie nǐ de bāngzhù.|Thank you for your help.
+2|我 晚上 很 忙 。|Wǒ wǎnshang hěn máng.|I'm very busy in the evening.
+2|这 家 商店 卖 手表 。|Zhè jiā shāngdiàn mài shǒubiǎo.|This shop sells watches.
+2|你 懂 我 的 意思 吗 ？|Nǐ dǒng wǒ de yìsi ma?|Do you understand what I mean?
+2|他 正在 休息 。|Tā zhèngzài xiūxi.|He is resting right now.
+2|火车站 离 这儿 远 吗 ？|Huǒchēzhàn lí zhèr yuǎn ma?|Is the train station far from here?
+2|一直 往 前 走 。|Yìzhí wǎng qián zǒu.|Go straight ahead.
+2|我 丈夫 在 公司 上班 。|Wǒ zhàngfu zài gōngsī shàngbān.|My husband works at a company.
+2|他 妻子 是 服务员 。|Tā qīzi shì fúwùyuán.|His wife is a waitress.
+2|她 的 眼睛 很 漂亮 。|Tā de yǎnjing hěn piàoliang.|Her eyes are beautiful.
+2|生日 快乐 ！|Shēngrì kuàilè!|Happy birthday!
+2|你 要 吃 药 ， 多 休息 。|Nǐ yào chī yào, duō xiūxi.|You need to take medicine and rest more.
+2|姐姐 喜欢 唱歌 ， 妹妹 喜欢 跳舞 。|Jiějie xǐhuan chànggē, mèimei xǐhuan tiàowǔ.|The older sister likes singing; the younger sister likes dancing.
+2|请 慢 一点儿 说 。|Qǐng màn yìdiǎnr shuō.|Please speak a little slower.
+2|我 来 介绍 一下 ， 这 是 我 姐姐 。|Wǒ lái jièshào yíxià, zhè shì wǒ jiějie.|Let me introduce you: this is my older sister.
+2|我 今天 有 汉语 课 。|Wǒ jīntiān yǒu Hànyǔ kè.|I have Chinese class today.
+2|医院 在 学校 旁边 。|Yīyuàn zài xuéxiào pángbiān.|The hospital is next to the school.
+2|我 去年 去 中国 旅游 了 。|Wǒ qùnián qù Zhōngguó lǚyóu le.|I traveled to China last year.
+2|爸爸 每 天 看 报纸 。|Bàba měi tiān kàn bàozhǐ.|Dad reads the newspaper every day.
+2|明天 有 考试 。|Míngtiān yǒu kǎoshì.|There is an exam tomorrow.
+2|西瓜 很 便宜 ， 也 很 好吃 。|Xīguā hěn piányi, yě hěn hǎochī.|Watermelon is cheap and also tasty.
+2|我 坐 公共汽车 去 上班 。|Wǒ zuò gōnggòng qìchē qù shàngbān.|I take the bus to work.
+2|我 早上 喝 牛奶 ， 吃 鸡蛋 。|Wǒ zǎoshang hē niúnǎi, chī jīdàn.|In the morning I drink milk and eat eggs.
+2|教室 里 有 很 多 学生 。|Jiàoshì li yǒu hěn duō xuésheng.|There are many students in the classroom.
+2|今天 是 晴 天 ， 昨天 是 阴 天 。|Jīntiān shì qíng tiān, zuótiān shì yīn tiān.|Today is sunny; yesterday was overcast.
+2|外 面 下 雪 了 。|Wàimiàn xià xuě le.|It's snowing outside.
+2|我 喜欢 吃 面条 和 羊肉 。|Wǒ xǐhuan chī miàntiáo hé yángròu.|I like eating noodles and mutton.
+2|这 是 我 第一 次 来 中国 。|Zhè shì wǒ dì-yī cì lái Zhōngguó.|This is my first time in China.
+2|这 条 路 很 长 。|Zhè tiáo lù hěn cháng.|This road is very long.
+2|我 的 铅笔 在 你 的 左边 。|Wǒ de qiānbǐ zài nǐ de zuǒbian.|My pencil is on your left.
+3|我 对 中国 文化 很 感 兴趣 。|Wǒ duì Zhōngguó wénhuà hěn gǎn xìngqù.|I am very interested in Chinese culture.
+3|请 把 门 关 上 。|Qǐng bǎ mén guānshang.|Please close the door.
+3|我 的 自行车 被 朋友 借 走 了 。|Wǒ de zìxíngchē bèi péngyou jièzǒu le.|My bicycle was borrowed by a friend.
+3|他 一边 吃 饭 ， 一边 看 电视 。|Tā yìbiān chī fàn, yìbiān kàn diànshì.|He eats while watching TV.
+3|如果 明天 下雨 ， 我们 就 不 去 公园 了 。|Rúguǒ míngtiān xiàyǔ, wǒmen jiù bú qù gōngyuán le.|If it rains tomorrow, we won't go to the park.
+3|这 个 城市 的 变化 很 大 。|Zhège chéngshì de biànhuà hěn dà.|This city has changed a lot.
+3|我 终于 明白 了 。|Wǒ zhōngyú míngbai le.|I finally understand.
+3|除了 汉语 ， 我 还 会 说 英语 。|Chúle Hànyǔ, wǒ hái huì shuō Yīngyǔ.|Besides Chinese, I can also speak English.
+3|你 越 来 越 漂亮 了 。|Nǐ yuè lái yuè piàoliang le.|You are getting prettier and prettier.
+3|我 需要 你 的 帮忙 。|Wǒ xūyào nǐ de bāngmáng.|I need your help.
+3|请 把 作业 放 在 桌子 上 。|Qǐng bǎ zuòyè fàng zài zhuōzi shang.|Please put the homework on the table.
+3|他 的 汉语 水平 提高 了 。|Tā de Hànyǔ shuǐpíng tígāo le.|His Chinese level has improved.
+3|我 打算 明年 去 北京 留学 。|Wǒ dǎsuàn míngnián qù Běijīng liúxué.|I plan to study abroad in Beijing next year.
+3|这 个 周末 你 有 空 吗 ？|Zhège zhōumò nǐ yǒu kòng ma?|Are you free this weekend?
+3|我 忘记 带 护照 了 。|Wǒ wàngjì dài hùzhào le.|I forgot to bring my passport.
+3|这 双 鞋 又 便宜 又 舒服 。|Zhè shuāng xié yòu piányi yòu shūfu.|This pair of shoes is both cheap and comfortable.
+3|我 应该 多 锻炼 身体 。|Wǒ yīnggāi duō duànliàn shēntǐ.|I should exercise more.
+3|她 一直 很 努力 。|Tā yìzhí hěn nǔlì.|She has always worked hard.
+3|我 相信 你 一定 能 做 到 。|Wǒ xiāngxìn nǐ yídìng néng zuòdào.|I believe you can definitely do it.
+3|你 的 行李箱 比 我 的 重 。|Nǐ de xínglixiāng bǐ wǒ de zhòng.|Your suitcase is heavier than mine.
+3|我 还 没 决定 去 哪儿 。|Wǒ hái méi juédìng qù nǎr.|I haven't decided where to go yet.
+3|我们 先 吃 饭 ， 然后 去 看 电影 。|Wǒmen xiān chī fàn, ránhòu qù kàn diànyǐng.|We'll eat first and then go to see a movie.
+3|冰箱 里 只 有 一 瓶 啤酒 。|Bīngxiāng li zhǐ yǒu yì píng píjiǔ.|There is only one bottle of beer in the fridge.
+3|医生 让 我 多 喝 水 ， 注意 休息 。|Yīshēng ràng wǒ duō hē shuǐ, zhùyì xiūxi.|The doctor told me to drink more water and get some rest.
+3|我 几乎 每 天 都 骑 自行车 上班 。|Wǒ jīhū měi tiān dōu qí zìxíngchē shàngbān.|I ride my bike to work almost every day.
+3|这 个 问题 很 简单 。|Zhège wèntí hěn jiǎndān.|This question is very simple.
+3|他 突然 哭 了 。|Tā tūrán kū le.|He suddenly started crying.
+3|我 习惯 早 睡 早 起 。|Wǒ xíguàn zǎo shuì zǎo qǐ.|I'm used to going to bed early and getting up early.
+3|你 害怕 什么 ？|Nǐ hàipà shénme?|What are you afraid of?
+3|请 帮 我 检查 一下 。|Qǐng bāng wǒ jiǎnchá yíxià.|Please check it for me.
+4|无论 多 忙 ， 他 都 坚持 每 天 学习 。|Wúlùn duō máng, tā dōu jiānchí měi tiān xuéxí.|No matter how busy he is, he keeps studying every day.
+4|他 不仅 会 说 汉语 ， 而且 说 得 很 流利 。|Tā bùjǐn huì shuō Hànyǔ, érqiě shuō de hěn liúlì.|He not only speaks Chinese, but speaks it fluently.
+4|既然 你 已经 决定 了 ， 我 就 不 反对 了 。|Jìrán nǐ yǐjīng juédìng le, wǒ jiù bù fǎnduì le.|Since you have already decided, I won't object.
+4|即使 失败 了 ， 也 不要 放弃 。|Jíshǐ shībài le, yě búyào fàngqì.|Even if you fail, don't give up.
+4|经验 是 慢慢 积累 的 。|Jīngyàn shì mànmàn jīlěi de.|Experience is accumulated gradually.
+4|我 对 这 里 的 环境 很 熟悉 。|Wǒ duì zhèlǐ de huánjìng hěn shúxī.|I am very familiar with the surroundings here.
+4|请 你 按照 要求 填 这 张 表格 。|Qǐng nǐ ànzhào yāoqiú tián zhè zhāng biǎogé.|Please fill in this form according to the requirements.
+4|这 次 旅行 给 我 留下 了 很 深 的 印象 。|Zhè cì lǚxíng gěi wǒ liúxiàle hěn shēn de yìnxiàng.|This trip left a deep impression on me.
+4|只要 努力 ， 就 会 成功 。|Zhǐyào nǔlì, jiù huì chénggōng.|As long as you work hard, you will succeed.
+4|我 差点儿 没 赶上 飞机 。|Wǒ chàdiǎnr méi gǎnshàng fēijī.|I almost missed the plane.
+4|这 件 事 让 我 很 感动 。|Zhè jiàn shì ràng wǒ hěn gǎndòng.|This matter moved me deeply.
+4|他 的 态度 非常 积极 。|Tā de tàidu fēicháng jījí.|His attitude is very positive.
+5|与其 抱怨 ， 不如 想 办法 解决 问题 。|Yǔqí bàoyuàn, bùrú xiǎng bànfǎ jiějué wèntí.|Rather than complain, it is better to find a way to solve the problem.
+5|他 的 观点 很 有 说服力 。|Tā de guāndiǎn hěn yǒu shuōfúlì.|His point of view is very persuasive.
+5|我们 必须 面对 现实 。|Wǒmen bìxū miànduì xiànshí.|We must face reality.
+5|这 家 公司 的 待遇 相当 不错 。|Zhè jiā gōngsī de dàiyù xiāngdāng búcuò.|This company's pay and benefits are quite good.
+5|他 把 全部 精力 都 投入 到 工作 中 。|Tā bǎ quánbù jīnglì dōu tóurù dào gōngzuò zhōng.|He puts all his energy into his work.
+5|哪怕 再 困难 ， 我 也 要 坚持 下去 。|Nǎpà zài kùnnan, wǒ yě yào jiānchí xiàqu.|However difficult it is, I will keep going.
+5|这 部 电影 反映 了 当时 的 社会 现象 。|Zhè bù diànyǐng fǎnyìngle dāngshí de shèhuì xiànxiàng.|This film reflects the social phenomena of that time.
+5|多亏 你 提醒 ， 我 才 没 迟到 。|Duōkuī nǐ tíxǐng, wǒ cái méi chídào.|Thanks to your reminder, I wasn't late.
+6|这 个 政策 的 实施 势必 会 带来 深远 的 影响 。|Zhège zhèngcè de shíshī shìbì huì dàilái shēnyuǎn de yǐngxiǎng.|The implementation of this policy is bound to have a far-reaching impact.
+6|他 的 成功 归根到底 取决 于 多 年 的 努力 。|Tā de chénggōng guīgēn dàodǐ qǔjué yú duō nián de nǔlì.|His success ultimately depends on many years of hard work.
+6|面对 挑战 ， 我们 不能 急于求成 。|Miànduì tiǎozhàn, wǒmen bù néng jíyú qiúchéng.|Facing challenges, we must not be impatient for success.
+6|这 篇 文章 的 论点 明确 ， 层次 分明 。|Zhè piān wénzhāng de lùndiǎn míngquè, céngcì fēnmíng.|The argument of this article is clear and well structured.
+6|保护 环境 是 每 个 人 义不容辞 的 责任 。|Bǎohù huánjìng shì měi ge rén yìbùróngcí de zérèn.|Protecting the environment is everyone's unshirkable duty.
+6|他 说话 总是 拐弯抹角 ， 让 人 摸不着头脑 。|Tā shuōhuà zǒngshì guǎiwān mòjiǎo, ràng rén mōbuzháo tóunǎo.|He always beats around the bush, leaving people baffled.

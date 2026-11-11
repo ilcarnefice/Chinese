@@ -1,0 +1,121 @@
+package com.hskpath.core
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class ContentTest {
+    private val content = TestData.content
+
+    @Test fun everyLevelHasItsFullWordList() {
+        assertEquals(listOf(150, 151, 300, 600, 1300, 2500), (1..6).map { content.wordsOf(it).size })
+    }
+
+    @Test fun wordsAreWellFormed() {
+        for (level in content.levels) for (w in content.wordsOf(level)) {
+            assertTrue("no meaning: ${w.hanzi}", w.definitions.isNotEmpty())
+            val syllables = w.pinyinNumbered.split(' ')
+            assertTrue("bad pinyin for ${w.hanzi}: ${w.pinyinNumbered}",
+                syllables.all { Regex("[a-z]+[1-5]").matches(it) })
+            assertEquals("one syllable per character: ${w.hanzi} ${w.pinyinNumbered}", w.hanzi.length, syllables.size)
+            assertEquals(w.hanzi.length, w.traditional.length)
+        }
+    }
+
+    @Test fun wordsAreUniqueWithinALevel() {
+        for (level in content.levels) {
+            val words = content.wordsOf(level)
+            assertEquals(words.size, words.map { it.hanzi }.distinct().size)
+        }
+    }
+
+    @Test fun sentencesHavePinyinForEveryWord() {
+        assertTrue(content.sentences.size >= 200)
+        for (s in content.sentences + content.grammar.flatMap { it.examples } +
+            content.dialogues.flatMap { d -> d.lines.map { it.sentence } }) {
+            assertTrue(s.text, s.words.isNotEmpty() && s.english.isNotBlank())
+            assertTrue("must end with punctuation: ${s.text}", Sentence.isPunctuation(s.tokens.last()))
+            assertTrue("pinyin must not contain characters: ${s.pinyin}", s.pinyin.none { it.code > 0x2E80 })
+            // Pinyin is written word by word, so it can never have more words than characters.
+            val pinyinWords = s.pinyin.split(' ').size
+            assertTrue("${s.text} / ${s.pinyin}", pinyinWords <= s.words.sumOf { it.length })
+            // ...and each syllable has at least one vowel, so vowel groups bound the character count.
+            val hanzi = s.words.sumOf { it.length }
+            val vowelGroups = Regex("[aeiouüāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+").findAll(s.pinyin.lowercase()).count()
+            assertTrue("${s.text} / ${s.pinyin}", vowelGroups in (hanzi - s.words.count { it.endsWith("儿") })..hanzi + 2)
+        }
+    }
+
+    @Test fun beginnerWordsHaveExampleSentences() {
+        val hsk1 = content.wordsOf(1)
+        val withExample = hsk1.count { content.examplesFor(it).isNotEmpty() }
+        assertTrue("only $withExample of ${hsk1.size} HSK 1 words have an example", withExample >= hsk1.size * 9 / 10)
+        val hsk2 = content.wordsOf(2)
+        assertTrue(hsk2.count { content.examplesFor(it).isNotEmpty() } >= hsk2.size * 8 / 10)
+    }
+
+    @Test fun examplesContainTheWord() {
+        val word = content.lookup("学生")!!
+        val examples = content.examplesFor(word)
+        assertTrue(examples.isNotEmpty())
+        assertTrue(examples.all { it.text.contains("学生") })
+        assertTrue(examples.zipWithNext().all { (a, b) -> a.level <= b.level })
+    }
+
+    @Test fun everyLevelHasGrammar() {
+        for (level in 1..6) assertTrue("HSK $level", content.grammarOf(level).isNotEmpty())
+        for (g in content.grammar) {
+            assertTrue(g.title, g.explanation.isNotBlank() && g.examples.isNotEmpty())
+            assertTrue(g.title, g.structure.isNotEmpty() && g.structure.all { it.isNotEmpty() })
+        }
+    }
+
+    @Test fun grammarStructureSplitsIntoBlocks() {
+        val shi = content.grammar.first { it.title.contains("是") }
+        assertEquals(listOf(listOf("A", "是", "B")), shi.structure.map { row -> row.map { it.text } })
+        assertEquals(listOf(false, true, false), shi.structure[0].map { it.isKeyword })
+        assertTrue(shi.isKeyword("是"))
+        assertTrue(!shi.isKeyword("学生"))
+
+        val because = content.grammar.first { it.title.startsWith("Because") }
+        assertEquals(2, because.structure.size)
+        assertEquals(setOf("因为", "所以"), because.keywords)
+        // Every structure's keywords show up in at least one of its examples.
+        for (g in content.grammar.filter { it.keywords.isNotEmpty() }) {
+            assertTrue(g.title, g.examples.any { s -> s.words.any { g.isKeyword(it) } })
+        }
+    }
+
+    @Test fun dialoguesParse() {
+        assertTrue(content.dialogues.size >= 8)
+        assertTrue(content.dialogues.all { it.lines.size >= 4 && it.title.isNotBlank() })
+        assertTrue(content.dialoguesOf(1).isNotEmpty())
+    }
+
+    @Test fun wordWebLinksWordsThatShareACharacter() {
+        val web = content.wordWeb("学")
+        assertTrue(web.size >= 4)
+        assertTrue(web.all { it.hanzi.contains("学") && it.hanzi.length > 1 })
+        assertTrue(web.map { it.hanzi }.containsAll(listOf("学生", "学习", "学校")))
+        assertTrue(web.zipWithNext().all { (a, b) -> a.level <= b.level })
+        for (level in 1..6) assertTrue(content.webCharacters(level).size >= 10)
+        assertTrue("学" in content.webCharacters(1))
+    }
+
+    @Test fun characterBreakdownExplainsCompoundWords() {
+        val parts = content.characterBreakdown(content.lookup("电脑")!!)
+        assertEquals(listOf("电", "脑"), parts.map { it.hanzi })
+        assertTrue(parts.all { it.definitions.isNotEmpty() })
+        assertTrue(content.characterBreakdown(content.lookup("我")!!).isEmpty())
+    }
+
+    @Test fun searchFindsWordsByCharactersPinyinAndMeaning() {
+        assertEquals("你", content.search("你").first().hanzi)
+        assertEquals("朋友", content.search("pengyou").first().hanzi)
+        assertEquals("朋友", content.search("péngyou").first().hanzi)
+        assertTrue(content.search("friend").any { it.hanzi == "朋友" })
+        assertEquals("吃", content.search("eat").first().hanzi)
+        assertTrue(content.search("  ").isEmpty())
+        assertTrue(content.search("zzzzqq").isEmpty())
+    }
+}
