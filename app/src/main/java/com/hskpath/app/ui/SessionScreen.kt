@@ -354,12 +354,17 @@ private fun ChoiceView(app: AppState, content: Content, choice: Choice, onJudged
             }
         }
         val characters = choice.kind == ChoiceKind.HANZI || choice.kind == ChoiceKind.LISTEN
-        // When listening, pinyin on the options would give the answer away until it is checked.
-        val pinyinOnOptions = characters && app.showPinyin && (choice.kind == ChoiceKind.HANZI || verdict != null)
+        val listening = choice.kind == ChoiceKind.LISTEN
         choice.options.forEachIndexed { i, option ->
-            val sub = if (!pinyinOnOptions) null else if (i == choice.correctIndex) word.pinyin else content.pinyinFor(option).replace(" ", "")
-            OptionTile(option, if (characters) 28 else 18, selected = i == selected, sub = sub,
-                state = optionState(verdict, i == choice.correctIndex, i == selected), enabled = verdict == null) { selected = i }
+            // When listening, an option shows its pinyin (under the character) and says itself once it is picked,
+            // so it can be compared with what was heard; showing every pinyin at once would give the answer away.
+            val showPinyin = characters && app.showPinyin && (!listening || i == selected || verdict != null)
+            val sub = if (!showPinyin) null else if (i == choice.correctIndex) word.pinyin else content.pinyinFor(option).replace(" ", "")
+            OptionTile(option, if (characters) 28 else 18, selected = i == selected, sub = sub, subBelow = listening,
+                state = optionState(verdict, i == choice.correctIndex, i == selected), enabled = verdict == null) {
+                selected = i
+                if (listening) app.speaker.speak(option)
+            }
         }
     }
 }
@@ -372,9 +377,10 @@ private fun optionState(verdict: Boolean?, isAnswer: Boolean, isSelected: Boolea
     else -> null
 }
 
-/** One answer option: a raised tile that turns green or red once judged. [sub] is pinyin shown above it. */
+/** One answer option: a raised tile that turns green or red once judged. [sub] is pinyin shown above it, or under it with [subBelow]. */
 @Composable
-private fun OptionTile(text: String, size: Int, selected: Boolean, state: Boolean?, enabled: Boolean, sub: String? = null, onClick: () -> Unit) {
+private fun OptionTile(text: String, size: Int, selected: Boolean, state: Boolean?, enabled: Boolean, sub: String? = null,
+                       subBelow: Boolean = false, onClick: () -> Unit) {
     val accent = when (state) {
         true -> Good
         false -> Bad
@@ -384,8 +390,9 @@ private fun OptionTile(text: String, size: Int, selected: Boolean, state: Boolea
     Raised(face, Modifier.fillMaxWidth().padding(vertical = 5.dp), edge = 4.dp, edgeColor = accent, enabled = enabled, onClick = onClick) {
         Column(Modifier.fillMaxWidth().border(2.dp, accent, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = if (sub.isNullOrEmpty()) 14.dp else 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
-            if (!sub.isNullOrEmpty()) Text(sub, fontSize = 13.sp, lineHeight = 15.sp, color = MaterialTheme.colorScheme.secondary)
+            if (!sub.isNullOrEmpty() && !subBelow) Text(sub, fontSize = 13.sp, lineHeight = 15.sp, color = MaterialTheme.colorScheme.secondary)
             Text(text, fontSize = size.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
+            if (!sub.isNullOrEmpty() && subBelow) Text(sub, fontSize = 15.sp, lineHeight = 18.sp, color = MaterialTheme.colorScheme.secondary)
         }
     }
 }
