@@ -225,7 +225,9 @@ fun AboutScreen(app: AppState) {
                 "film-subtitle frequencies. The sentence corpus comes from Tatoeba (tatoeba.org), licensed CC BY 2.0 FR; " +
                 "its word splitting and pinyin were added automatically and may contain occasional mistakes. Stroke " +
                 "order comes from Hanzi Writer data, built on Make Me a Hanzi and the Arphic fonts (Arphic Public " +
-                "License). Beginner glosses, the hand-written examples, grammar notes and dialogues were written for " +
+                "License). The head anatomy in the mouth diagrams is traced from a public-domain (CC0) diagram by " +
+                "Wugapodes on Wikimedia Commons. Beginner glosses, the hand-written examples, grammar notes, phrase " +
+                "books and dialogues were written for " +
                 "this app. Audio is produced by your device's text-to-speech voice.")
             Text("This app is independent and is not affiliated with Hanban, Chinese Testing International, " +
                 "or any textbook publisher.", style = MaterialTheme.typography.bodySmall)

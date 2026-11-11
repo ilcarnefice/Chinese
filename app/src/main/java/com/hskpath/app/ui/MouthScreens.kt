@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.nativeCanvas
@@ -117,12 +118,15 @@ fun MouthCanvas(
     Canvas(modifier.aspectRatio(view.width / view.height)) {
         val s = size.width / view.width
         scale(s, s, pivot = Offset.Zero) {
-            for (layer in view.layers) {
-                val path = fixed[layer.id] ?: shapePath(frame[layer.id] ?: FloatArray(0), layer.closed, layer.smooth)
-                drawLayer(mouth, layer, path, view)
+            // The artwork may run past the edge of the view (a head is bigger than the picture of it).
+            clipRect(0f, 0f, view.width, view.height) {
+                for (layer in view.layers) {
+                    val path = fixed[layer.id] ?: shapePath(frame[layer.id] ?: FloatArray(0), layer.closed, layer.smooth)
+                    drawLayer(mouth, layer, path, view)
+                }
+                if (overlay != null && overlay.alpha > 0.01f) drawOverlay(mouth, overlay, flow)
+                if (labels) drawLabels(mouth, view)
             }
-            if (overlay != null && overlay.alpha > 0.01f) drawOverlay(mouth, overlay, flow)
-            if (labels) drawLabels(mouth, view)
         }
     }
 }

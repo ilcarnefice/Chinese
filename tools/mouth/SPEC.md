@@ -43,7 +43,8 @@ Two views are drawn for each pose:
 ```
 
 Coordinates are in the view's own units, origin top left, y pointing down. The
-side view is always 1000 x 800 and the front view 500 x 400.
+side view is always 1000 x 800 and the front view 500 x 400. Artwork may extend
+past the edges of a view; both renderers clip it to the view.
 
 ### palette
 
@@ -175,11 +176,21 @@ Airflow: every vowel pose and every fricative pose (`lipTeeth`, `velarFric`,
 `palatalFric`, `retroflexFric`, `dentalFric`), plus `ridgeLateral` and `rest`,
 needs an `airPath`. Closure poses need a `contact` and no `airPath`.
 
+## Where the artwork comes from
+
+`build_mouth.py` writes the file. The fixed anatomy (head, palate, teeth, throat)
+is traced by `trace_base.py` from "Midsagittal diagram unlabeled" by Wugapodes on
+Wikimedia Commons, which is in the public domain (CC0); the traced outlines are in
+`base_shapes.json`. The generator adds the parts that move: the jaw swings on a
+hinge, lips and soft palate bend, and the tongue is a curve through twelve control
+points set per pose.
+
 ## Checking a design
 
 ```
-python3 tools/mouth/check_mouth.py <mouth.json>          # structure
-node tools/mouth/preview.cjs <mouth.json> <out dir>      # pictures
+python3 tools/mouth/build_mouth.py app/src/main/assets/mouth.json   # regenerate
+python3 tools/mouth/check_mouth.py <mouth.json>                      # structure
+node tools/mouth/preview.cjs <mouth.json> <out dir>                  # pictures
 ```
 
 The preview writes:

@@ -112,8 +112,8 @@ def main():
             err(f"rest pose has no points for shape layer '{lid}'")
         elif len(pts) < (3 if closed else 2):
             err(f"rest.{lid}: too few points")
-        elif len(pts) > 40:
-            warnings.append(f"rest.{lid} has {len(pts)} points; 40 or fewer keeps the file small")
+        elif len(pts) > 120:
+            warnings.append(f"rest.{lid} has {len(pts)} points; 120 or fewer keeps the file small")
     for name, pose in poses.items():
         for lid, pts in pose.get("points", {}).items():
             if lid not in shapes:
