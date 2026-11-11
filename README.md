@@ -16,7 +16,7 @@ in short game-like lessons.
 | Phrase books | 900 phrases with audio and drills: 500 everyday phrases in 20 topics, 100 travel phrases in 10 topics, 300 business phrases in 12 topics |
 | Training plans | A day-by-day schedule through each level (HSK 1-3 in 30 days each, HSK 4 in 60, HSK 5 in 100, HSK 6 in 150): lessons, a grammar formula, a sentence workout and optional handwriting each day, ending with the level test |
 | Dialogues | 17 short conversations covering every level, with line-by-line audio and "play all" |
-| Sounds and mouth positions | For all 21 initials and 35 finals: a real textbook picture of the head in side section that moves — jaw, lips, tongue and soft palate — played step by step (closure, release, vowel) with the breath through mouth or nose, the puff of aspirated sounds and voicing marked; a button that names the parts; instructions, the nearest English sound and practice words; plus the tones with pitch contours and tone-change rules |
+| Sounds and mouth positions | For all 21 initials and 35 finals: a close-up of a real textbook picture of the mouth, seen from the side, that moves — jaw, lips, tongue and soft palate — step by step (closure, release, vowel). A dot shows where two parts touch, one short arrow shows where the breath comes out (mouth or nose), and one sentence under the picture says what to do; a button names the parts. Plus the nearest English sound and practice words, and the tones with pitch contours and tone-change rules |
 | Practice | Spaced-repetition word review, sentence workouts (translate, listen, build), grammar drills, and a 30-question test per level |
 | Dictionary | Search all 11,001 words by characters, pinyin (tones optional) or English |
 | Motivation | XP, ranks, a daily goal, day streaks, a weekly chart, 13 achievements, and a panda that cheers you on |
@@ -72,8 +72,9 @@ Every push also builds the APK on GitHub Actions; download it from the run's
   (Connexions, http://cnx.org/content/col11496/1.6/), licensed
   [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), via
   [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:2303_Anatomy_of_Nose-Pharynx-Mouth-Larynx.jpg).
-  Changes: labels removed, cropped, and the tongue, lower jaw and soft palate cut out
-  and moved to show each sound (`tools/mouth/source/README.md`). The adapted pictures
+  Changes: labels and tonsils removed, cropped, everything but the mouth washed out,
+  and the tongue, lower jaw and soft palate cut out and moved to show each sound
+  (`tools/mouth/source/README.md`). The adapted pictures
   carry the same licence.
 - Beginner glosses for HSK 1-2, about 215 hand-written example sentences, the grammar
   formulas, the phrase books and the dialogues were written for this app.

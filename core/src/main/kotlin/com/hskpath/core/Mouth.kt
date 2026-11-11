@@ -79,6 +79,8 @@ data class MouthArt(
     /** Where the picture comes from, for the credits. */
     val source: String = "",
     val meshUnit: Float = 1f,
+    /** Named parts of the side view that can be shown on their own: x, y, width, height. */
+    val windows: Map<String, List<Float>> = emptyMap(),
     val palette: Map<String, String>,
     val views: Map<String, MouthView>,
     val anchors: MouthAnchors,
@@ -138,6 +140,16 @@ class Mouth(val art: MouthArt) {
 
     fun colour(name: String?): String? = if (name == null) null else art.palette[name] ?: name
 
+    /**
+     * The part of the side view to show (x, y, width, height). [MOUTH] is the normal
+     * close view of lips, teeth and tongue; an unknown name gives the whole view.
+     */
+    fun window(name: String): FloatArray {
+        val w = art.windows[name]
+        return if (w != null && w.size == 4 && w[2] > 0f && w[3] > 0f) w.toFloatArray()
+        else floatArrayOf(0f, 0f, side.width, side.height)
+    }
+
     /** Every picture file the artwork uses. */
     val pictures: Set<String> get() = layers.mapNotNull { it.src }.toSet()
 
@@ -178,6 +190,9 @@ class Mouth(val art: MouthArt) {
             }
         }
         if (art.meshUnit <= 0f) out += "meshUnit must be positive"
+        for ((name, w) in art.windows) {
+            if (w.size != 4 || w[2] <= 0f || w[3] <= 0f) out += "window $name must be [x, y, width, height]"
+        }
         for (c in OVERLAY_COLOURS) if (c !in art.palette) out += "palette lacks $c"
         for ((name, value) in art.palette) if (!HEX.matches(value)) out += "palette.$name is not #RRGGBB"
         if (art.anchors.nasalPath.size < 2) out += "nasalPath is too short"
@@ -188,6 +203,10 @@ class Mouth(val art: MouthArt) {
         const val REST = "rest"
         const val SIDE = "side"
         const val FRONT = "front"
+        /** The normal window: lips, teeth, tongue and the roof of the mouth. */
+        const val MOUTH = "mouth"
+        /** The same with room for the names of the parts. */
+        const val NAMES = "names"
         val OVERLAY_COLOURS = listOf("contact", "air", "voice", "label")
         private val HEX = Regex("#[0-9A-Fa-f]{6}")
         private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }

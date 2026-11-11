@@ -19,6 +19,24 @@ class MouthTest {
         assertTrue(mouth.art.source.contains("OpenStax"))
     }
 
+    @Test fun thePictureIsShownCloseUpOnTheMouth() {
+        // What matters is lips, teeth and tongue: the app shows a window on the mouth, not the whole head.
+        val close = mouth.window(Mouth.MOUTH)
+        assertTrue(close[2] < mouth.side.width && close[3] < mouth.side.height)
+        val names = mouth.window(Mouth.NAMES)
+        assertTrue(names[2] >= close[2])
+        // Every marker of every pose lies inside the close view.
+        for ((name, pose) in mouth.art.poses) for (p in pose.contact + pose.gap) {
+            assertTrue("$name marker at $p", p[0] in close[0]..close[0] + close[2] && p[1] in close[1]..close[1] + close[3])
+        }
+        // Names of parts point at places inside the window they are shown in.
+        for (label in mouth.side.labels) {
+            assertTrue(label.text, label.to[0] in names[0]..names[0] + names[2] && label.to[1] in names[1]..names[1] + names[3])
+        }
+        // An unknown window shows the whole picture.
+        assertArrayEquals(floatArrayOf(0f, 0f, mouth.side.width, mouth.side.height), mouth.window("nowhere"), 0f)
+    }
+
     @Test fun theDiagramsAreOneRealPictureTakenApart() {
         // Nothing is drawn: every layer is a piece of the textbook picture.
         assertTrue(mouth.side.layers.all { it.isImage })

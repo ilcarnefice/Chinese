@@ -13,6 +13,8 @@
 `tools/mouth/build_mouth.py` makes the pictures in `app/src/main/assets/mouth/` from this file:
 
 - the printed labels and their pointer lines are removed and the picture is cropped to the head;
+- the two tonsils are painted out, and everything that is not mouth or skin is washed out, so that
+  lips, teeth and tongue stand out;
 - the tongue, the lower jaw (with lower lip and teeth) and the soft palate are cut out as separate
   pieces, and the area behind them is painted in;
 - in the app those pieces are moved and bent to show the position of the mouth for each Mandarin

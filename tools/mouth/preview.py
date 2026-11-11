@@ -2,8 +2,12 @@
 """Draws the mouth diagrams (mouth.json and its pictures, see SPEC.md) to PNG
 files with the same rules as the app, so they can be judged without building it.
 
-Usage: python3 tools/mouth/preview.py <assets dir> <out dir> [--only sheets,poses,plain,labels,blends,phone] [--poses a,b]
-       ("plain" draws each pose without markers; it is only written when asked for)
+Usage: python3 tools/mouth/preview.py <assets dir> <out dir> [--only sheets,poses,plain,labels,blends,phone]
+                                      [--poses a,b] [--window mouth|nose|head|all]
+       "plain" draws each pose without markers; it is only written when asked for.
+       --window picks what part of the picture is shown (default: mouth, as in the app; all: the whole view).
+Markers, as in the app: a solid dot where two parts touch, a ring at a narrow gap, a short arrow where the
+breath comes out (mouth or nose) and arcs for a strong puff. The voice is not drawn; the app says it in words.
 """
 import json
 import math
@@ -141,12 +145,16 @@ def smooth(points, per_segment=12):
     return np.array(out)
 
 
+MARK = 1.0      # markers keep their size on screen: this is how much of the view the picture shows
+
+
 def line(img, pts, colour, width, scale):
     cv2.polylines(img, [np.round(np.array(pts) * scale * 16).astype(np.int32)], False, colour,
-                  max(int(round(width * scale)), 1), cv2.LINE_AA, shift=4)
+                  max(int(round(width * scale * MARK)), 1), cv2.LINE_AA, shift=4)
 
 
 def dashed(img, pts, colour, width, scale, on=22.0, off=18.0):
+    on, off = on * MARK, off * MARK
     pts = np.array(pts)
     seg = np.linalg.norm(np.diff(pts, axis=0), axis=1)
     s = np.concatenate([[0], np.cumsum(seg)])
@@ -161,22 +169,19 @@ def dashed(img, pts, colour, width, scale, on=22.0, off=18.0):
 
 
 def arrow(img, points, colour, scale):
-    pts = smooth(points)
-    white = np.full_like(img, 255)
-    under = img.copy()
-    line(under, pts, (255, 255, 255), 18, scale)
-    img[:] = cv2.addWeighted(under, 0.55, img, 0.45, 0)
-    dashed(img, pts, colour, 10, scale)
+    """A short arrow where the breath comes out: the last stretch of its route."""
     tip = np.array(points[-1], float)
     d = tip - np.array(points[-2], float)
     u = d / (np.linalg.norm(d) or 1)
-    base = tip - u * 34
+    start = tip - u * 80 * MARK
+    base = tip - u * 30 * MARK
     n = np.array([-u[1], u[0]])
-    head = np.array([tip + u * 8, base + n * 19, base - n * 19])
-    cv2.fillPoly(img, [np.round(head * scale * 16).astype(np.int32)], colour, cv2.LINE_AA, shift=4)
+    head = np.array([tip + u * 6 * MARK, base + n * 21 * MARK, base - n * 21 * MARK])
+    line(img, [start, base], (255, 255, 255), 21, scale)
     cv2.polylines(img, [np.round(head * scale * 16).astype(np.int32)], True, (255, 255, 255),
-                  max(int(round(3 * scale)), 1), cv2.LINE_AA, shift=4)
-    del white
+                  max(int(round(9 * scale * MARK)), 1), cv2.LINE_AA, shift=4)
+    line(img, [start, base], colour, 12, scale)
+    cv2.fillPoly(img, [np.round(head * scale * 16).astype(np.int32)], colour, cv2.LINE_AA, shift=4)
 
 
 def arc(cx, cy, radius, a0, a1, steps=12):
@@ -185,12 +190,29 @@ def arc(cx, cy, radius, a0, a1, steps=12):
 
 
 def circle(img, p, r, colour, scale, width=None):
-    cv2.circle(img, (int(round(p[0] * scale * 16)), int(round(p[1] * scale * 16))), int(round(r * scale * 16)),
-               colour, -1 if width is None else max(int(round(width * scale)), 1), cv2.LINE_AA, shift=4)
+    cv2.circle(img, (int(round(p[0] * scale * 16)), int(round(p[1] * scale * 16))), int(round(r * MARK * scale * 16)),
+               colour, -1 if width is None else max(int(round(width * scale * MARK)), 1), cv2.LINE_AA, shift=4)
 
 
-def render(art, frame, size, overlay=None, labels=False):
-    """overlay: (pose, air, voiced) or None."""
+def render(art, frame, size, overlay=None, labels=False, window=None):
+    """overlay: (pose, air, voiced) or None. window: the name of a view window, or None for the whole view;
+    the result is then `size` pixels wide and shows only that window."""
+    if window:
+        wx, wy, ww, wh = art.data["windows"][window]
+        full = render_view(art, frame, size / ww * art.view["width"], overlay, labels, ww / art.view["width"],
+                           (wx, wy, ww, wh))
+        k = size / ww
+        m = np.float32([[1, 0, -wx * k], [0, 1, -wy * k]])
+        return cv2.warpAffine(full, m, (size, int(round(wh * k))), flags=cv2.INTER_LINEAR,
+                              borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
+    return render_view(art, frame, size, overlay, labels, 1.0, None)
+
+
+def render_view(art, frame, size, overlay, labels, mark, window):
+    """Draws the whole view `size` pixels wide; `mark` scales the markers (they keep their size on screen)."""
+    global MARK
+    MARK = mark
+    size = int(round(size))
     scale = size / art.view["width"]
     canvas = np.full((int(art.view["height"] * scale), size, 3), 255, np.float32)
     for layer in art.layers:
@@ -213,13 +235,8 @@ def render(art, frame, size, overlay=None, labels=False):
             arrow(img, anchors["nasalPath"], rgb(pal["air"]), scale)
         if air == "puff":
             for r in (30, 54, 78):
-                line(img, arc(anchors["mouthOut"][0], anchors["mouthOut"][1], r, -40, 40), rgb(pal["air"]), 10, scale)
-        if voiced:
-            x, y = anchors["larynx"]
-            circle(img, (x, y), 8, rgb(pal["voice"]), scale)
-            for r in (22, 38):
-                line(img, arc(x, y, r, -40, 40, 8), rgb(pal["voice"]), 7, scale)
-                line(img, arc(x, y, r, 140, 220, 8), rgb(pal["voice"]), 7, scale)
+                line(img, arc(anchors["mouthOut"][0], anchors["mouthOut"][1], r * mark, -40, 40), rgb(pal["air"]), 10,
+                     scale)
         for p in pose.get("gap", []):
             circle(img, p, 17, rgb(pal["contact"]), scale, 7)
         for p in pose.get("contact", []):
@@ -233,7 +250,7 @@ def render(art, frame, size, overlay=None, labels=False):
                 line(img, [label.get("from", label["at"]), label["to"]], colour, 8 if white else 3.5, scale)
                 circle(img, label["to"], 9.5 if white else 7, colour, scale)
         for label in art.view.get("labels", []):
-            fs = 0.8 * scale
+            fs = 0.8 * scale * mark
             (tw, th), _ = cv2.getTextSize(label["text"], cv2.FONT_HERSHEY_SIMPLEX, fs, 2)
             x = label["at"][0] * scale
             x -= {"middle": tw / 2, "end": tw}.get(label.get("align", "middle"), 0)
@@ -262,24 +279,30 @@ def tile(images, columns):
 def main():
     args = sys.argv[1:]
     only, chosen = None, None
-    for flag in ("--only", "--poses"):
+    window = "mouth"
+    for flag in ("--only", "--poses", "--window"):
         if flag in args:
             i = args.index(flag)
             value = args[i + 1].split(",")
             del args[i:i + 2]
             if flag == "--only":
                 only = value
-            else:
+            elif flag == "--poses":
                 chosen = value
+            else:
+                window = None if value[0] == "all" else value[0]
     assets, out = args[0], args[1]
     os.makedirs(out, exist_ok=True)
     art = Art(assets)
     want = lambda kind: only is None or kind in only
     poses = [(n, c) for n, c in POSES if n in art.data["poses"] and (chosen is None or n in chosen)]
 
+    if window and window not in art.data.get("windows", {}):
+        window = None
+
     def shot(name, size):
         air, voiced = TYPICAL.get(name, ("none", False))
-        return render(art, art.frame(name), size, (name, air, voiced))
+        return render(art, art.frame(name), size, (name, air, voiced), window=window)
 
     if want("sheets"):
         tiles = [caption(shot(n, 520), f"{n}  ({c})") for n, c in poses]
@@ -290,19 +313,21 @@ def main():
             cv2.imwrite(os.path.join(out, f"pose-{n}.png"), shot(n, 900))
     if only is not None and "plain" in only:
         for n, _ in poses:
-            cv2.imwrite(os.path.join(out, f"plain-{n}.png"), render(art, art.frame(n), 900))
+            cv2.imwrite(os.path.join(out, f"plain-{n}.png"), render(art, art.frame(n), 900, window=window))
     if want("phone"):
         tiles = [caption(shot(n, 330), n) for n, _ in poses]
         cv2.imwrite(os.path.join(out, "phone.png"), tile(tiles, 5))
     if want("labels"):
-        cv2.imwrite(os.path.join(out, "labels.png"), render(art, art.frame("rest"), 900, labels=True))
+        cv2.imwrite(os.path.join(out, "labels.png"),
+                    render(art, art.frame("rest"), 900, labels=True, window="names" if window else None))
     if want("blends"):
         strips = []
         for pair in BLENDS:
             a, b = pair.split(":")
             if a not in art.data["poses"] or b not in art.data["poses"]:
                 continue
-            frames = [caption(render(art, art.blend(a, b, t), 300), f"{a} > {b}  {t:.2f}") for t in (0, 0.25, 0.5, 0.75, 1)]
+            frames = [caption(render(art, art.blend(a, b, t), 300, window=window), f"{a} > {b}  {t:.2f}")
+                      for t in (0, 0.25, 0.5, 0.75, 1)]
             strips.append(np.hstack(frames))
         for k in range(0, len(strips), 5):
             cv2.imwrite(os.path.join(out, f"blend-{k // 5 + 1}.png"), np.vstack(strips[k:k + 5]))

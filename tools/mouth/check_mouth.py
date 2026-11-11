@@ -72,6 +72,11 @@ def check(path):
             problems.append(f"layer {lid}: a grid needs both cols and rows")
         if cols > 0 and rows > 0:
             grids[lid] = (cols + 1) * (rows + 1) * 2
+    windows = art.get("windows", {})
+    for name in ("mouth", "names"):
+        w = windows.get(name)
+        if not w or len(w) != 4 or w[2] <= 0 or w[3] <= 0:
+            problems.append(f"window {name} must be [x, y, width, height]")
     if len(side.get("labels", [])) < 8:
         problems.append("the side view should name at least 8 parts")
 

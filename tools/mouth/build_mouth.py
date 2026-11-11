@@ -122,7 +122,31 @@ def load_picture():
     pad = 16
     part = full[Y0 - pad:Y0 + SIZE + pad, X0 - pad:X0 + SIZE + pad]
     clean = remove_lines(part)
-    return clean[pad:pad + SIZE, pad:pad + SIZE].copy()
+    return remove_tonsils(clean[pad:pad + SIZE, pad:pad + SIZE].copy())
+
+
+def remove_tonsils(pic):
+    """Paints out the two yellow tonsils. They play no part in speaking and only
+    distract: the one at the back of the mouth becomes throat wall and dark
+    mouth, continued up from just below it; the one on the back of the tongue
+    becomes tongue."""
+    b, g, r = [pic[:, :, i].astype(np.int32) for i in range(3)]
+    yellow = ((r - g < 62) & (r > 222) & (b < 190)).astype(np.uint8)
+    out = pic.copy()
+    round_ = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
+    back = np.zeros_like(yellow)
+    back[392:522, 92:162] = yellow[392:522, 92:162]
+    back = cv2.dilate(cv2.morphologyEx(back, cv2.MORPH_CLOSE, round_), round_)
+    for y, x in zip(*np.nonzero(back)):
+        out[y, x] = pic[532, x]
+    on_tongue = np.zeros_like(yellow)
+    on_tongue[468:585, 138:210] = yellow[468:585, 138:210]
+    on_tongue = cv2.dilate(cv2.morphologyEx(on_tongue, cv2.MORPH_CLOSE, round_), round_)
+    out = cv2.inpaint(out, on_tongue, 7, cv2.INPAINT_TELEA)
+    soft = cv2.GaussianBlur(out, (0, 0), 0.8)
+    edge = cv2.dilate(back, np.ones((3, 3), np.uint8)) > 0
+    out[edge] = soft[edge]
+    return out
 
 
 def fill_holes(mask):
@@ -158,28 +182,10 @@ def velum_mask(pic):
     count, labels, stats, _ = cv2.connectedComponentsWithStats(m, connectivity=8)
     m = (labels == 1 + int(np.argmax(stats[1:, 4]))).astype(np.uint8)
     m = fill_holes(m)
-    # the tonsil below the tip is yellow: keep its fringe out of the piece
-    yellow = ((r - g < 58) & (r > 225) & (b < 185)).astype(np.uint8)
-    yellow[:392] = 0
-    yellow[:, 160:] = 0
-    m[cv2.dilate(yellow, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))) > 0] = 0
     m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
     count, labels, stats, _ = cv2.connectedComponentsWithStats(m, connectivity=8)
     m = (labels == 1 + int(np.argmax(stats[1:, 4]))).astype(np.uint8)
     return fill_holes(m)
-
-
-def tonsil_mask(pic):
-    b, g, r = [pic[:, :, i].astype(np.int32) for i in range(3)]
-    yellow = ((r - g < 58) & (r > 225) & (b < 185)).astype(np.uint8)
-    yellow[:392] = 0
-    yellow[:, 160:] = 0
-    yellow[:, :96] = 0
-    yellow = cv2.morphologyEx(yellow, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-    count, labels, stats, _ = cv2.connectedComponentsWithStats(yellow, connectivity=8)
-    if count < 2:
-        return yellow
-    return (labels == 1 + int(np.argmax(stats[1:, 4]))).astype(np.uint8)
 
 
 THROAT_EDGE_Y = [286, 300, 318, 340, 365, 395, 425, 470]     # behind the soft palate: where the throat wall
@@ -192,42 +198,44 @@ def paint_behind_velum(pic, hole):
     hole = hole.astype(np.uint8)
     out = pic.copy()
     h, w = hole.shape
-    # around the tonsil keep the tonsil: every pixel takes the colour of the nearest pixel outside the hole
-    _, labels = cv2.distanceTransformWithLabels(hole, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
-    lut = np.zeros((labels.max() + 1, 3), np.uint8)
-    lut[labels[hole == 0]] = pic[hole == 0]
-    nearest = lut[labels]
-    near_tonsil = cv2.distanceTransform(1 - tonsil_mask(pic), cv2.DIST_L2, 5) < 5
     for x in range(w):
         rows = np.nonzero(hole[:, x])[0]
         if len(rows) == 0:
             continue
         below = pic[470, min(x, 96)]      # the throat wall, taken from under the soft palate's tip
         for y in rows:
-            if near_tonsil[y, x]:
-                out[y, x] = nearest[y, x]
-            elif x < np.interp(y, THROAT_EDGE_Y, THROAT_EDGE_X):
-                out[y, x] = below
-            else:
-                out[y, x] = CAVITY
+            out[y, x] = below if x < np.interp(y, THROAT_EDGE_Y, THROAT_EDGE_X) else CAVITY
     soft = cv2.GaussianBlur(out, (0, 0), 0.8)
     out[hole > 0] = soft[hole > 0]
-    # The tip of the soft palate hid the top of the tonsil: round the tonsil off where it was hidden.
-    tonsil = tonsil_mask(pic)
-    points = np.stack(np.nonzero(tonsil)[::-1], axis=1).astype(np.int32)
-    whole = np.zeros_like(tonsil)
-    cv2.fillConvexPoly(whole, cv2.convexHull(points), 1)
-    added = (whole > 0) & (hole > 0) & (tonsil == 0)
-    body = np.median(pic[tonsil > 0], axis=0)
-    rim = pic[(cv2.dilate(tonsil, np.ones((5, 5), np.uint8)) > 0) & (tonsil == 0) & (hole == 0)]
-    out[added] = body
-    edge = added & (cv2.erode(whole, np.ones((5, 5), np.uint8)) == 0)
-    if len(rim):
-        out[edge] = (0.5 * np.median(rim, axis=0) + 0.5 * body).astype(np.uint8)
-    smooth = cv2.GaussianBlur(out, (0, 0), 0.7)
-    near = cv2.dilate(added.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
-    out[near] = smooth[near]
     return out
+
+
+# What matters for speaking is the mouth: lips, teeth, tongue and the roof of the mouth. Everything else in the
+# picture (nose cavity, spine, voice box) is kept, for bearings, but washed out.
+FOCUS_LEFT, FOCUS_TOP = 85, 256
+FOCUS_FLOOR_X = [85, 150, 165, 200, 250, 300, 330, 560, 600, 900]
+FOCUS_FLOOR_Y = [585, 585, 600, 650, 700, 722, 742, 742, 760, 760]
+WASH = 0.62          # how far the rest is faded towards white
+
+
+def focus_weight(pic, tongue, velum):
+    """1 where the picture keeps its full colour (mouth and skin), 0 where it is washed out."""
+    ys, xs = np.mgrid[0:SIZE, 0:SIZE]
+    b, g, r = [pic[:, :, i].astype(np.int32) for i in range(3)]
+    skin = ((abs(r - 247) < 16) & (abs(g - 213) < 22) & (abs(b - 176) < 28)).astype(np.uint8)
+    skin = cv2.morphologyEx(skin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(skin, connectivity=8)
+    big = np.isin(labels, [i for i in range(1, count) if stats[i, 4] > 1500])
+    floor = np.interp(xs, FOCUS_FLOOR_X, FOCUS_FLOOR_Y)
+    mouth = (ys >= FOCUS_TOP) & (xs >= FOCUS_LEFT) & (ys <= floor)
+    keep = mouth | cv2.dilate(big.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool) | (tongue > 0) | (velum > 0)
+    return cv2.GaussianBlur(keep.astype(np.float32), (0, 0), 12)
+
+
+def wash(image, weight):
+    faded = image.astype(np.float32) * (1 - WASH) + 255.0 * WASH
+    w = weight[:, :, None]
+    return np.clip(image.astype(np.float32) * w + faded * (1 - w), 0, 255).astype(np.uint8)
 
 
 def background_mask(pic):
@@ -546,9 +554,14 @@ POSES = {
 
 LARYNX = (192, 830)
 MOUTH_OUT = (742, 474)
+# What the app shows of the picture (x, y, width, height in picture pixels, 5 wide to 4 high):
+WINDOWS = {
+    "mouth": (70, 172, 790, 632),       # nose tip to chin: lips, teeth, tongue and the roof of the mouth
+    "names": (70, 172, 830, 664),       # the same with room on the right for the names of the parts
+}
 THROAT = [(192, 830), (152, 776), (108, 690), (88, 600), (84, 520)]
 NASAL = THROAT + [(74, 440), (62, 370), (70, 300), (100, 240), (170, 222), (300, 222), (440, 226), (570, 226),
-                  (660, 232), (725, 252), (762, 286), (792, 326)]
+                  (660, 232), (725, 252), (756, 280), (784, 318)]
 
 # The roof of the mouth: y of the palate's underside at each x (soft palate hanging / lifted, then hard palate).
 ROOF_X = [130, 150, 170, 190, 210, 230, 250, 300, 350, 400, 450, 500, 550, 575, 600]
@@ -561,18 +574,15 @@ LOWER_LIP_EDGE = np.array([672.0, 476.0])
 
 LABELS = [
     # text, where the text sits, where its pointer starts, where it points (picture pixels), alignment
-    ("nose passage", (430, 160), (430, 175), (430, 224), "middle"),
-    ("hard palate", (352, 240), (372, 254), (392, 296), "middle"),
-    ("soft palate", (150, 232), (158, 247), (178, 300), "middle"),
-    ("ridge", (728, 372), (722, 372), (594, 388), "start"),
-    ("upper teeth", (728, 416), (722, 416), (620, 432), "start"),
-    ("lips", (728, 472), (722, 472), (704, 472), "start"),
-    ("lower teeth", (728, 528), (722, 528), (607, 512), "start"),
+    ("hard palate", (352, 262), (372, 276), (392, 298), "middle"),
+    ("soft palate", (150, 262), (158, 276), (178, 302), "middle"),
+    ("ridge", (722, 372), (716, 372), (594, 388), "start"),
+    ("upper teeth", (722, 416), (716, 416), (620, 432), "start"),
+    ("lips", (722, 472), (716, 472), (704, 472), "start"),
+    ("lower teeth", (722, 528), (716, 528), (607, 512), "start"),
     ("tongue tip", (500, 528), (540, 514), (583, 496), "middle"),
     ("tongue front", (452, 440), (460, 426), (478, 394), "middle"),
     ("tongue back", (264, 440), (256, 426), (238, 378), "middle"),
-    ("throat", (66, 612), (66, 627), (66, 664), "middle"),
-    ("voice box", (318, 852), (312, 852), (208, 832), "start"),
 ]
 
 
@@ -675,6 +685,8 @@ def build(out_dir, debug_dir=None):
     head[band & (xs <= arc_x)] = CAVITY
     head[band & (xs > arc_x)] = WHITE
 
+    weight = focus_weight(pic, tongue.mask, velum)
+    head = wash(head, weight)
     lip_crop = (616, 330, 130, 290)       # the upper lip, and under it the edge of the mouth opening
 
     layers = [
@@ -687,7 +699,7 @@ def build(out_dir, debug_dir=None):
     os.makedirs(os.path.join(out_dir, "mouth"), exist_ok=True)
     cv2.imwrite(os.path.join(out_dir, "mouth", "head.png"), head)
     cv2.imwrite(os.path.join(out_dir, "mouth", "velum.png"), piece(pic, velum_alpha, velum_rect))
-    cv2.imwrite(os.path.join(out_dir, "mouth", "jaw.png"), piece(pic, jaw_alpha, jaw_rect))
+    cv2.imwrite(os.path.join(out_dir, "mouth", "jaw.png"), piece(wash(pic, weight), jaw_alpha, jaw_rect))
     cv2.imwrite(os.path.join(out_dir, "mouth", "tongue.png"), piece(pic, tongue_alpha, tongue_rect))
     if debug_dir:
         os.makedirs(debug_dir, exist_ok=True)
@@ -790,6 +802,7 @@ def build(out_dir, debug_dir=None):
     art = {
         "version": 2,
         "meshUnit": MESH_UNIT,
+        "windows": {name: [round(v * K, 1) for v in rect] for name, rect in WINDOWS.items()},
         "source": "OpenStax College, Anatomy & Physiology, figure 'Anatomy of Nose-Pharynx-Mouth-Larynx' (CC BY 3.0)",
         "palette": PALETTE,
         "views": {"side": {

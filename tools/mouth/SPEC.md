@@ -15,6 +15,13 @@ The app draws the file and moves smoothly from pose to pose. `preview.py` draws
 the same file to PNG with the same rules, so a change can be judged without
 building the app.
 
+**Kept simple on purpose.** What matters for speaking is the mouth: lips, teeth,
+tongue and the roof of the mouth. So the app shows a close view of the mouth
+(the `mouth` window), the two tonsils are painted out, and everything that is
+not mouth or skin (nose cavity, spine, voice box) is washed out. On the picture
+there is only a dot where two parts touch, a ring at a narrow gap and one short
+arrow where the breath comes out. What the voice is doing is said in words.
+
 ## File format
 
 ```json
@@ -22,6 +29,7 @@ building the app.
   "version": 2,
   "source": "credit for the picture",
   "meshUnit": 0.25,
+  "windows": { "mouth": [x, y, width, height], "names": [x, y, width, height] },
   "palette": { "contact": "#FFB703", "air": "#1C7ED6", "voice": "#7C4DFF", "label": "#1F2333" },
   "views": { "side": { "width": 1000, "height": 1000, "layers": [ ... ], "labels": [ ... ] } },
   "anchors": { "larynx": [x, y], "mouthOut": [x, y], "nasalPath": [[x, y], ...] },
@@ -79,21 +87,28 @@ has none.
 - `contact`: where two parts touch and block the air. Drawn as a solid dot.
 - `gap`: the narrowest point where air squeezes through. Drawn as a ring.
 - `airPath`: the route of the breath through the mouth, from the voice box to
-  just in front of the lips. Drawn as a dashed arrow when air flows through the
-  mouth. Needed by every pose that can have breath flowing through the mouth.
+  just in front of the lips. Only its last stretch, out between the lips, is
+  drawn, as a short arrow, when air flows through the mouth. Needed by every
+  pose that can have breath flowing through the mouth.
 
 The app moves from one pose to the next by sliding every grid corner in a
 straight line, so a pose must not fold a grid over itself. `build_mouth.py`
 warns when a visible triangle of a grid is turned inside out or squashed flat.
 
+### windows
+
+The part of the view the app shows. `mouth` is the normal close view, from the
+tip of the nose to the chin; `names` is the same with room on the right for the
+names of the parts. Markers and names keep the same size on screen whatever
+the window.
+
 ### anchors
 
-- `larynx`: the voice box. Vibration marks are drawn here when the sound is voiced.
-- `mouthOut`: a point just in front of the lips. A burst is drawn here for the
+- `larynx`: the voice box (kept for reference; nothing is drawn there).
+- `mouthOut`: a point just in front of the lips. Arcs are drawn here for the
   puff of air of p, t, k, q, ch, c.
-- `nasalPath`: the route of the breath through the nose: up the throat, behind
-  the hanging soft palate, through the nose passage and out of the nostril.
-  Drawn as a dashed arrow for m, n, ng.
+- `nasalPath`: the route of the breath through the nose. Only its last stretch,
+  out of the nostril, is drawn, as a short arrow, for m, n, ng.
 
 ### labels
 
@@ -104,18 +119,20 @@ warns when a visible triangle of a grid is turned inside out or squashed flat.
 Names of the parts, shown on the relaxed mouth: text at `at` (`start`, `middle`
 or `end` aligned), with a pointer from `from` to `to`.
 
-## Overlays drawn by the renderer
+## Markers drawn by the renderer
 
 A step of an animation is a pose plus two facts about the sound:
 `air` (`none`, `oral`, `nasal` or `puff`) and `voiced` (true or false).
 
-| Overlay | When | Colour |
+| Marker | When | Colour |
 | --- | --- | --- |
-| contact dots, gap rings | always | palette `contact` |
-| dashed arrow along `airPath` | air is `oral` or `puff` | palette `air` |
-| burst at `mouthOut` | air is `puff` | palette `air` |
-| dashed arrow along `nasalPath` | air is `nasal` | palette `air` |
-| vibration marks at `larynx` | voiced | palette `voice` |
+| solid dot at each `contact`, ring at each `gap` | always | palette `contact` |
+| short arrow out between the lips | air is `oral` or `puff` | palette `air` |
+| arcs at `mouthOut` | air is `puff` | palette `air` |
+| short arrow out of the nostril | air is `nasal` | palette `air` |
+
+The voice is not drawn. The app writes "Voice on" or "No voice" under the picture
+(in palette `voice`), next to what the breath is doing.
 
 ## The poses
 
@@ -173,5 +190,6 @@ python3 tools/mouth/preview.py app/src/main/assets out  # pictures
 The preview writes `sheet-N.png` (all poses with their usual markers),
 `pose-<name>.png` (one pose, large), `phone.png` (every pose at phone size),
 `labels.png` (the relaxed mouth with part names) and `blend-N.png` (in-between
-frames of the movements the app animates). Needs Python 3 with `numpy` and
+frames of the movements the app animates), all in the `mouth` window unless
+`--window all` is given. Needs Python 3 with `numpy` and
 `opencv-python`.

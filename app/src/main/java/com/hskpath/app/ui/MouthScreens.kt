@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.PathParser
@@ -125,9 +126,10 @@ object MouthPictures {
 }
 
 /**
- * Draws the side view of the mouth for the given positions of its moving parts,
- * following the rules in tools/mouth/SPEC.md. [flow] (0..1, repeating) makes the
- * breath arrows move.
+ * Draws the mouth for the given positions of its moving parts, following the
+ * rules in tools/mouth/SPEC.md. Only the [window] of the picture is shown: by
+ * default the close view of lips, teeth and tongue. [flow] (0..1, repeating)
+ * makes the breath arrow move.
  */
 @Composable
 fun MouthCanvas(
@@ -137,6 +139,7 @@ fun MouthCanvas(
     overlay: MouthOverlay? = null,
     labels: Boolean = false,
     flow: Float = 0f,
+    window: String = Mouth.MOUTH,
 ) {
     val view = mouth.side
     val context = LocalContext.current
@@ -147,22 +150,26 @@ fun MouthCanvas(
         view.layers.filter { it.isImage }.mapNotNull { layer -> MouthPictures.get(context, layer)?.let { layer.id to it } }.toMap()
     }
     val paint = remember { Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG) }
-    Canvas(modifier.aspectRatio(view.width / view.height)) {
-        val s = size.width / view.width
-        scale(s, s, pivot = Offset.Zero) {
-            // The artwork may run past the edge of the view; keep it inside the picture.
-            clipRect(0f, 0f, view.width, view.height) {
-                drawRect(Color.White, size = androidx.compose.ui.geometry.Size(view.width, view.height))
-                for (layer in view.layers) {
-                    if (layer.isImage) {
-                        pictures[layer.id]?.let { drawPicture(layer, it, frame[layer.id], paint) }
-                    } else {
-                        val path = fixed[layer.id] ?: shapePath(frame[layer.id] ?: FloatArray(0), layer.closed, layer.smooth)
-                        drawLayer(mouth, layer, path, view)
+    val w = remember(mouth, window) { mouth.window(window) }
+    Canvas(modifier.aspectRatio(w[2] / w[3])) {
+        val s = size.width / w[2]
+        // Markers keep the same size on screen however much of the picture is shown.
+        val mark = w[2] / view.width
+        clipRect(0f, 0f, size.width, size.height) {
+            drawRect(Color.White)
+            scale(s, s, pivot = Offset.Zero) {
+                translate(-w[0], -w[1]) {
+                    for (layer in view.layers) {
+                        if (layer.isImage) {
+                            pictures[layer.id]?.let { drawPicture(layer, it, frame[layer.id], paint) }
+                        } else {
+                            val path = fixed[layer.id] ?: shapePath(frame[layer.id] ?: FloatArray(0), layer.closed, layer.smooth)
+                            drawLayer(mouth, layer, path, view)
+                        }
                     }
+                    if (overlay != null && overlay.alpha > 0.01f) drawOverlay(mouth, overlay, flow, mark)
+                    if (labels) drawLabels(mouth, view, mark)
                 }
-                if (overlay != null && overlay.alpha > 0.01f) drawOverlay(mouth, overlay, flow)
-                if (labels) drawLabels(mouth, view)
             }
         }
     }
@@ -208,81 +215,74 @@ private fun DrawScope.polyline(points: FloatArray, color: Color, width: Float, a
         style = Stroke(width, cap = StrokeCap.Round, join = StrokeJoin.Round))
 }
 
-/** A dashed arrow along a route of the breath; the dashes drift towards the tip. */
-private fun DrawScope.arrow(points: FloatArray, color: Color, alpha: Float, flow: Float) {
+/** A short arrow where the breath comes out: the last stretch of its route. It nudges forward as it plays. */
+private fun DrawScope.arrow(points: FloatArray, color: Color, alpha: Float, flow: Float, mark: Float) {
     val n = points.size / 2
     if (n < 2) return
-    val path = shapePath(points, closed = false, smooth = true)
-    drawPath(path, Color.White, alpha = 0.55f * alpha, style = Stroke(18f, cap = StrokeCap.Round))
-    drawPath(path, color, alpha = alpha, style = Stroke(10f, cap = StrokeCap.Round,
-        pathEffect = PathEffect.dashPathEffect(floatArrayOf(22f, 18f), -flow * 40f)))
-    val tx = points[(n - 1) * 2]
-    val ty = points[(n - 1) * 2 + 1]
-    val dx = tx - points[(n - 2) * 2]
-    val dy = ty - points[(n - 2) * 2 + 1]
+    val dx = points[(n - 1) * 2] - points[(n - 2) * 2]
+    val dy = points[(n - 1) * 2 + 1] - points[(n - 2) * 2 + 1]
     val len = kotlin.math.hypot(dx, dy).takeIf { it > 0f } ?: 1f
     val ux = dx / len
     val uy = dy / len
-    val bx = tx - ux * 34f
-    val by = ty - uy * 34f
+    val push = 7f * mark * kotlin.math.sin(flow * 2f * Math.PI.toFloat())
+    val tx = points[(n - 1) * 2] + ux * push
+    val ty = points[(n - 1) * 2 + 1] + uy * push
+    val start = Offset(tx - ux * 80f * mark, ty - uy * 80f * mark)
+    val base = Offset(tx - ux * 30f * mark, ty - uy * 30f * mark)
     val head = Path().apply {
-        moveTo(tx + ux * 8f, ty + uy * 8f)
-        lineTo(bx - uy * 19f, by + ux * 19f)
-        lineTo(bx + uy * 19f, by - ux * 19f)
+        moveTo(tx + ux * 6f * mark, ty + uy * 6f * mark)
+        lineTo(base.x - uy * 21f * mark, base.y + ux * 21f * mark)
+        lineTo(base.x + uy * 21f * mark, base.y - ux * 21f * mark)
         close()
     }
+    drawLine(Color.White, start, base, strokeWidth = 21f * mark, cap = StrokeCap.Round, alpha = alpha)
+    drawPath(head, Color.White, alpha = alpha, style = Stroke(9f * mark, join = StrokeJoin.Round))
+    drawLine(color, start, base, strokeWidth = 12f * mark, cap = StrokeCap.Round, alpha = alpha)
     drawPath(head, color, alpha = alpha)
-    drawPath(head, Color.White, alpha = alpha, style = Stroke(3f, join = StrokeJoin.Round))
 }
 
-private fun DrawScope.drawOverlay(mouth: Mouth, overlay: MouthOverlay, flow: Float) {
+/**
+ * The markers: a solid dot where two parts touch, a ring at a narrow gap, a short
+ * arrow where the breath comes out (mouth or nose) and arcs for a strong puff.
+ * The voice is not drawn; the screen says it in words.
+ */
+private fun DrawScope.drawOverlay(mouth: Mouth, overlay: MouthOverlay, flow: Float, mark: Float) {
     val pose = mouth.pose(overlay.pose)
     val a = overlay.alpha.coerceIn(0f, 1f)
     val air = hex(mouth.colour("air") ?: "#339AF0")
-    val voice = hex(mouth.colour("voice") ?: "#845EF7")
     val contact = hex(mouth.colour("contact") ?: "#FFB703")
     val anchors = mouth.art.anchors
-    if (overlay.air == Air.ORAL || overlay.air == Air.PUFF) pose.airPath?.let { arrow(flat(it), air, a, flow) }
-    if (overlay.air == Air.NASAL) arrow(flat(anchors.nasalPath), air, a, flow)
+    if (overlay.air == Air.ORAL || overlay.air == Air.PUFF) pose.airPath?.let { arrow(flat(it), air, a, flow, mark) }
+    if (overlay.air == Air.NASAL) arrow(flat(anchors.nasalPath), air, a, flow, mark)
     if (overlay.air == Air.PUFF) {
         // The burst swells outwards as it plays.
-        for ((i, r) in listOf(30f, 54f, 78f).withIndex()) {
+        for ((i, r) in listOf(46f, 70f, 94f).withIndex()) {
             val pulse = (1f - ((flow + 1f - i / 3f) % 1f)) * 0.6f + 0.4f
-            polyline(Spline.arc(anchors.mouthOut[0], anchors.mouthOut[1], r, 140f, 220f, 12), air, 10f, a * pulse)
-        }
-    }
-    if (overlay.voiced) {
-        val x = anchors.larynx[0]
-        val y = anchors.larynx[1]
-        val pulse = 0.55f + 0.45f * kotlin.math.abs(1f - 2f * ((flow * 2f) % 1f))
-        drawCircle(voice, 8f, Offset(x, y), alpha = a)
-        for (r in listOf(22f, 38f)) {
-            polyline(Spline.arc(x, y, r, -40f, 40f, 8), voice, 7f, a * pulse)
-            polyline(Spline.arc(x, y, r, 140f, 220f, 8), voice, 7f, a * pulse)
+            polyline(Spline.arc(anchors.mouthOut[0], anchors.mouthOut[1], r * mark, -38f, 38f, 12), air, 10f * mark, a * pulse)
         }
     }
     for (p in pose.gap) {
-        drawCircle(Color.White, 17f, Offset(p[0], p[1]), alpha = 0.35f * a)
-        drawCircle(contact, 17f, Offset(p[0], p[1]), alpha = a, style = Stroke(7f))
+        drawCircle(Color.White, 17f * mark, Offset(p[0], p[1]), alpha = 0.35f * a)
+        drawCircle(contact, 17f * mark, Offset(p[0], p[1]), alpha = a, style = Stroke(7f * mark))
     }
     for (p in pose.contact) {
-        drawCircle(contact, 17f, Offset(p[0], p[1]), alpha = a)
-        drawCircle(Color.White, 17f, Offset(p[0], p[1]), alpha = a, style = Stroke(5f))
+        drawCircle(contact, 17f * mark, Offset(p[0], p[1]), alpha = a)
+        drawCircle(Color.White, 17f * mark, Offset(p[0], p[1]), alpha = a, style = Stroke(5f * mark))
     }
 }
 
-private fun DrawScope.drawLabels(mouth: Mouth, view: MouthView) {
+private fun DrawScope.drawLabels(mouth: Mouth, view: MouthView, mark: Float) {
     val ink = hex(mouth.colour("label") ?: "#1F2333")
     // Pointers get a white edge so they stay readable on the dark parts of the picture.
     for (white in listOf(true, false)) for (label in view.labels) {
         val from = label.from ?: label.at
         val a = Offset(from[0], from[1])
         val b = Offset(label.to[0], label.to[1])
-        drawLine(if (white) Color.White else ink, a, b, strokeWidth = if (white) 8f else 3.5f, cap = StrokeCap.Round)
-        drawCircle(if (white) Color.White else ink, if (white) 9.5f else 7f, b)
+        drawLine(if (white) Color.White else ink, a, b, strokeWidth = (if (white) 8f else 3.5f) * mark, cap = StrokeCap.Round)
+        drawCircle(if (white) Color.White else ink, (if (white) 9.5f else 7f) * mark, b)
     }
     val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textSize = 30f
+        textSize = 32f * mark
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         textAlign = Paint.Align.CENTER
     }
@@ -295,7 +295,7 @@ private fun DrawScope.drawLabels(mouth: Mouth, view: MouthView) {
             }
             val baseline = label.at[1] - (text.descent() + text.ascent()) / 2f
             text.style = Paint.Style.STROKE
-            text.strokeWidth = 7f
+            text.strokeWidth = 7f * mark
             text.strokeJoin = Paint.Join.ROUND
             text.color = android.graphics.Color.WHITE
             canvas.nativeCanvas.drawText(label.text, label.at[0], baseline, text)
@@ -307,9 +307,9 @@ private fun DrawScope.drawLabels(mouth: Mouth, view: MouthView) {
 }
 
 /**
- * The mouth picture as used on the sound screen: the moving side view, what the
- * markers mean, and where the picture comes from. With [names] the relaxed
- * mouth is shown instead, with every part named.
+ * The mouth picture as used on the sound screen: the moving close view of the
+ * mouth, one sentence saying what it shows, and what the breath and the voice
+ * are doing. With [names] the relaxed mouth is shown instead, with its parts named.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -324,38 +324,46 @@ fun MouthPicture(
 ) {
     Column(modifier) {
         MouthCanvas(mouth, if (names) mouth.frame(Mouth.REST) else frame,
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)), if (names) null else overlay, labels = names, flow = flow)
-        // What the picture is showing right now, in words, right under it.
-        if (caption != null && !names) {
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)), if (names) null else overlay, labels = names, flow = flow,
+            window = if (names) Mouth.NAMES else Mouth.MOUTH)
+        if (names) {
+            Text("The parts of the mouth named in the instructions.", style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
+        } else if (caption != null) {
+            // What the picture is showing right now, in words, right under it.
             Text(caption, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 10.dp))
         }
-        Text("A head seen from the side, cut down the middle. Nose and lips are on the right.",
-            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp))
-        FlowRow(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            val contact = hex(mouth.colour("contact") ?: "#FFB703")
+        if (overlay != null && !names) {
             val air = hex(mouth.colour("air") ?: "#339AF0")
             val voice = hex(mouth.colour("voice") ?: "#845EF7")
-            Key(contact, filled = true, "touching: air blocked")
-            Key(contact, filled = false, "narrow gap: air hisses")
-            Key(air, filled = true, "path of the breath")
-            Key(voice, filled = true, "voice switched on")
+            val quiet = MaterialTheme.colorScheme.onSurfaceVariant
+            FlowRow(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                when (overlay.air) {
+                    Air.NONE -> Tag("Air held back", quiet)
+                    Air.ORAL -> Tag("Air out through the mouth", air)
+                    Air.NASAL -> Tag("Air out through the nose", air)
+                    Air.PUFF -> Tag("Strong puff of air", air)
+                }
+                if (overlay.voiced) Tag("Voice on", voice) else Tag("No voice", quiet)
+            }
+        } else {
+            Text("A real mouth seen from the side. Lips are on the right.", style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         }
     }
 }
 
-const val PICTURE_CREDIT = "Picture adapted from OpenStax, Anatomy & Physiology (CC BY 3.0)."
-
+/** A small coloured label saying what the breath or the voice is doing. */
 @Composable
-private fun Key(color: Color, filled: Boolean, label: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(14.dp).clip(CircleShape)
-            .then(if (filled) Modifier.background(color) else Modifier.border(3.dp, color, CircleShape)))
-        Text(label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 6.dp))
-    }
+private fun Tag(text: String, color: Color) {
+    Text(text, color = color, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold,
+        modifier = Modifier.clip(RoundedCornerShape(50)).background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 12.dp, vertical = 5.dp))
 }
+
+const val PICTURE_CREDIT = "Picture adapted from OpenStax, Anatomy & Physiology (CC BY 3.0)."
 
 /** How to shape the mouth for one sound: an animated diagram, the steps in words, and words to practise. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -483,9 +491,9 @@ fun MouthMap(mouth: Mouth, modifier: Modifier = Modifier) {
     Card(modifier.fillMaxWidth()) {
         Column(Modifier.padding(10.dp)) {
             MouthCanvas(mouth, mouth.frame(Mouth.REST), Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)),
-                labels = true)
-            Text("A real textbook picture of a head seen from the side, cut down the middle, with the parts named " +
-                "in the instructions. Tap a sound below to watch these parts move.",
+                labels = true, window = Mouth.NAMES)
+            Text("A real mouth seen from the side, with the parts named in the instructions. " +
+                "Tap a sound below to watch them move.",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
             Text(PICTURE_CREDIT, style = MaterialTheme.typography.labelSmall,
