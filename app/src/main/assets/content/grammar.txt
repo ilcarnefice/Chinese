@@ -1,179 +1,523 @@
 # Grammar tips written for this app. Format:
-# "# level | title | pattern", explanation lines, then example lines
+# "# level | title | pattern | regex", explanation lines, then example lines.
+# The regex (or "-") finds more sentences with this structure in the corpus.
 # "> words | pinyin | English" (same layout as sentences.tsv).
 
-# 1 | Saying what something is: 是 | A + 是 + B
+# 1 | Saying what something is: 是 | A + 是 + B | ^[我你他她这那]们?是.{1,6}。$
 是 (shì) links two nouns, like "to be". It never changes form: 我是, 你是, 他是 are all the same. Do not use 是 before an adjective; use 很 instead.
 > 我 是 学生 。|Wǒ shì xuésheng.|I am a student.
 > 她 是 我 的 老师 。|Tā shì wǒ de lǎoshī.|She is my teacher.
 
-# 1 | Saying no: 不 | 不 + verb / adjective
+# 1 | Saying no: 不 | 不 + verb / adjective | 不[是喝吃去想会能要喜好大忙冷热]
 Put 不 (bù) directly before a verb or adjective to negate it. Before a fourth-tone syllable it is pronounced bú, as in 不是 (bú shì).
 > 他 不 是 医生 。|Tā bú shì yīshēng.|He is not a doctor.
 > 我 不 喝 茶 ， 我 喝 水 。|Wǒ bù hē chá, wǒ hē shuǐ.|I don't drink tea; I drink water.
 
-# 1 | Yes/no questions: 吗 | statement + 吗 ？
+# 1 | Yes/no questions: 吗 | statement + 吗 ？ | 吗？
 Add 吗 (ma) to the end of a statement to turn it into a yes/no question. The word order does not change.
 > 你 是 中国 人 吗 ？|Nǐ shì Zhōngguó rén ma?|Are you Chinese?
 > 你 喝 茶 吗 ？|Nǐ hē chá ma?|Do you drink tea?
 
-# 1 | Question words stay in place | 什么 / 谁 / 哪儿 / 几 / 多少
+# 1 | Question words stay in place | 什么 / 谁 / 哪儿 / 几 / 多少 | [谁哪几么].{0,5}？
 Chinese question words sit exactly where the answer would go. There is no need to move them to the front of the sentence.
 > 你 叫 什么 名字 ？|Nǐ jiào shénme míngzi?|What is your name?
 > 你 去 哪儿 ？|Nǐ qù nǎr?|Where are you going?
 > 那 是 谁 的 书 ？|Nà shì shéi de shū?|Whose book is that?
 
-# 1 | Possession: 的 | owner + 的 + thing
+# 1 | Possession: 的 | owner + 的 + thing | [我你他她]们?的[^。？！，]
 的 (de) works like 's in English. With close family and friends it is often dropped: 我妈妈 (my mom).
 > 这 是 我 的 朋友 。|Zhè shì wǒ de péngyou.|This is my friend.
 > 我 妈妈 在 医院 工作 。|Wǒ māma zài yīyuàn gōngzuò.|My mom works at a hospital.
 
-# 1 | Describing with 很 | subject + 很 + adjective
+# 1 | Describing with 很 | subject + 很 + adjective | 很[好大小多少高热冷忙累贵快慢远近漂]
 Adjectives work like verbs, so no 是 is needed. 很 (hěn) fills the slot before the adjective and often barely means "very".
 > 今天 很 热 。|Jīntiān hěn rè.|It is very hot today.
 > 这些 衣服 很 漂亮 。|Zhèxiē yīfu hěn piàoliang.|These clothes are very pretty.
 
-# 1 | Having and not having: 有 / 没有 | subject + 有 / 没有 + thing
+# 1 | Having and not having: 有 / 没有 | subject + 有 / 没有 + thing | [我你他她们家]没?有[^点些的]
 有 (yǒu) means "to have" or "there is". It is the one verb negated with 没 instead of 不.
 > 我 家 有 四 个 人 。|Wǒ jiā yǒu sì ge rén.|There are four people in my family.
 > 我 没有 钱 。|Wǒ méiyǒu qián.|I don't have money.
 
-# 1 | Measure words | number + measure word + noun
+# 1 | Measure words | number + measure word + noun | [一二两三四五六七八九十几][个本张件只条位杯块]
 A number cannot stand directly before a noun. A measure word goes between them. 个 (ge) is the general one; others, such as 本 for books, go with particular nouns.
 > 我 有 一 个 儿子 和 一 个 女儿 。|Wǒ yǒu yí ge érzi hé yí ge nǚ'ér.|I have a son and a daughter.
 > 他 有 三 本 书 。|Tā yǒu sān běn shū.|He has three books.
 
-# 1 | Where something is: 在 | subject + 在 + place
+# 1 | Where something is: 在 | subject + 在 + place | [^现正实]在[^。？！，]{1,6}[上里边面儿]
 在 (zài) says where someone or something is. Before another verb it tells where the action happens, and before a verb alone it means the action is in progress.
 > 我 住 在 北京 。|Wǒ zhù zài Běijīng.|I live in Beijing.
 > 我 的 电脑 在 桌子 上 。|Wǒ de diànnǎo zài zhuōzi shang.|My computer is on the table.
 > 爸爸 在 看 电视 。|Bàba zài kàn diànshì.|Dad is watching TV.
 
-# 1 | Time comes before the verb | subject + time + verb
+# 1 | Time comes before the verb | subject + time + verb | [今明昨]天.{0,4}[去来回吃看买做学工]
 Time words go before the verb, either after the subject or at the very start. They never go at the end as in English.
 > 我 下午 回 家 。|Wǒ xiàwǔ huí jiā.|I go home in the afternoon.
 > 我 昨天 没 去 学校 。|Wǒ zuótiān méi qù xuéxiào.|I didn't go to school yesterday.
 
-# 1 | Wanting and being able: 想 / 会 / 能 | subject + 想 / 会 / 能 + verb
+# 1 | Wanting and being able: 想 / 会 / 能 | subject + 想 / 会 / 能 + verb | [想会能][吃喝去来说看买做写学开游]
 想 (xiǎng) is "would like to", 会 (huì) is "know how to" or "will", and 能 (néng) is "be able to". They all go directly before the verb.
 > 我 想 吃 米饭 。|Wǒ xiǎng chī mǐfàn.|I'd like to eat rice.
 > 你 会 说 汉语 吗 ？|Nǐ huì shuō Hànyǔ ma?|Can you speak Chinese?
 > 王 先生 能 来 吗 ？|Wáng xiānsheng néng lái ma?|Can Mr. Wang come?
 
-# 1 | "Too ...": 太 ... 了 | 太 + adjective + 了
+# 1 | "Too ...": 太 ... 了 | 太 + adjective + 了 | 太.{1,3}了
 太 (tài) with 了 (le) at the end means "too" or "so", often with strong feeling.
 > 昨天 太 冷 了 。|Zuótiān tài lěng le.|It was too cold yesterday.
 
-# 2 | Completed actions: 了 | verb + 了
+# 2 | Completed actions: 了 | verb + 了 | [吃喝买看到来去睡写做学]了
 了 (le) after a verb shows the action is completed. At the end of a sentence it shows that the situation has changed. It is not a past tense: the negative uses 没 and drops 了.
 > 他 已经 到 了 。|Tā yǐjīng dào le.|He has already arrived.
 > 我 睡 了 八 个 小时 。|Wǒ shuìle bā ge xiǎoshí.|I slept for eight hours.
 > 他 还 没 起床 。|Tā hái méi qǐchuáng.|He hasn't gotten up yet.
 
-# 2 | Experience: 过 | verb + 过
+# 2 | Experience: 过 | verb + 过 | [去吃看听学见来用喝]过
 过 (guo) after a verb says you have done something at least once in your life.
 > 我 去 过 北京 。|Wǒ qùguo Běijīng.|I have been to Beijing.
 
-# 2 | Comparing: 比 | A + 比 + B + adjective
+# 2 | Comparing: 比 | A + 比 + B + adjective | 比.{1,6}[高大多少快慢好贵远近长重忙冷热]
 Use 比 (bǐ) to say A is more ... than B. Do not add 很 before the adjective.
 > 哥哥 比 弟弟 高 。|Gēge bǐ dìdi gāo.|The older brother is taller than the younger brother.
 
-# 2 | How well: 得 | verb + 得 + description
+# 2 | How well: 得 | verb + 得 + description | [说跑做写唱走吃睡来起玩学考长]得[很不真太非对好快慢]
 得 (de) after a verb introduces a comment on how the action is done.
 > 她 跑 得 很 快 。|Tā pǎo de hěn kuài.|She runs very fast.
 > 你 说 得 对 。|Nǐ shuō de duì.|You are right.
 
-# 2 | Because ... so ...: 因为 ... 所以 ... | 因为 + reason ， 所以 + result
+# 2 | Because ... so ...: 因为 ... 所以 ... | 因为 + reason ， 所以 + result | 因为.+所以
 Chinese likes to mark both halves: 因为 (yīnwèi) for the reason and 所以 (suǒyǐ) for the result.
 > 因为 下雨 ， 所以 我 没 去 。|Yīnwèi xiàyǔ, suǒyǐ wǒ méi qù.|Because it rained, I didn't go.
 
-# 2 | Although ... but ...: 虽然 ... 但是 ... | 虽然 + fact ， 但是 + contrast
+# 2 | Although ... but ...: 虽然 ... 但是 ... | 虽然 + fact ， 但是 + contrast | 虽然.+但是
 Unlike English, Chinese uses both "although" and "but" in the same sentence.
 > 虽然 很 累 ， 但是 我 很 快乐 。|Suīrán hěn lèi, dànshì wǒ hěn kuàilè.|Although I'm tired, I'm happy.
 
-# 2 | Ongoing states: 着 and 正在 | verb + 着 / 正在 + verb
+# 2 | Ongoing states: 着 and 正在 | verb + 着 / 正在 + verb | [开关坐站拿穿放等笑写挂带戴]着
 着 (zhe) after a verb describes a state that continues. 正在 (zhèngzài) before a verb says the action is happening right now.
 > 门 开 着 。|Mén kāizhe.|The door is open.
 > 他 正在 休息 。|Tā zhèngzài xiūxi.|He is resting right now.
 
-# 2 | Distance: 离 | A + 离 + B + 远 / 近
+# 2 | Distance: 离 | A + 离 + B + 远 / 近 | 离.{1,6}[远近]
 离 (lí) measures the distance between two places. Use 从 ... 到 ... for "from ... to ...".
 > 火车站 离 这儿 远 吗 ？|Huǒchēzhàn lí zhèr yuǎn ma?|Is the train station far from here?
 > 从 我 家 到 公司 很 近 。|Cóng wǒ jiā dào gōngsī hěn jìn.|It's very close from my home to the company.
 
-# 2 | Telling someone not to: 别 | 别 + verb
+# 2 | Telling someone not to: 别 | 别 + verb | 别[说去走吃喝看忘哭笑担着急动问买玩]
 别 (bié) means "don't". It is softer with 请 in front.
 > 别 说话 ！|Bié shuōhuà!|Don't talk!
 
-# 3 | Doing something to an object: 把 | subject + 把 + object + verb + result
+# 3 | Doing something to an object: 把 | subject + 把 + object + verb + result | 把.{1,8}[上下完好到在给走开掉了]
 把 (bǎ) moves the object in front of the verb to stress what happens to it. The verb must be followed by a result or a place.
 > 请 把 门 关 上 。|Qǐng bǎ mén guānshang.|Please close the door.
 > 请 把 作业 放 在 桌子 上 。|Qǐng bǎ zuòyè fàng zài zhuōzi shang.|Please put the homework on the table.
 
-# 3 | The passive: 被 | receiver + 被 + doer + verb + result
+# 3 | The passive: 被 | receiver + 被 + doer + verb + result | 被[^子].{0,9}了
 被 (bèi) marks who did the action when the receiver is the subject of the sentence.
 > 我 的 自行车 被 朋友 借 走 了 。|Wǒ de zìxíngchē bèi péngyou jièzǒu le.|My bicycle was borrowed by a friend.
 
-# 3 | Two actions at once: 一边 ... 一边 ... | 一边 + verb ， 一边 + verb
+# 3 | Two actions at once: 一边 ... 一边 ... | 一边 + verb ， 一边 + verb | 一边.+一边
 Use 一边 (yìbiān) before each verb to say two actions happen at the same time.
 > 他 一边 吃 饭 ， 一边 看 电视 。|Tā yìbiān chī fàn, yìbiān kàn diànshì.|He eats while watching TV.
 
-# 3 | If ... then ...: 如果 ... 就 ... | 如果 + condition ， 就 + result
+# 3 | If ... then ...: 如果 ... 就 ... | 如果 + condition ， 就 + result | 如果.+就
 如果 (rúguǒ) introduces the condition and 就 (jiù) comes before the verb of the result.
 > 如果 明天 下雨 ， 我们 就 不 去 公园 了 。|Rúguǒ míngtiān xiàyǔ, wǒmen jiù bú qù gōngyuán le.|If it rains tomorrow, we won't go to the park.
 
-# 3 | More and more: 越来越 | 越来越 + adjective
+# 3 | More and more: 越来越 | 越来越 + adjective | 越来越
 越来越 (yuè lái yuè) shows that something keeps increasing over time.
 > 你 越 来 越 漂亮 了 。|Nǐ yuè lái yuè piàoliang le.|You are getting prettier and prettier.
 
-# 3 | Both ... and ...: 又 ... 又 ... | 又 + adjective + 又 + adjective
+# 3 | Both ... and ...: 又 ... 又 ... | 又 + adjective + 又 + adjective | 又.{1,4}又
 又 (yòu) before each of two adjectives says both qualities are true.
 > 这 双 鞋 又 便宜 又 舒服 。|Zhè shuāng xié yòu piányi yòu shūfu.|This pair of shoes is both cheap and comfortable.
 
-# 3 | Besides: 除了 ... 还 ... | 除了 + A ， 还 + B
+# 3 | Besides: 除了 ... 还 ... | 除了 + A ， 还 + B | 除了.+还
 除了 (chúle) with 还 (hái) means "in addition to A, also B".
 > 除了 汉语 ， 我 还 会 说 英语 。|Chúle Hànyǔ, wǒ hái huì shuō Yīngyǔ.|Besides Chinese, I can also speak English.
 
-# 3 | First ... then ...: 先 ... 然后 ... | 先 + action ， 然后 + action
+# 3 | First ... then ...: 先 ... 然后 ... | 先 + action ， 然后 + action | 先.+然后
 先 (xiān) and 然后 (ránhòu) put two actions in order.
 > 我们 先 吃 饭 ， 然后 去 看 电影 。|Wǒmen xiān chī fàn, ránhòu qù kàn diànyǐng.|We'll eat first and then go to see a movie.
 
-# 4 | Not only ... but also ...: 不仅 ... 而且 ... | 不仅 + A ， 而且 + B
+# 4 | Not only ... but also ...: 不仅 ... 而且 ... | 不仅 + A ， 而且 + B | 不仅.+而且
 不仅 (bùjǐn) and 而且 (érqiě) add a second, stronger point to the first.
 > 他 不仅 会 说 汉语 ， 而且 说 得 很 流利 。|Tā bùjǐn huì shuō Hànyǔ, érqiě shuō de hěn liúlì.|He not only speaks Chinese, but speaks it fluently.
 
-# 4 | No matter: 无论 ... 都 ... | 无论 + question form ， 都 + result
+# 4 | No matter: 无论 ... 都 ... | 无论 + question form ， 都 + result | 无论.+都
 无论 (wúlùn) is followed by a question word or a choice, and 都 (dōu) shows the result stays the same.
 > 无论 多 忙 ， 他 都 坚持 每 天 学习 。|Wúlùn duō máng, tā dōu jiānchí měi tiān xuéxí.|No matter how busy he is, he keeps studying every day.
 
-# 4 | Even if: 即使 ... 也 ... | 即使 + supposition ， 也 + result
+# 4 | Even if: 即使 ... 也 ... | 即使 + supposition ， 也 + result | 即使.+也
 即使 (jíshǐ) introduces something that may not be true, and 也 (yě) shows the result would not change.
 > 即使 失败 了 ， 也 不要 放弃 。|Jíshǐ shībài le, yě búyào fàngqì.|Even if you fail, don't give up.
 
-# 4 | Since: 既然 ... 就 ... | 既然 + known fact ， 就 + conclusion
+# 4 | Since: 既然 ... 就 ... | 既然 + known fact ， 就 + conclusion | 既然.+就
 既然 (jìrán) introduces a fact both speakers already accept, and 就 (jiù) draws the conclusion from it.
 > 既然 你 已经 决定 了 ， 我 就 不 反对 了 。|Jìrán nǐ yǐjīng juédìng le, wǒ jiù bù fǎnduì le.|Since you have already decided, I won't object.
 
-# 4 | As long as: 只要 ... 就 ... | 只要 + condition ， 就 + result
+# 4 | As long as: 只要 ... 就 ... | 只要 + condition ， 就 + result | 只要.+就
 只要 (zhǐyào) gives the only condition that is needed for the result.
 > 只要 努力 ， 就 会 成功 。|Zhǐyào nǔlì, jiù huì chénggōng.|As long as you work hard, you will succeed.
 
-# 5 | Rather than: 与其 ... 不如 ... | 与其 + A ， 不如 + B
+# 5 | Rather than: 与其 ... 不如 ... | 与其 + A ， 不如 + B | 与其.+不如
 与其 (yǔqí) names the option you reject and 不如 (bùrú) the one you prefer.
 > 与其 抱怨 ， 不如 想 办法 解决 问题 。|Yǔqí bàoyuàn, bùrú xiǎng bànfǎ jiějué wèntí.|Rather than complain, it is better to find a way to solve the problem.
 
-# 5 | However much: 哪怕 ... 也 ... | 哪怕 + extreme case ， 也 + result
+# 5 | However much: 哪怕 ... 也 ... | 哪怕 + extreme case ， 也 + result | 哪怕.+也
 哪怕 (nǎpà) is a more colloquial 即使: it grants an extreme case and 也 (yě) says the result still holds.
 > 哪怕 再 困难 ， 我 也 要 坚持 下去 。|Nǎpà zài kùnnan, wǒ yě yào jiānchí xiàqu.|However difficult it is, I will keep going.
 
-# 5 | Thanks to: 多亏 ... 才 ... | 多亏 + help ， 才 + good result
+# 5 | Thanks to: 多亏 ... 才 ... | 多亏 + help ， 才 + good result | 多亏.+才
 多亏 (duōkuī) credits someone or something for a good outcome, and 才 (cái) marks that outcome as only possible because of it.
 > 多亏 你 提醒 ， 我 才 没 迟到 。|Duōkuī nǐ tíxǐng, wǒ cái méi chídào.|Thanks to your reminder, I wasn't late.
 
-# 6 | Bound to: 势必 | subject + 势必 + result
+# 6 | Bound to: 势必 | subject + 势必 + result | 势必
 势必 (shìbì) is a formal adverb meaning that a result is certain to follow from the circumstances.
 > 这 个 政策 的 实施 势必 会 带来 深远 的 影响 。|Zhège zhèngcè de shíshī shìbì huì dàilái shēnyuǎn de yǐngxiǎng.|The implementation of this policy is bound to have a far-reaching impact.
 
-# 6 | Depending on: 取决于 | result + 取决于 + deciding factor
+# 6 | Depending on: 取决于 | result + 取决于 + deciding factor | 取决于
 取决于 (qǔjué yú) is a written-style way to say what a result depends on.
 > 他 的 成功 归根到底 取决 于 多 年 的 努力 。|Tā de chénggōng guīgēn dàodǐ qǔjué yú duō nián de nǔlì.|His success ultimately depends on many years of hard work.
+
+# 1 | Also: 也 | subject + 也 + verb / adjective | [我你他她们]也[是有很不喜想去会在]
+也 (yě) means "also" or "too". It always goes after the subject and before the verb or adjective, never at the end of the sentence.
+> 我 也 是 学生 。|Wǒ yě shì xuésheng.|I am a student too.
+> 他 也 喜欢 喝 茶 。|Tā yě xǐhuan hē chá.|He likes drinking tea too.
+
+# 1 | All and both: 都 | subject + 都 + verb / adjective | [们家人我]都[是有很不喜去在会想]
+都 (dōu) means "all" or "both". It comes after the people or things it sums up and before the verb. With 也, the order is 也都.
+> 我们 都 是 中国 人 。|Wǒmen dōu shì Zhōngguó rén.|We are all Chinese.
+> 他们 都 很 高兴 。|Tāmen dōu hěn gāoxìng.|They are all very happy.
+> 这些 书 我 都 喜欢 。|Zhèxiē shū wǒ dōu xǐhuan.|I like all of these books.
+
+# 1 | Joining nouns: 和 | noun + 和 + noun | .和.{1,4}都
+和 (hé) joins two nouns or pronouns. Unlike English "and", it does not join two sentences or two verb phrases.
+> 我 和 他 都 是 老师 。|Wǒ hé tā dōu shì lǎoshī.|He and I are both teachers.
+> 我 爱 爸爸 和 妈妈 。|Wǒ ài bàba hé māma.|I love my dad and mom.
+> 桌子 上 有 苹果 和 茶 。|Zhuōzi shang yǒu píngguǒ hé chá.|There are apples and tea on the table.
+
+# 1 | "And you?": 呢 | statement ， topic + 呢 ？ | ，.{1,4}呢？
+呢 (ne) after a noun or pronoun sends the same question back: "and what about ...?". With no earlier statement it asks where something is.
+> 我 很 好 ， 你 呢 ？|Wǒ hěn hǎo, nǐ ne?|I'm fine, and you?
+> 我 想 喝 水 ， 你 呢 ？|Wǒ xiǎng hē shuǐ, nǐ ne?|I'd like some water. How about you?
+> 我 的 书 呢 ？|Wǒ de shū ne?|Where is my book?
+
+# 1 | Asking how many: 几 and 多少 | 几 + measure word + noun / 多少 + noun | 多少.{0,4}？
+Use 几 (jǐ) when you expect a small number, usually under ten; it needs a measure word. Use 多少 (duōshao) for any number; the measure word is optional.
+> 你 家 有 几 个 人 ？|Nǐ jiā yǒu jǐ ge rén?|How many people are there in your family?
+> 这 个 杯子 多少 钱 ？|Zhège bēizi duōshao qián?|How much is this cup?
+> 你们 学校 有 多少 学生 ？|Nǐmen xuéxiào yǒu duōshao xuésheng?|How many students does your school have?
+
+# 1 | This one and that one: 这 / 那 | 这 / 那 + measure word + noun | [这那][个本件张位杯块只][^。？！，]
+这 (zhè) is "this" and 那 (nà) is "that". Before a noun they need a measure word in between, just as numbers do.
+> 这 个 菜 很 好吃 。|Zhège cài hěn hǎochī.|This dish is delicious.
+> 那 本 书 是 我 的 。|Nà běn shū shì wǒ de.|That book is mine.
+> 我 喜欢 这 个 杯子 。|Wǒ xǐhuan zhège bēizi.|I like this cup.
+
+# 1 | Polite requests: 请 | 请 + verb | ^请[^问假客]
+Start a request with 请 (qǐng) to make it polite, like "please". It goes at the beginning, not at the end.
+> 请 坐 。|Qǐng zuò.|Please sit down.
+> 请 喝 茶 。|Qǐng hē chá.|Please have some tea.
+> 请 在 这儿 写 你 的 名字 。|Qǐng zài zhèr xiě nǐ de míngzi.|Please write your name here.
+
+# 1 | Asking how: 怎么 | 怎么 + verb | 怎么[去走说写做读用办来回吃卖]
+怎么 (zěnme) directly before a verb asks how to do something.
+> 这 个 字 怎么 读 ？|Zhège zì zěnme dú?|How do you read this character?
+> 你 怎么 去 学校 ？|Nǐ zěnme qù xuéxiào?|How do you get to school?
+> 这 个 菜 怎么 做 ？|Zhège cài zěnme zuò?|How do you make this dish?
+
+# 1 | Liking to do things: 喜欢 | subject + 喜欢 + verb | 喜欢[看吃喝听做去学买打唱玩说读写睡]
+喜欢 (xǐhuan) can be followed by a noun or directly by a verb. No extra word like "to" or "-ing" is needed.
+> 我 喜欢 看 电影 。|Wǒ xǐhuan kàn diànyǐng.|I like watching movies.
+> 她 不 喜欢 做 饭 。|Tā bù xǐhuan zuò fàn.|She doesn't like cooking.
+> 你 喜欢 吃 什么 ？|Nǐ xǐhuan chī shénme?|What do you like to eat?
+
+# 1 | Going somewhere to do something: 去 | subject + 去 + place + verb | 去[^。？！，了过]{2,3}[买看吃喝学]
+Say where you go first and what you do there second. The actions follow the order in which they happen, and no word for "to" is needed.
+> 我 去 商店 买 东西 。|Wǒ qù shāngdiàn mǎi dōngxi.|I'm going to the store to buy things.
+> 他 去 医院 看 医生 。|Tā qù yīyuàn kàn yīshēng.|He is going to the hospital to see a doctor.
+> 我们 明天 去 饭店 吃 饭 。|Wǒmen míngtiān qù fàndiàn chī fàn.|We are going to a restaurant to eat tomorrow.
+
+# 2 | About to happen: 要 ... 了 | 要 / 快 / 快要 + verb + 了 | 快要[^。？！，]{1,5}了
+要 (yào) before the verb and 了 (le) at the end say that something will happen very soon. 快 or 快要 in place of 要 makes it feel even closer.
+> 要 下雨 了 。|Yào xiàyǔ le.|It's about to rain.
+> 火车 快要 开 了 。|Huǒchē kuàiyào kāi le.|The train is about to leave.
+> 我们 快 到 了 。|Wǒmen kuài dào le.|We're almost there.
+
+# 2 | Doing something for someone: 给 | subject + 给 + person + verb | 给[^。？！，]{1,3}[打买写做介]
+给 (gěi) with a person before the verb shows who the action is for or directed at.
+> 我 晚上 给 你 打 电话 。|Wǒ wǎnshang gěi nǐ dǎ diànhuà.|I'll call you this evening.
+> 妈妈 给 我 买 了 一 件 新 衣服 。|Māma gěi wǒ mǎile yí jiàn xīn yīfu.|Mom bought me a new piece of clothing.
+> 请 给 我们 介绍 一下 。|Qǐng gěi wǒmen jièshào yíxià.|Please introduce it to us.
+
+# 2 | Telling or letting someone do something: 让 | A + 让 + B + verb | 让[我你他她孩大][^。？！，]
+让 (ràng) means to tell, ask or allow someone to do something. The negative 不让 means "not allow".
+> 医生 让 他 多 休息 。|Yīshēng ràng tā duō xiūxi.|The doctor told him to rest more.
+> 妈妈 不 让 我 玩 手机 。|Māma bú ràng wǒ wán shǒujī.|Mom doesn't let me play on my phone.
+> 老师 让 我们 回答 问题 。|Lǎoshī ràng wǒmen huídá wèntí.|The teacher asked us to answer the questions.
+
+# 2 | Already: 已经 ... 了 | 已经 + verb / time + 了 | 已经.+了
+已经 (yǐjīng) means "already" and almost always comes with 了 (le) later in the sentence.
+> 我 已经 吃 过 饭 了 。|Wǒ yǐjīng chīguo fàn le.|I have already eaten.
+> 他 已经 回 家 了 。|Tā yǐjīng huí jiā le.|He has already gone home.
+> 已经 十 点 了 ， 快 睡觉 吧 。|Yǐjīng shí diǎn le, kuài shuìjiào ba.|It's already ten o'clock; go to sleep.
+
+# 2 | Stressing when, where or how: 是 ... 的 | subject + 是 + time / place / manner + verb + 的 | 是[^。？！，]{2,6}[来去买到学做写]的[。？]
+When both speakers know that something happened, 是 ... 的 highlights a detail about it: when, where, how or with whom. 是 can be left out, but 的 cannot.
+> 我 是 昨天 来 的 。|Wǒ shì zuótiān lái de.|I came yesterday.
+> 你 是 怎么 来 的 ？|Nǐ shì zěnme lái de?|How did you get here?
+> 这 本 书 是 在 北京 买 的 。|Zhè běn shū shì zài Běijīng mǎi de.|This book was bought in Beijing.
+
+# 2 | Again: 再 and 又 | 再 + verb / 又 + verb + 了 | 又[^。？！，又]{1,4}了
+Both mean "again". 再 (zài) is for a repeat that has not happened yet; 又 (yòu) is for a repeat that has already happened, usually with 了.
+> 请 再 说 一 次 。|Qǐng zài shuō yí cì.|Please say it once more.
+> 你 怎么 又 生病 了 ？|Nǐ zěnme yòu shēngbìng le?|How come you are sick again?
+> 我们 明天 再 来 吧 。|Wǒmen míngtiān zài lái ba.|Let's come again tomorrow.
+
+# 2 | The most: 最 | 最 + adjective / verb | 最[好大小多高喜爱快贵近远长漂便忙冷热]
+最 (zuì) before an adjective makes the superlative, like "-est". It also goes before verbs of feeling such as 喜欢.
+> 我 最 喜欢 吃 鱼 。|Wǒ zuì xǐhuan chī yú.|I like eating fish the most.
+> 他 是 我 最 好 的 朋友 。|Tā shì wǒ zuì hǎo de péngyou.|He is my best friend.
+> 这 个 手机 最 便宜 。|Zhège shǒujī zuì piányi.|This phone is the cheapest.
+
+# 2 | Permission: 可以 | subject + 可以 + verb | 可以[^。？！，]{1,6}吗？
+可以 (kěyǐ) means "may" or "can" in the sense of being allowed. 不可以 means something is not allowed.
+> 我 可以 进来 吗 ？|Wǒ kěyǐ jìnlai ma?|May I come in?
+> 你 可以 坐 公共汽车 去 。|Nǐ kěyǐ zuò gōnggòng qìchē qù.|You can go by bus.
+> 这儿 不 可以 游泳 。|Zhèr bù kěyǐ yóuyǒng.|Swimming is not allowed here.
+
+# 2 | Doing something briefly: 一下 | verb + 一下 | [看等问试想说听坐绍息用]一下
+一下 (yíxià) after a verb means doing it quickly or casually, which makes a request sound softer. Doubling the verb, as in 看看, has the same effect.
+> 请 等 一下 。|Qǐng děng yíxià.|Please wait a moment.
+> 我 想 休息 一下 。|Wǒ xiǎng xiūxi yíxià.|I'd like to rest for a bit.
+> 我 来 介绍 一下 ， 这 是 我 的 妻子 。|Wǒ lái jièshào yíxià, zhè shì wǒ de qīzi.|Let me introduce you: this is my wife.
+
+# 2 | When: 的时候 | action / time + 的时候 ， main clause | 的时候
+的时候 (de shíhou) after an action or a description means "when" or "while". The "when" part always comes first.
+> 我 小 的 时候 很 喜欢 跳舞 。|Wǒ xiǎo de shíhou hěn xǐhuan tiàowǔ.|When I was little I loved dancing.
+> 吃 饭 的 时候 别 看 手机 。|Chī fàn de shíhou bié kàn shǒujī.|Don't look at your phone while eating.
+> 你 到 的 时候 给 我 打 电话 。|Nǐ dào de shíhou gěi wǒ dǎ diànhuà.|Call me when you arrive.
+
+# 2 | Every: 每 ... 都 ... | 每 + measure word + noun + 都 + verb | 每[^。？！，]{1,6}都
+每 (měi) means "every" and is normally echoed by 都 (dōu) before the verb.
+> 我 每 天 早上 都 喝 牛奶 。|Wǒ měi tiān zǎoshang dōu hē niúnǎi.|I drink milk every morning.
+> 他 每 个 星期 都 去 游泳 。|Tā měi ge xīngqī dōu qù yóuyǒng.|He goes swimming every week.
+> 每 个 人 都 知道 这 件 事 。|Měi ge rén dōu zhīdào zhè jiàn shì.|Everyone knows about this.
+
+# 2 | A bit too: 有点儿 | 有点儿 + adjective | 有点儿[累贵冷热忙大小难远慢快不]
+有点儿 (yǒudiǎnr) before an adjective means "a bit", usually about something you are not happy with. Do not confuse it with 一点儿, which goes after an adjective or verb.
+> 我 今天 有点儿 累 。|Wǒ jīntiān yǒudiǎnr lèi.|I'm a bit tired today.
+> 这 件 衣服 有点儿 贵 。|Zhè jiàn yīfu yǒudiǎnr guì.|This piece of clothing is a bit expensive.
+> 今天 有点儿 冷 ， 你 多 穿 一点儿 。|Jīntiān yǒudiǎnr lěng, nǐ duō chuān yìdiǎnr.|It's a bit cold today; put on a little more.
+
+# 3 | Earlier or later than expected: 就 and 才 | time + 就 / 才 + verb | 点半?[就才]
+After a time word, 就 (jiù) says the action happened early or quickly, and 才 (cái) says it happened late or slowly. 就 often takes 了; 才 does not.
+> 他 六 点 就 起床 了 。|Tā liù diǎn jiù qǐchuáng le.|He got up as early as six o'clock.
+> 我 昨天 晚上 十二 点 才 睡觉 。|Wǒ zuótiān wǎnshang shí'èr diǎn cái shuìjiào.|I didn't go to bed until twelve last night.
+> 电影 八 点 开始 ， 他 八 点 半 才 到 。|Diànyǐng bā diǎn kāishǐ, tā bā diǎn bàn cái dào.|The movie started at eight, and he didn't arrive until half past eight.
+
+# 3 | Results of an action: 完 / 到 / 见 / 懂 | verb + 完 / 到 / 见 / 懂 | [看听吃做写学找买][完到见懂]
+A second word right after the verb tells how the action turned out: 完 finished, 到 reached or obtained, 见 perceived, 懂 understood. The negative uses 没.
+> 我 做 完 作业 了 。|Wǒ zuòwán zuòyè le.|I have finished my homework.
+> 你 听 懂 了 吗 ？|Nǐ tīngdǒng le ma?|Did you understand what you heard?
+> 我 没 找 到 我 的 手机 。|Wǒ méi zhǎodào wǒ de shǒujī.|I couldn't find my phone.
+
+# 3 | Direction of movement: 来 / 去 | verb + 上 / 下 / 进 / 出 / 回 / 过 / 起 + 来 / 去 | [走跑拿带搬站坐爬][上下进出回过起][来去]
+After a verb of movement, a direction word plus 来 (toward the speaker) or 去 (away from the speaker) shows which way the action goes.
+> 他 从 楼 上 走 下来 了 。|Tā cóng lóu shang zǒu xiàlai le.|He walked down from upstairs.
+> 请 把 椅子 搬 进来 。|Qǐng bǎ yǐzi bān jìnlai.|Please carry the chair in.
+> 她 站 起来 回答 问题 。|Tā zhàn qǐlai huídá wèntí.|She stood up to answer the question.
+
+# 3 | Able or unable to: 得 / 不 complements | verb + 得 / 不 + result | [看听吃做买找写睡记学][得不][见懂完到着清]
+Put 得 (de) between a verb and its result to say the result can be achieved, or 不 (bu) to say it cannot. The negative form is much more common.
+> 我 听 不 懂 他 说 的 话 。|Wǒ tīng bu dǒng tā shuō de huà.|I can't understand what he says.
+> 黑板 上 的 字 你 看 得 见 吗 ？|Hēibǎn shang de zì nǐ kàn de jiàn ma?|Can you see the words on the blackboard?
+> 这么 多 菜 ， 我们 吃 不 完 。|Zhème duō cài, wǒmen chī bu wán.|There is so much food that we can't finish it.
+
+# 3 | The same as: 跟 ... 一样 | A + 跟 + B + 一样 + adjective | 跟.{1,8}一样
+跟 ... 一样 (gēn ... yíyàng) says two things are the same. Add an adjective after 一样 to say in what way.
+> 我 的 爱好 跟 你 的 一样 。|Wǒ de àihào gēn nǐ de yíyàng.|My hobbies are the same as yours.
+> 他 跟 他 爸爸 一样 高 。|Tā gēn tā bàba yíyàng gāo.|He is as tall as his dad.
+> 今天 的 天气 跟 昨天 一样 冷 。|Jīntiān de tiānqì gēn zuótiān yíyàng lěng.|The weather today is as cold as yesterday.
+
+# 3 | Not as ... as: 没有 ... 那么 ... | A + 没有 + B + 那么 / 这么 + adjective | 没有.{1,6}[那这]么
+This is the negative of a 比 comparison: A does not reach B's level. 那么 (nàme) is optional but very common.
+> 我 没有 他 那么 高 。|Wǒ méiyǒu tā nàme gāo.|I'm not as tall as he is.
+> 坐 火车 没有 坐 飞机 那么 快 。|Zuò huǒchē méiyǒu zuò fēijī nàme kuài.|Taking the train is not as fast as flying.
+> 这儿 的 冬天 没有 北京 那么 冷 。|Zhèr de dōngtiān méiyǒu Běijīng nàme lěng.|Winter here is not as cold as in Beijing.
+
+# 3 | Or: 或者 and 还是 | A + 还是 + B ？ / A + 或者 + B | 还是[^。？！，]{1,8}？
+Both mean "or". 还是 (háishi) is used in questions that ask you to choose; 或者 (huòzhě) is used in statements.
+> 你 想 喝 茶 还是 喝 咖啡 ？|Nǐ xiǎng hē chá háishi hē kāfēi?|Would you like tea or coffee?
+> 周末 我 一般 看 书 或者 上网 。|Zhōumò wǒ yìbān kàn shū huòzhě shàngwǎng.|On weekends I usually read or go online.
+> 你 明天 或者 后天 来 都 可以 。|Nǐ míngtiān huòzhě hòutiān lái dōu kěyǐ.|You can come either tomorrow or the day after.
+
+# 3 | The more ... the more ...: 越 ... 越 ... | 越 + verb / adjective + 越 + adjective | 越[^来。？！，]{1,5}越
+The first 越 (yuè) marks what changes and the second marks what changes along with it.
+> 雨 越 下 越 大 。|Yǔ yuè xià yuè dà.|The rain is getting heavier and heavier.
+> 汉语 越 学 越 有 意思 。|Hànyǔ yuè xué yuè yǒu yìsi.|The more you study Chinese, the more interesting it gets.
+> 他 越 说 越 生气 。|Tā yuè shuō yuè shēngqì.|The more he talked, the angrier he got.
+
+# 3 | In order to: 为了 | 为了 + goal ， action | ^为了
+为了 (wèile) introduces a purpose. The purpose normally comes first and the action taken to reach it second.
+> 为了 健康 ， 他 每 天 都 跑步 。|Wèile jiànkāng, tā měi tiān dōu pǎobù.|He goes running every day for the sake of his health.
+> 为了 提高 汉语 水平 ， 她 经常 看 中国 电影 。|Wèile tígāo Hànyǔ shuǐpíng, tā jīngcháng kàn Zhōngguó diànyǐng.|In order to improve her Chinese, she often watches Chinese movies.
+
+# 3 | As soon as: 一 ... 就 ... | 一 + first action + 就 + second action | 一[^。？！，个点些边定直样般起共][^。？！，]{0,4}就
+一 (yī) before the first verb and 就 (jiù) before the second say that the second action follows the first immediately.
+> 他 一 到 家 就 打开 电视 。|Tā yí dào jiā jiù dǎkāi diànshì.|He turns on the TV as soon as he gets home.
+> 我 一 看 就 明白 了 。|Wǒ yí kàn jiù míngbai le.|I understood as soon as I looked at it.
+> 弟弟 一 回 家 就 玩 游戏 。|Dìdi yì huí jiā jiù wán yóuxì.|My little brother plays games as soon as he gets home.
+
+# 3 | Saying how long: 了 + duration | verb + 了 + duration + object | [学等住睡看坐]了[一二两三四五六七八九十半几]+个?多?[小年天月分星]
+The length of time goes after the verb, not before it. If there is an object, it comes after the duration.
+> 我 学 了 两 年 汉语 。|Wǒ xuéle liǎng nián Hànyǔ.|I studied Chinese for two years.
+> 他 在 北京 住 了 三 年 。|Tā zài Běijīng zhùle sān nián.|He lived in Beijing for three years.
+> 我们 等 了 半 个 小时 。|Wǒmen děngle bàn ge xiǎoshí.|We waited for half an hour.
+
+# 3 | Describing how an action is done: 地 | adjective + 地 + verb | [兴真慢心力静细]地[^方铁图球点]
+地 (de) turns an adjective into an adverb, like "-ly", and the whole phrase goes before the verb. Compare 得, which comes after the verb.
+> 孩子们 高兴 地 唱 着 歌 。|Háizimen gāoxìng de chàngzhe gē.|The children are singing happily.
+> 他 认真 地 回答 了 老师 的 问题 。|Tā rènzhēn de huídále lǎoshī de wèntí.|He answered the teacher's question carefully.
+> 她 慢慢 地 走 进 教室 。|Tā mànmàn de zǒujìn jiàoshì.|She walked slowly into the classroom.
+
+# 3 | Interested in: 对 ... 感兴趣 | subject + 对 + topic + 感兴趣 | 对.{1,8}感兴趣
+The thing you are interested in goes between 对 (duì) and 感兴趣 (gǎn xìngqù), before the verb rather than after it.
+> 我 对 中国 文化 很 感兴趣 。|Wǒ duì Zhōngguó wénhuà hěn gǎn xìngqù.|I'm very interested in Chinese culture.
+> 你 对 什么 运动 感兴趣 ？|Nǐ duì shénme yùndòng gǎn xìngqù?|What sports are you interested in?
+> 他 对 历史 不 感兴趣 。|Tā duì lìshǐ bù gǎn xìngqù.|He is not interested in history.
+
+# 3 | Doing one thing while in a state: 着 + verb | verb + 着 + main verb | [坐站笑哭拿]着[^。？！，呢的]{1,3}
+A verb with 着 (zhe) placed before the main verb describes the posture or manner in which the main action is done.
+> 老师 站 着 上课 。|Lǎoshī zhànzhe shàngkè.|The teacher teaches standing up.
+> 她 笑 着 回答 了 我 的 问题 。|Tā xiàozhe huídále wǒ de wèntí.|She answered my question with a smile.
+> 我 喜欢 听 着 音乐 做 作业 。|Wǒ xǐhuan tīngzhe yīnyuè zuò zuòyè.|I like doing homework while listening to music.
+
+# 4 | Despite: 尽管 ... 还是 ... | 尽管 + fact ， 还是 + result | 尽管.+还是
+尽管 (jǐnguǎn) admits a real fact, and 还是 (háishi) says that what follows happened anyway.
+> 尽管 天气 不 好 ， 他们 还是 准时 到 了 。|Jǐnguǎn tiānqì bù hǎo, tāmen háishi zhǔnshí dào le.|Despite the bad weather, they still arrived on time.
+> 尽管 很 累 ， 她 还是 坚持 把 工作 做 完 了 。|Jǐnguǎn hěn lèi, tā háishi jiānchí bǎ gōngzuò zuòwán le.|Although she was very tired, she still insisted on finishing the work.
+
+# 4 | Even: 连 ... 都 / 也 ... | 连 + extreme example + 都 / 也 + verb | 连[^。？！，]{1,6}[都也]
+连 (lián) picks out a surprising or extreme example, and 都 or 也 before the verb completes the meaning "even".
+> 他 连 一 句 话 都 没 说 。|Tā lián yí jù huà dōu méi shuō.|He didn't say even a single word.
+> 这 个 问题 太 简单 了 ， 连 孩子 都 会 回答 。|Zhège wèntí tài jiǎndān le, lián háizi dōu huì huídá.|This question is so simple that even a child can answer it.
+> 我 忙 得 连 饭 也 没 时间 吃 。|Wǒ máng de lián fàn yě méi shíjiān chī.|I'm so busy that I don't even have time to eat.
+
+# 4 | Otherwise: 否则 | advice ， 否则 + bad result | 否则
+否则 (fǒuzé) means "otherwise" or "or else". It starts the second clause and states what happens if the first is not done.
+> 快 点儿 走 吧 ， 否则 我们 会 迟到 的 。|Kuài diǎnr zǒu ba, fǒuzé wǒmen huì chídào de.|Let's hurry, otherwise we will be late.
+> 你 得 好好 休息 ， 否则 身体 会 受不了 。|Nǐ děi hǎohǎo xiūxi, fǒuzé shēntǐ huì shòubuliǎo.|You must get proper rest, or your body won't be able to take it.
+
+# 4 | Wrongly thought: 以为 | subject + 以为 + mistaken belief | [我你他她还都]以为
+以为 (yǐwéi) means "thought", but only for a belief that turned out to be wrong. For a neutral opinion use 觉得 or 认为.
+> 我 以为 今天 是 星期五 。|Wǒ yǐwéi jīntiān shì xīngqīwǔ.|I thought today was Friday.
+> 我 还 以为 你 不 来 了 呢 。|Wǒ hái yǐwéi nǐ bù lái le ne.|I thought you weren't coming.
+
+# 4 | Pressing for an answer: 到底 | 到底 + question | 到底.{1,10}？
+到底 (dàodǐ) in a question shows that the speaker wants a real, final answer, like "on earth" or "exactly".
+> 你 到底 想 不 想 去 ？|Nǐ dàodǐ xiǎng bu xiǎng qù?|Do you want to go or not?
+> 这 到底 是 怎么 回 事 ？|Zhè dàodǐ shì zěnme huí shì?|What on earth is going on here?
+
+# 4 | Rhetorical questions: 难道 ... 吗 | 难道 + statement + 吗 ？ | 难道.+吗
+难道 (nándào) turns a question into a rhetorical one: the speaker finds the idea hard to believe and expects the answer "no".
+> 难道 你 不 知道 这 件 事 吗 ？|Nándào nǐ bù zhīdào zhè jiàn shì ma?|Don't tell me you don't know about this?
+> 这么 重要 的 事 ， 难道 你 忘 了 吗 ？|Zhème zhòngyào de shì, nándào nǐ wàng le ma?|Such an important matter, could you really have forgotten it?
+
+# 4 | Having no choice but to: 不得不 | subject + 不得不 + verb | 不得不
+不得不 (bùdébù) means being forced by circumstances to do something you would rather not do.
+> 因为 下 大 雨 ， 比赛 不得不 推迟 。|Yīnwèi xià dà yǔ, bǐsài bùdébù tuīchí.|Because of heavy rain, the match had to be postponed.
+> 为了 照顾 生病 的 母亲 ， 她 不得不 放弃 这 次 机会 。|Wèile zhàogù shēngbìng de mǔqīn, tā bùdébù fàngqì zhè cì jīhuì.|In order to look after her sick mother, she had no choice but to give up this opportunity.
+
+# 4 | Enough time or not: 来得及 / 来不及 | 来得及 / 来不及 + verb | 来[不得]及
+来得及 (láidejí) means there is still enough time to do something; 来不及 (láibují) means it is too late for it.
+> 快 起床 ， 再 不 走 就 来不及 了 。|Kuài qǐchuáng, zài bù zǒu jiù láibují le.|Get up quickly; if we don't leave now it will be too late.
+> 别 着急 ， 现在 出发 还 来得及 。|Bié zháojí, xiànzài chūfā hái láidejí.|Don't worry, there is still time if we set off now.
+> 我 来不及 吃 早饭 就 出门 了 。|Wǒ láibují chī zǎofàn jiù chūmén le.|I left home without having time to eat breakfast.
+
+# 4 | Looks like: 看起来 | subject + 看起来 + description | 看起来
+看起来 (kàn qǐlai) gives an impression based on how something looks, like "looks" or "seems".
+> 你 今天 看 起来 很 精神 。|Nǐ jīntiān kàn qǐlai hěn jīngshen.|You look full of energy today.
+> 这 个 菜 看 起来 很 好吃 ， 味道 怎么样 ？|Zhège cài kàn qǐlai hěn hǎochī, wèidào zěnmeyàng?|This dish looks delicious. How does it taste?
+> 这 件 事 看 起来 简单 ， 实际上 很 复杂 。|Zhè jiàn shì kàn qǐlai jiǎndān, shíjìshang hěn fùzá.|This matter looks simple, but it is actually complicated.
+
+# 4 | Unexpected contrast: 却 | clause ， subject + 却 + verb | ，[^。？！，]{0,6}却
+却 (què) means "but" or "yet". Unlike 但是, it is an adverb, so it goes after the subject and before the verb.
+> 他 学 了 三 年 汉语 ， 却 不 敢 开口 说 。|Tā xuéle sān nián Hànyǔ, què bù gǎn kāikǒu shuō.|He has studied Chinese for three years, yet he doesn't dare to open his mouth and speak.
+> 大家 都 很 着急 ， 他 却 一点儿 也 不 担心 。|Dàjiā dōu hěn zháojí, tā què yìdiǎnr yě bù dānxīn.|Everyone was anxious, but he was not worried at all.
+
+# 4 | By means of: 通过 | 通过 + means ， result | 通过[^了。？！，]{2,10}，
+通过 (tōngguò) introduces the method or experience through which a result is reached.
+> 通过 这 次 旅行 ， 我 了解 了 很 多 当地 的 文化 。|Tōngguò zhè cì lǚxíng, wǒ liǎojiěle hěn duō dāngdì de wénhuà.|Through this trip, I learned a lot about the local culture.
+> 他 通过 努力 学习 ， 考 上 了 理想 的 大学 。|Tā tōngguò nǔlì xuéxí, kǎoshàngle lǐxiǎng de dàxué.|By studying hard, he got into the university of his dreams.
+
+# 5 | Would rather: 宁可 ... 也不 ... | 宁可 + accepted cost ， 也不 + rejected option | 宁可.+也不
+宁可 (nìngkě) names something unpleasant that the speaker is willing to accept, and 也不 (yě bù) names what they refuse even more strongly.
+> 我 宁可 走 路 去 ， 也 不 坐 他 的 车 。|Wǒ nìngkě zǒu lù qù, yě bú zuò tā de chē.|I would rather walk there than ride in his car.
+> 他 宁可 自己 多 干 一点儿 ， 也 不 愿意 麻烦 别人 。|Tā nìngkě zìjǐ duō gàn yìdiǎnr, yě bú yuànyì máfan biérén.|He would rather do a bit more himself than trouble other people.
+
+# 5 | Once: 一旦 ... 就 ... | 一旦 + condition ， 就 + consequence | 一旦.+就
+一旦 (yídàn) introduces something that may happen at some unknown moment, and 就 (jiù) gives the consequence that follows at once.
+> 一旦 养成 了 坏 习惯 ， 就 很 难 改 掉 。|Yídàn yǎngchéngle huài xíguàn, jiù hěn nán gǎidiào.|Once you have formed a bad habit, it is very hard to break.
+> 机会 一旦 错过 ， 就 不 会 再 来 了 。|Jīhuì yídàn cuòguò, jiù bú huì zài lái le.|Once an opportunity is missed, it will not come again.
+
+# 5 | Unless: 除非 ... 否则 ... | 除非 + only condition ， 否则 + result | 除非.+否则
+除非 (chúfēi) states the one condition that would change things, and 否则 (fǒuzé) says what happens without it.
+> 除非 你 亲自 去 请 他 ， 否则 他 不 会 来 的 。|Chúfēi nǐ qīnzì qù qǐng tā, fǒuzé tā bú huì lái de.|Unless you go and invite him in person, he won't come.
+> 除非 发生 特殊 情况 ， 否则 会议 按时 举行 。|Chúfēi fāshēng tèshū qíngkuàng, fǒuzé huìyì ànshí jǔxíng.|Unless something unusual happens, the meeting will be held on schedule.
+
+# 5 | The reason why: 之所以 ... 是因为 ... | subject + 之所以 + result ， 是因为 + reason | 之所以.+是因为
+This turns 因为 ... 所以 around: the result comes first after 之所以 (zhīsuǒyǐ), and the reason is stressed after 是因为 (shì yīnwèi).
+> 他 之所以 成功 ， 是 因为 他 从 不 放弃 。|Tā zhīsuǒyǐ chénggōng, shì yīnwèi tā cóng bú fàngqì.|The reason he succeeded is that he never gives up.
+> 我 之所以 没 告诉 你 ， 是 因为 怕 你 担心 。|Wǒ zhīsuǒyǐ méi gàosu nǐ, shì yīnwèi pà nǐ dānxīn.|The reason I didn't tell you is that I was afraid you would worry.
+
+# 5 | On the contrary: 反而 | situation ， 反而 + opposite result | 反而
+反而 (fǎn'ér) introduces a result that is the opposite of what one would expect from the situation.
+> 吃 了 药 以后 ， 他 的 病 反而 更 严重 了 。|Chīle yào yǐhòu, tā de bìng fǎn'ér gèng yánzhòng le.|After taking the medicine, his illness actually got worse.
+> 雨 不但 没 停 ， 反而 越 下 越 大 。|Yǔ búdàn méi tíng, fǎn'ér yuè xià yuè dà.|The rain not only didn't stop, it got heavier and heavier.
+
+# 5 | After all: 毕竟 | 毕竟 + undeniable fact | 毕竟
+毕竟 (bìjìng) points to a basic fact that cannot be denied and that explains or excuses the situation.
+> 别 怪 他 了 ， 他 毕竟 还 是 个 孩子 。|Bié guài tā le, tā bìjìng hái shì ge háizi.|Don't blame him; after all, he is still a child.
+> 毕竟 是 第 一 次 ， 做 得 不 好 也 很 正常 。|Bìjìng shì dì yī cì, zuò de bù hǎo yě hěn zhèngcháng.|It is the first time, after all, so it is quite normal not to do it well.
+
+# 5 | Not necessarily: 未必 / 不见得 | 未必 / 不见得 + verb / adjective | 未必
+未必 (wèibì) and the more colloquial 不见得 (bújiànde) politely cast doubt on a claim: "not necessarily".
+> 贵 的 东西 未必 好 。|Guì de dōngxi wèibì hǎo.|Expensive things are not necessarily good.
+> 你 觉得 容易 的 事 ， 别人 未必 这么 想 。|Nǐ juéde róngyì de shì, biérén wèibì zhème xiǎng.|What you find easy, others may not see the same way.
+> 他 说 的 话 不见得 都 是 真 的 。|Tā shuō de huà bújiànde dōu shì zhēn de.|What he says is not necessarily all true.
+
+# 5 | So as to avoid: 以免 | action ， 以免 + unwanted result | 以免
+以免 (yǐmiǎn) starts the second clause and names the bad outcome that the first action is meant to prevent.
+> 请 提前 检查 一下 ， 以免 出 错 。|Qǐng tíqián jiǎnchá yíxià, yǐmiǎn chū cuò.|Please check in advance so as to avoid mistakes.
+> 出门 记得 带 伞 ， 以免 被 雨 淋 湿 。|Chūmén jìde dài sǎn, yǐmiǎn bèi yǔ línshī.|Remember to take an umbrella when you go out, so you don't get soaked by the rain.
+
+# 6 | Admittedly ... but ...: 固然 ... 但是 ... | A + 固然 + accepted point ， 但是 + weightier point | 固然.+但是
+固然 (gùrán) concedes that something is true, and 但是 (dànshì) then brings in the point the speaker considers more important.
+> 钱 固然 重要 ， 但是 健康 更 重要 。|Qián gùrán zhòngyào, dànshì jiànkāng gèng zhòngyào.|Money is certainly important, but health is more important.
+> 这 个 办法 固然 好 ， 但是 实行 起来 并 不 容易 。|Zhège bànfǎ gùrán hǎo, dànshì shíxíng qǐlai bìng bù róngyì.|This method is good, admittedly, but putting it into practice is not easy at all.
+
+# 6 | To the point that: 以至于 | cause ， 以至于 + extreme result | 以至于
+以至于 (yǐzhìyú) introduces a result, usually an extreme or unwanted one, brought about by the degree of what was said before.
+> 他 工作 太 投入 ， 以至于 忘 了 吃 饭 。|Tā gōngzuò tài tóurù, yǐzhìyú wàngle chī fàn.|He was so absorbed in his work that he forgot to eat.
+> 事情 来 得 太 突然 ， 以至于 大家 都 没 反应 过来 。|Shìqing lái de tài tūrán, yǐzhìyú dàjiā dōu méi fǎnyìng guòlai.|It all happened so suddenly that nobody had time to react.
+
+# 6 | Moreover: 况且 | reason ， 况且 + further reason | 况且
+况且 (kuàngqiě) adds one more reason on top of those already given, often together with 也 or 又.
+> 这 套 房子 位置 很 好 ， 况且 价格 也 不 贵 。|Zhè tào fángzi wèizhi hěn hǎo, kuàngqiě jiàgé yě bú guì.|This apartment is well located, and besides, the price is not high.
+> 天 已经 黑 了 ， 况且 路 又 不 熟 ， 你 明天 再 走 吧 。|Tiān yǐjīng hēi le, kuàngqiě lù yòu bù shú, nǐ míngtiān zài zǒu ba.|It is already dark, and besides, you don't know the way; leave tomorrow instead.
+
+# 6 | Might as well: 不妨 | subject + 不妨 + verb | 不妨
+不妨 (bùfáng) makes a gentle suggestion: there is no harm in doing something.
+> 你 不妨 换 个 角度 想 一 想 。|Nǐ bùfáng huàn ge jiǎodù xiǎng yi xiǎng.|You might as well think about it from a different angle.
+> 我们 不妨 再 等 几 天 看看 。|Wǒmen bùfáng zài děng jǐ tiān kànkan.|We might as well wait a few more days and see.
+
+# 6 | In view of: 鉴于 | 鉴于 + circumstance ， decision | 鉴于
+鉴于 (jiànyú) is a formal way to give the circumstance on which a decision or judgment is based.
+> 鉴于 目前 的 情况 ， 会议 将 延期 举行 。|Jiànyú mùqián de qíngkuàng, huìyì jiāng yánqī jǔxíng.|In view of the current situation, the meeting will be postponed.
+> 鉴于 他 一贯 表现 优秀 ， 公司 决定 提拔 他 。|Jiànyú tā yíguàn biǎoxiàn yōuxiù, gōngsī juédìng tíbá tā.|In view of his consistently excellent performance, the company has decided to promote him.
+
+# 6 | If, in formal style: 倘若 | 倘若 + condition ， result | 倘若
+倘若 (tǎngruò) means "if" like 如果, but belongs to written or formal language.
+> 倘若 你 遇到 困难 ， 随时 可以 来 找 我 。|Tǎngruò nǐ yùdào kùnnan, suíshí kěyǐ lái zhǎo wǒ.|Should you run into difficulties, you can come to me at any time.
+> 倘若 当初 听 了 你 的 劝告 ， 我 就 不 会 犯 这 个 错误 了 。|Tǎngruò dāngchū tīngle nǐ de quàngào, wǒ jiù bú huì fàn zhège cuòwù le.|If I had listened to your advice back then, I would not have made this mistake.

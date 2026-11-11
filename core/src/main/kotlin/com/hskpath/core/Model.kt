@@ -2,6 +2,7 @@ package com.hskpath.core
 
 /** One vocabulary item of an HSK level. */
 data class Word(
+    /** HSK level 1-6; 7 for common words beyond HSK; 0 for a bare character. */
     val level: Int,
     val hanzi: String,
     val traditional: String,
@@ -14,6 +15,11 @@ data class Word(
     val pinyin: String by lazy { Pinyin.toMarked(pinyinNumbered) }
     /** Short meaning shown in exercises. */
     val gloss: String get() = definitions.take(2).joinToString("; ")
+    val levelLabel: String get() = when (level) {
+        0 -> "Character"
+        in 1..6 -> "HSK $level"
+        else -> "Beyond HSK"
+    }
 }
 
 /** A sentence split into words, with its pinyin and English translation. */
@@ -23,8 +29,10 @@ data class Sentence(
     val tokens: List<String>,
     val pinyin: String,
     val english: String,
+    /** True for the hand-written sentences, which are shown before corpus sentences. */
+    val curated: Boolean = false,
 ) {
-    val text: String get() = tokens.joinToString("")
+    val text: String = tokens.joinToString("")
     /** The words only, without punctuation. */
     val words: List<String> get() = tokens.filter { !isPunctuation(it) }
 
@@ -42,6 +50,8 @@ data class GrammarPoint(
     val pattern: String,
     val explanation: String,
     val examples: List<Sentence>,
+    /** Finds further sentences that use this structure in the sentence corpus. */
+    val match: Regex? = null,
 ) {
     /**
      * The pattern as rows of blocks: "因为 + reason ， 所以 + result" becomes two

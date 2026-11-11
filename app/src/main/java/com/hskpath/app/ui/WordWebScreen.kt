@@ -52,10 +52,7 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
-private val BranchColors = listOf(
-    Color(0xFFD84315), Color(0xFF00897B), Color(0xFF5E35B1), Color(0xFFF9A825),
-    Color(0xFF1E88E5), Color(0xFFC2185B), Color(0xFF558B2F), Color(0xFF6D4C41),
-)
+private val BranchColors = Rainbow
 
 /** A character in the middle with the words it builds branching out around it. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -64,16 +61,17 @@ fun WordWebScreen(app: AppState, content: Content, start: String) {
     var character by remember { mutableStateOf(start) }
     var picked by remember { mutableStateOf<Word?>(null) }
     val web = remember(character) { content.wordWeb(character) }
+    val all = remember(character) { content.wordWeb(character, 999) }
     val center = content.lookup(character)
 
     Column(Modifier.fillMaxSize()) {
-        TopBar(app, "Word web · $character")
+        TopBar(app, "Word map · $character")
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             BoxWithConstraints(Modifier.fillMaxWidth().padding(8.dp)) {
                 val side = min(maxWidth.value, 460f)
-                val nodeWidth = (side * 0.27f).dp
-                val nodeHeight = 76.dp
-                val radius = side * 0.37f
+                val nodeWidth = (side * 0.25f).dp
+                val nodeHeight = 84.dp
+                val radius = side * 0.375f
                 val mid = side / 2f
                 Box(Modifier.size(side.dp).align(Alignment.Center)) {
                     Canvas(Modifier.fillMaxSize()) {
@@ -121,8 +119,8 @@ fun WordWebScreen(app: AppState, content: Content, start: String) {
                     Text("$character  ${center.pinyin}  —  ${center.gloss}", style = MaterialTheme.typography.titleMedium)
                 }
                 Text(
-                    if (web.isEmpty()) "No other words in HSK 1-6 use this character."
-                    else "Tap a word to hear it. Tap one of its characters below to jump to that web.",
+                    if (web.isEmpty()) "No other words use this character."
+                    else "${all.size} words use $character. Tap a word to hear it, then tap one of its characters to jump to that map.",
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 6.dp),
                 )
@@ -139,7 +137,7 @@ fun WordWebScreen(app: AppState, content: Content, start: String) {
                                 SpeakButton(app, word.hanzi)
                             }
                             Text(word.definitions.joinToString("; "), modifier = Modifier.padding(vertical = 6.dp))
-                            Text("HSK ${word.level}", style = MaterialTheme.typography.labelMedium,
+                            Text(word.levelLabel, style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                             FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = SpacedSmall, verticalArrangement = SpacedSmall) {
                                 for (c in word.hanzi.map { it.toString() }.distinct().filter { it != character }) {
@@ -155,6 +153,21 @@ fun WordWebScreen(app: AppState, content: Content, start: String) {
                         }
                     }
                 }
+                if (all.size > web.size) {
+                    SectionTitle("More words with $character")
+                    for (w in all.drop(web.size).take(60)) {
+                        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { picked = w; app.speaker.speak(w.hanzi) }
+                            .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(w.hanzi, fontSize = 20.sp, modifier = Modifier.width(96.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(w.pinyin, color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodyMedium)
+                                Text(w.gloss, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                            Text(w.levelLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                Box(Modifier.height(24.dp))
             }
         }
     }
@@ -172,7 +185,7 @@ private fun WebNode(word: Word, character: String, color: Color, width: Dp, heig
         shadowElevation = 2.dp,
         modifier = Modifier.width(width).height(height).clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick),
     ) {
-        Column(Modifier.fillMaxSize().padding(4.dp), horizontalAlignment = Alignment.CenterHorizontally,
+        Column(Modifier.fillMaxSize().padding(horizontal = 4.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
             Text(
                 buildAnnotatedString {
@@ -181,11 +194,11 @@ private fun WebNode(word: Word, character: String, color: Color, width: Dp, heig
                         else append(c)
                     }
                 },
-                fontSize = if (word.hanzi.length > 3) 15.sp else 20.sp, maxLines = 1,
+                fontSize = if (word.hanzi.length > 3) 14.sp else 19.sp, lineHeight = 22.sp, maxLines = 1,
             )
-            Text(word.pinyin, fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary, maxLines = 1,
+            Text(word.pinyin, fontSize = 11.sp, lineHeight = 14.sp, color = MaterialTheme.colorScheme.secondary, maxLines = 1,
                 overflow = TextOverflow.Ellipsis)
-            Text(word.definitions.first(), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            Text(word.definitions.first(), fontSize = 11.sp, lineHeight = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
@@ -197,18 +210,18 @@ private fun WebNode(word: Word, character: String, color: Color, width: Dp, heig
 fun WebListScreen(app: AppState, content: Content, level: Int) {
     val characters = remember(level) { content.webCharacters(level) }
     Column(Modifier.fillMaxSize()) {
-        TopBar(app, "Word webs · HSK $level")
+        TopBar(app, "Word map · HSK $level")
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Text(
-                "Chinese words are built from a small set of characters. Each web shows one character " +
-                    "and the words that grow out of it, so one character unlocks many words.",
+                "Chinese words are built from a small set of characters. Each map shows one character and the " +
+                    "words that grow out of it (%,d words in all), so one character unlocks many words.".format(content.mapWordCount),
                 style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 12.dp),
             )
             FlowRow(horizontalArrangement = SpacedSmall, verticalArrangement = SpacedSmall) {
                 characters.forEachIndexed { i, c ->
                     val color = BranchColors[i % BranchColors.size]
-                    Surface(shape = RoundedCornerShape(16.dp), border = BorderStroke(2.dp, color),
-                        modifier = Modifier.size(76.dp).clip(RoundedCornerShape(16.dp)).clickable { app.open(Screen.Web(c)) }) {
+                    Raised(MaterialTheme.colorScheme.surface, Modifier.size(width = 76.dp, height = 80.dp), edge = 4.dp,
+                        edgeColor = color, onClick = { app.open(Screen.Web(c)) }) {
                         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
                             Text(c, fontSize = 30.sp)

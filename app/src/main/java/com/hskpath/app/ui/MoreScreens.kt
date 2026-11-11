@@ -20,7 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,9 +58,7 @@ fun StoriesScreen(app: AppState, content: Content, level: Int) {
                 Row(Modifier.fillMaxWidth().padding(top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(dialogue.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f))
-                    OutlinedButton(onClick = { app.speaker.speakAll(dialogue.lines.map { it.sentence.text }) }) {
-                        Text("▶ Play all")
-                    }
+                    Pill("▶ Play all", Tangerine, Color.White) { app.speaker.speakAll(dialogue.lines.map { it.sentence.text }) }
                 }
                 val first = dialogue.lines.firstOrNull()?.speaker
                 for (line in dialogue.lines) {
@@ -204,7 +202,7 @@ private fun WordRow(app: AppState, word: Word) {
             Text(word.pinyin, color = MaterialTheme.colorScheme.secondary)
             Text(word.gloss, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
         }
-        Text("HSK ${word.level}", style = MaterialTheme.typography.labelMedium,
+        Text(word.levelLabel, style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -212,7 +210,7 @@ private fun WordRow(app: AppState, word: Word) {
 @Composable
 fun WordInfoScreen(app: AppState, content: Content, word: Word) {
     Column(Modifier.fillMaxSize()) {
-        TopBar(app, if (word.level > 0) "HSK ${word.level} word" else "Character")
+        TopBar(app, word.levelLabel)
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
             WordCard(app, content, word)
         }
@@ -225,9 +223,9 @@ fun AboutScreen(app: AppState) {
         TopBar(app, "About")
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("HSK Path teaches the 5,000 words of HSK levels 1 to 6 in short lessons, with word webs, " +
-                "grammar structures, dialogues and spaced practice. It works fully offline and keeps your " +
-                "progress on this device only.")
+            Text("HSK Path teaches the 5,000 words of HSK levels 1 to 6 in short lessons, with a word map of 11,000 " +
+                "words, a sentence map of 24,000 sentences, 100 grammar formulas, stroke-order writing, dialogues " +
+                "and spaced practice. It works fully offline and keeps your progress on this device only.")
             Text("How it works", fontWeight = FontWeight.Bold)
             Text("• Each lesson teaches five words, then drills them: meaning, characters, pronunciation, " +
                 "listening, matching and sentence building.\n" +
@@ -237,9 +235,12 @@ fun AboutScreen(app: AppState) {
             Text("Sources and licences", fontWeight = FontWeight.Bold)
             Text("Word definitions and readings come from CC-CEDICT (cc-cedict.org), used under the Creative " +
                 "Commons Attribution-ShareAlike 4.0 licence. HSK word lists are the published HSK 2.0 lists, " +
-                "taken from the chinese-lexicon project (ISC licence). Beginner glosses, example sentences, " +
-                "grammar notes and dialogues were written for this app. Audio is produced by your device's " +
-                "text-to-speech voice.")
+                "taken from the chinese-lexicon project (ISC licence); words beyond HSK are ranked with SUBTLEX-CH " +
+                "film-subtitle frequencies. The sentence corpus comes from Tatoeba (tatoeba.org), licensed CC BY 2.0 FR; " +
+                "its word splitting and pinyin were added automatically and may contain occasional mistakes. Stroke " +
+                "order comes from Hanzi Writer data, built on Make Me a Hanzi and the Arphic fonts (Arphic Public " +
+                "License). Beginner glosses, the hand-written examples, grammar notes and dialogues were written for " +
+                "this app. Audio is produced by your device's text-to-speech voice.")
             Text("This app is independent and is not affiliated with Hanban, Chinese Testing International, " +
                 "or any textbook publisher.", style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(24.dp))

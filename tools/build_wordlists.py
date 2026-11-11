@@ -18,6 +18,8 @@ import os
 import re
 import sys
 
+EXTRA_WORDS = 6000
+
 TONES = {"a": "āáǎà", "e": "ēéěè", "i": "īíǐì", "o": "ōóǒò", "u": "ūúǔù", "ü": "ǖǘǚǜ"}
 
 # Readings picked by hand where the automatic choice is not the one HSK teaches.
@@ -90,10 +92,14 @@ def is_reference(d):
                          r"Japanese variant|archaic variant|used in |also written|also pr\.)", d))
 
 
+RUDE = re.compile(r"vulgar|\(slang\)|fuck|prostitut|penis|vagina|whore|bitch|bastard|shit|\bsex\b|"
+                  r"\bass\b|asshole|damn|genital|slut|\bporn|erotic|masturbat|testicle|breasts", re.I)
+
+
 def clean_defs(defs):
     out = []
     for d in defs:
-        if d.startswith("CL:") or is_reference(d):
+        if d.startswith("CL:") or is_reference(d) or RUDE.search(d):
             continue
         d = re.sub(r"\s*\(Tw\)", "", d)
         # 場|场[chang2] -> 场
@@ -195,6 +201,29 @@ def main():
     with open(os.path.join(out, "chars.tsv"), "w", encoding="utf-8") as f:
         f.write("\n".join(rows) + "\n")
     print(f"Extra characters: {len(rows)}")
+
+    # Common everyday words beyond the HSK lists, ranked by how often they occur in
+    # film subtitles (SUBTLEX-CH), so the word map covers more than 10,000 words.
+    text = open(os.path.join(pkg, "statistics", "movieWordFrequency.js"), encoding="utf-8").read()
+    ranked = [line.split("\t")[0] for line in text[text.index("`") + 1:].splitlines() if "\t" in line]
+    rows = []
+    for w in ranked:
+        if len(rows) >= EXTRA_WORDS:
+            break
+        if w in known or not 2 <= len(w) <= 4 or w not in cedict:
+            continue
+        if not all("\u4e00" <= ch <= "\u9fff" for ch in w):
+            continue
+        cands = [c for c in cedict[w] if not c[1][0].isupper()]
+        if not cands:
+            continue  # proper nouns only
+        trad, pinyin, defs = choose(w, cands, freq)
+        defs = clean_defs(defs)
+        if defs and len(pinyin.split()) == len(w) and not any(d.startswith("abbr.") for d in defs[:1]):
+            rows.append("\t".join([w, trad, pinyin.lower().replace("u:", "v"), "; ".join(defs)]))
+    with open(os.path.join(out, "extra.tsv"), "w", encoding="utf-8") as f:
+        f.write("\n".join(rows) + "\n")
+    print(f"Words beyond HSK: {len(rows)}")
 
 
 if __name__ == "__main__":

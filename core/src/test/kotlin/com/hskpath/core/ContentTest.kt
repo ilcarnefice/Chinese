@@ -30,7 +30,9 @@ class ContentTest {
     }
 
     @Test fun sentencesHavePinyinForEveryWord() {
-        assertTrue(content.sentences.size >= 200)
+        assertTrue(content.sentences.count { it.curated } >= 200)
+        assertTrue("corpus size ${content.sentences.size}", content.sentences.size >= 20_000)
+        for (level in 1..6) assertTrue(content.sentencesOf(level).size >= 2000)
         for (s in content.sentences + content.grammar.flatMap { it.examples } +
             content.dialogues.flatMap { d -> d.lines.map { it.sentence } }) {
             assertTrue(s.text, s.words.isNotEmpty() && s.english.isNotBlank())
@@ -42,7 +44,8 @@ class ContentTest {
             // ...and each syllable has at least one vowel, so vowel groups bound the character count.
             val hanzi = s.words.sumOf { it.length }
             val vowelGroups = Regex("[aeiouüāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+").findAll(s.pinyin.lowercase()).count()
-            assertTrue("${s.text} / ${s.pinyin}", vowelGroups in (hanzi - s.words.count { it.endsWith("儿") })..hanzi + 2)
+            if (s.curated) assertTrue("${s.text} / ${s.pinyin}",
+                vowelGroups in (hanzi - s.words.count { it.endsWith("儿") })..hanzi + 2)
         }
     }
 
@@ -59,7 +62,10 @@ class ContentTest {
         val examples = content.examplesFor(word)
         assertTrue(examples.isNotEmpty())
         assertTrue(examples.all { it.text.contains("学生") })
-        assertTrue(examples.zipWithNext().all { (a, b) -> a.level <= b.level })
+        // Hand-written sentences come before corpus sentences.
+        assertTrue(examples.first().curated)
+        assertTrue(examples.zipWithNext().none { (a, b) -> !a.curated && b.curated })
+        assertTrue(content.sentencesWith("学生").size > 20)
     }
 
     @Test fun everyLevelHasGrammar() {
@@ -84,6 +90,39 @@ class ContentTest {
         for (g in content.grammar.filter { it.keywords.isNotEmpty() }) {
             assertTrue(g.title, g.examples.any { s -> s.words.any { g.isKeyword(it) } })
         }
+    }
+
+    @Test fun corpusSentencesUseOnlyKnownWords() {
+        val names = setOf("汤姆", "玛丽")
+        for (level in 1..6) for (s in content.sentencesOf(level).filter { !it.curated }) {
+            assertTrue(s.text, s.words.size in 2..14)
+            val known = s.words.count { content.lookup(it) != null || it in names }
+            assertTrue("unknown words in ${s.tokens}", known >= 1)
+        }
+    }
+
+    @Test fun thereAreAHundredGrammarStructuresWithCorpusExamples() {
+        assertEquals(100, content.grammar.size)
+        assertEquals(100, content.grammar.map { it.title }.distinct().size)
+        val because = content.grammar.first { it.title.startsWith("Because") }
+        val examples = content.grammarExamples(because, 10)
+        assertTrue(examples.size >= 5)
+        assertEquals(because.examples, examples.take(because.examples.size))
+        assertTrue(examples.all { it.text.contains("因为") && it.text.contains("所以") })
+        // Each structure's own search pattern finds its hand-written examples.
+        for (g in content.grammar) g.match?.let { regex ->
+            assertTrue(g.title, g.examples.any { regex.containsMatchIn(it.text) })
+        }
+        val total = content.grammar.sumOf { content.grammarExamples(it, 50).size }
+        assertTrue("only $total grammar sentences", total >= 1000)
+    }
+
+    @Test fun wordMapCoversMoreThanTenThousandWords() {
+        assertTrue(content.mapWordCount >= 10_000)
+        assertEquals(6000, content.extraWords.size)
+        assertTrue(content.extraWords.none { content.word("1:" + it.hanzi) != null })
+        assertTrue(content.wordWeb("学", 999).any { it.level == Content.EXTRA_LEVEL })
+        assertEquals("Beyond HSK", content.extraWords.first().levelLabel)
     }
 
     @Test fun dialoguesParse() {
@@ -115,6 +154,7 @@ class ContentTest {
         assertEquals("朋友", content.search("péngyou").first().hanzi)
         assertTrue(content.search("friend").any { it.hanzi == "朋友" })
         assertEquals("吃", content.search("eat").first().hanzi)
+        assertEquals("他们", content.search("tamen").first().hanzi)
         assertTrue(content.search("  ").isEmpty())
         assertTrue(content.search("zzzzqq").isEmpty())
     }

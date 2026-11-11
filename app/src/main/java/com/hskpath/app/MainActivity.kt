@@ -7,7 +7,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.ui.unit.dp
+import com.hskpath.app.ui.Mood
+import com.hskpath.app.ui.Panda
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -20,6 +25,9 @@ import com.hskpath.app.ui.HomeScreen
 import com.hskpath.app.ui.HskTheme
 import com.hskpath.app.ui.PinyinScreen
 import com.hskpath.app.ui.SearchScreen
+import com.hskpath.app.ui.SentenceMapScreen
+import com.hskpath.app.ui.WriteListScreen
+import com.hskpath.app.ui.WriteScreen
 import com.hskpath.app.ui.SessionScreen
 import com.hskpath.app.ui.StoriesScreen
 import com.hskpath.app.ui.WebListScreen
@@ -39,7 +47,12 @@ class MainActivity : ComponentActivity() {
                     BackHandler(enabled = app.canGoBack) { app.back() }
                     val content = app.content
                     if (content == null) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Panda(Mood.HAPPY, size = 120.dp)
+                                Text("加载中… Loading lessons", modifier = Modifier.padding(top = 12.dp))
+                            }
+                        }
                     } else {
                         val screen = app.screen
                         key(screen) {
@@ -50,6 +63,9 @@ class MainActivity : ComponentActivity() {
                                 is Screen.Stories -> StoriesScreen(app, content, screen.level)
                                 is Screen.Webs -> WebListScreen(app, content, screen.level)
                                 is Screen.Web -> WordWebScreen(app, content, screen.character)
+                                is Screen.SentenceMap -> SentenceMapScreen(app, content, screen.level, screen.word)
+                                is Screen.WriteList -> WriteListScreen(app, content, screen.level)
+                                is Screen.Write -> WriteScreen(app, content, screen.character)
                                 is Screen.WordInfo -> WordInfoScreen(app, content, screen.word)
                                 Screen.PinyinGuide -> PinyinScreen(app)
                                 Screen.Search -> SearchScreen(app, content)

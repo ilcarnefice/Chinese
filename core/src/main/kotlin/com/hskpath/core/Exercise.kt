@@ -14,7 +14,7 @@ data class Teach(val word: Word, val examples: List<Sentence>, val breakdown: Li
 
 enum class ChoiceKind { MEANING, HANZI, PINYIN, LISTEN }
 
-/** Multiple choice with one right answer. */
+/** Multiple choice about one word. */
 data class Choice(
     val kind: ChoiceKind,
     val instruction: String,
@@ -41,7 +41,31 @@ data class Arrange(val sentence: Sentence, val bank: List<String>, val focus: Li
     fun isCorrect(chosen: List<String>) = chosen.joinToString("") == sentence.words.joinToString("")
 }
 
-/** Builds the exercise lists for lessons, practice sessions and level tests. */
+/** A sentence with one word missing; pick the word that fits. */
+data class Cloze(
+    val sentence: Sentence,
+    /** Index of the missing word in [Sentence.tokens]. */
+    val blank: Int,
+    val options: List<String>,
+    val correctIndex: Int,
+    val word: Word,
+) : Exercise {
+    override val wordIds get() = listOf(word.id)
+}
+
+enum class SentenceKind { TRANSLATE, LISTEN }
+
+/** Read or hear a whole sentence and pick its meaning (or what was said). */
+data class SentenceChoice(
+    val kind: SentenceKind,
+    val sentence: Sentence,
+    val options: List<String>,
+    val correctIndex: Int,
+) : Exercise {
+    override val wordIds get() = emptyList<String>()
+}
+
+/** Builds the exercise lists for lessons, practice sessions, drills and level tests. */
 class ExerciseBuilder(private val content: Content, private val random: Random = Random.Default) {
 
     /** New words are taught one by one, then mixed practice follows. */
@@ -57,6 +81,7 @@ class ExerciseBuilder(private val content: Content, private val random: Random =
             mixed += choice(ChoiceKind.HANZI, w)
             mixed += choice(if (random.nextBoolean()) ChoiceKind.LISTEN else ChoiceKind.PINYIN, w)
         }
+        mixed += clozeFor(lesson.words, 2)
         mixed.shuffle(random)
         if (lesson.words.size >= 3) mixed.add(mixed.size / 2, match(lesson.words))
         out += mixed
@@ -69,27 +94,42 @@ class ExerciseBuilder(private val content: Content, private val random: Random =
         val out = mutableListOf<Exercise>()
         val kinds = ChoiceKind.entries
         words.forEachIndexed { i, w -> out += choice(kinds[(i + random.nextInt(kinds.size)) % kinds.size], w) }
+        out += clozeFor(words, 3)
         out.shuffle(random)
         words.chunked(5).filter { it.size >= 3 }.take(2).forEach { out.add(random.nextInt(out.size + 1), match(it)) }
         out += arrangeFor(words, 2)
         return out
     }
 
-    /** A graded test over a whole level: listening, reading and sentence building. */
+    /** Whole-sentence practice for a level: translate, listen and build. */
+    fun sentenceDrill(level: Int, size: Int = DRILL_SIZE): List<Exercise> {
+        val pool = content.sentencesOf(level).filter { it.words.size in 3..10 }
+        return pool.shuffled(random).take(size).mapIndexed { i, s ->
+            when (i % 3) {
+                0 -> sentenceChoice(SentenceKind.TRANSLATE, s, pool)
+                1 -> arrange(s, emptyList())
+                else -> sentenceChoice(SentenceKind.LISTEN, s, pool)
+            }
+        }
+    }
+
+    /** A graded test over a whole level: listening, reading and sentences. */
     fun levelTest(level: Int, size: Int = TEST_SIZE): List<Exercise> {
         val words = content.wordsOf(level).shuffled(random).take(size)
         val kinds = listOf(ChoiceKind.LISTEN, ChoiceKind.MEANING, ChoiceKind.HANZI, ChoiceKind.PINYIN)
         val out = words.mapIndexed<Word, Exercise> { i, w -> choice(kinds[i * kinds.size / words.size.coerceAtLeast(1)], w) }
             .toMutableList()
-        val sentences = content.sentences.filter { it.level == level && it.words.size in 3..9 }
-            .shuffled(random).take(size / 5)
-        out += sentences.map { arrange(it, emptyList()) }
+        out += sentenceDrill(level, size / 2)
         return out
     }
 
-    /** Sentence-building practice for one grammar structure. */
-    fun grammarPractice(point: GrammarPoint): List<Exercise> =
-        point.examples.filter { it.words.size >= 2 }.shuffled(random).map { arrange(it, emptyList()) }
+    /** Sentence practice for one grammar structure, using its examples from the corpus too. */
+    fun grammarPractice(point: GrammarPoint): List<Exercise> {
+        val examples = content.grammarExamples(point, 30).filter { it.words.size in 2..12 }
+        val own = examples.filter { it.curated }
+        val more = examples.filter { !it.curated }.shuffled(random).take(GRAMMAR_DRILL_SIZE - own.size)
+        return (own + more).shuffled(random).map { arrange(it, emptyList()) }
+    }
 
     fun choice(kind: ChoiceKind, word: Word): Choice {
         val (prompt, speak, correct, wrong) = when (kind) {
@@ -120,12 +160,44 @@ class ExerciseBuilder(private val content: Content, private val random: Random =
         return Arrange(sentence, (words + extra).shuffled(random), focus)
     }
 
+    /** Blanks out [word] in one of its example sentences, or returns null if it has none. */
+    fun cloze(word: Word): Cloze? {
+        val sentence = content.sentencesWith(word.hanzi)
+            .filter { it.level <= word.level && it.words.size in 3..10 }
+            .let { list -> list.filter { it.curated }.ifEmpty { list.take(40) } }
+            .randomOrNull(random) ?: return null
+        val wrong = content.wordsOf(word.level).asSequence()
+            .filter { it.hanzi != word.hanzi && it.hanzi !in sentence.words }
+            .toList().shuffled(random)
+            .sortedBy { if (it.hanzi.length == word.hanzi.length) 0 else 1 }
+            .map { it.hanzi }.distinct().take(OPTIONS - 1)
+        val options = (wrong + word.hanzi).shuffled(random)
+        return Cloze(sentence, sentence.tokens.indexOf(word.hanzi), options, options.indexOf(word.hanzi), word)
+    }
+
+    fun sentenceChoice(kind: SentenceKind, sentence: Sentence, pool: List<Sentence>): SentenceChoice {
+        val text: (Sentence) -> String = if (kind == SentenceKind.TRANSLATE) ({ it.english }) else ({ it.text })
+        val wrong = LinkedHashSet<String>()
+        var attempts = 0
+        while (wrong.size < SENTENCE_OPTIONS - 1 && attempts++ < 200 && pool.isNotEmpty()) {
+            val other = text(pool[random.nextInt(pool.size)])
+            if (other != text(sentence)) wrong += other
+        }
+        val options = (wrong + text(sentence)).shuffled(random)
+        return SentenceChoice(kind, sentence, options, options.indexOf(text(sentence)))
+    }
+
+    private fun clozeFor(words: List<Word>, max: Int): List<Cloze> =
+        words.shuffled(random).asSequence().mapNotNull { cloze(it) }.take(max).toList()
+
     private fun arrangeFor(words: List<Word>, max: Int): List<Arrange> {
         val hanzi = words.associateBy { it.hanzi }
         val level = words.maxOfOrNull { it.level } ?: return emptyList()
-        return content.sentences.asSequence()
-            .filter { it.level <= level && it.words.size in 3..9 && it.words.any { t -> t in hanzi } }
-            .toList().shuffled(random).take(max)
+        val candidates = words.flatMap { w ->
+            content.sentencesWith(w.hanzi).filter { it.level <= level && it.words.size in 3..9 }
+                .let { list -> list.filter { it.curated } + list.filter { !it.curated }.take(15) }
+        }.distinct()
+        return candidates.shuffled(random).take(max)
             .map { s -> arrange(s, s.words.mapNotNull { hanzi[it] }.distinct()) }
     }
 
@@ -147,8 +219,11 @@ class ExerciseBuilder(private val content: Content, private val random: Random =
 
     companion object {
         const val OPTIONS = 4
+        const val SENTENCE_OPTIONS = 3
         const val EXTRA_TILES = 3
         const val REVIEW_SIZE = 12
         const val TEST_SIZE = 20
+        const val DRILL_SIZE = 12
+        const val GRAMMAR_DRILL_SIZE = 6
     }
 }

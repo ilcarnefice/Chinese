@@ -7,10 +7,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,47 +36,52 @@ private val SlotColors = listOf(Color(0xFF1E88E5), Color(0xFF5E35B1), Color(0xFF
 fun GrammarScreen(app: AppState, content: Content, level: Int) {
     val points = content.grammarOf(level)
     Column(Modifier.fillMaxSize()) {
-        TopBar(app, "Grammar · HSK $level")
+        TopBar(app, "Grammar map · HSK $level")
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
             item {
                 Text(
-                    "Red blocks are fixed Chinese words. The other blocks are slots you fill with your own words.",
+                    "${points.size} formulas in this level. Red blocks are fixed Chinese words; the other blocks are slots you fill with your own words.",
                     style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 8.dp),
                 )
             }
-            items(points) { point -> GrammarCard(app, point) }
+            itemsIndexed(points) { i, point -> GrammarCard(app, content, point, i + 1) }
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun GrammarCard(app: AppState, point: GrammarPoint) {
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), shape = RoundedCornerShape(18.dp),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+private fun GrammarCard(app: AppState, content: Content, point: GrammarPoint, number: Int) {
+    var expanded by remember { mutableStateOf(false) }
+    val examples = remember(point, expanded) { content.grammarExamples(point, if (expanded) 12 else 3) }
+    Card(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Column(Modifier.padding(16.dp)) {
-            Text(point.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("FORMULA $number", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = Grape)
+            Text(point.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
             for (row in point.structure) {
                 var slot = 0
                 FlowRow(Modifier.padding(top = 10.dp), horizontalArrangement = SpacedSmall, verticalArrangement = SpacedSmall) {
                     row.forEachIndexed { i, block ->
                         if (i > 0) Text("+", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.align(Alignment.CenterVertically))
-                        val color = if (block.isKeyword) MaterialTheme.colorScheme.primary
-                        else SlotColors[slot++ % SlotColors.size]
+                        val color = if (block.isKeyword) Coral else SlotColors[slot++ % SlotColors.size]
                         Surface(color = if (block.isKeyword) color else color.copy(alpha = 0.16f), shape = RoundedCornerShape(10.dp)) {
                             Text(block.text, fontSize = if (block.isKeyword) 22.sp else 16.sp, fontWeight = FontWeight.Bold,
-                                color = if (block.isKeyword) MaterialTheme.colorScheme.onPrimary else color,
+                                color = if (block.isKeyword) Color.White else color,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
                         }
                     }
                 }
             }
             Text(point.explanation, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
-            for (example in point.examples) SentenceRow(app, example) { point.isKeyword(it) }
-            OutlinedButton(onClick = { app.open(Screen.Run(SessionKind.GrammarRun(point))) },
-                modifier = Modifier.padding(top = 6.dp)) {
-                Text("Practise this structure")
+            for (example in examples) SentenceRow(app, example) { point.isKeyword(it) }
+            if (!expanded && content.grammarExamples(point, 4).size > 3) {
+                Pill("Show more sentences", MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant) {
+                    expanded = true
+                }
+            }
+            BigButton("Build sentences", Modifier.padding(top = 10.dp), color = Grape) {
+                app.open(Screen.Run(SessionKind.GrammarRun(point)))
             }
         }
     }

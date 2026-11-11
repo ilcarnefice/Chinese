@@ -1,6 +1,10 @@
 package com.hskpath.app.ui
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,9 +25,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,6 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -49,6 +56,9 @@ import com.hskpath.app.Screen
 import com.hskpath.app.SessionKind
 import com.hskpath.core.Arrange
 import com.hskpath.core.Choice
+import com.hskpath.core.Cloze
+import com.hskpath.core.SentenceChoice
+import com.hskpath.core.SentenceKind
 import com.hskpath.core.ChoiceKind
 import com.hskpath.core.Content
 import com.hskpath.core.Exercise
@@ -60,13 +70,15 @@ import com.hskpath.core.SessionResult
 import com.hskpath.core.Teach
 import com.hskpath.core.Word
 
-/** Plays one lesson, practice round, grammar drill or level test from start to results. */
+/** Plays one lesson, practice round, drill or level test from start to results. */
 @Composable
 fun SessionScreen(app: AppState, content: Content, kind: SessionKind) {
     val exercises = remember { buildExercises(app, content, kind) }
     val session = remember { Session(exercises, retryMistakes = kind !is SessionKind.LevelTest) }
     var step by remember { mutableIntStateOf(0) }
+    var combo by remember { mutableIntStateOf(0) }
     var result by remember { mutableStateOf<SessionResult?>(null) }
+    val haptics = LocalHapticFeedback.current
 
     val finished = result
     if (finished != null) {
@@ -76,23 +88,22 @@ fun SessionScreen(app: AppState, content: Content, kind: SessionKind) {
     if (exercises.isEmpty()) {
         Column(Modifier.fillMaxSize()) {
             TopBar(app, "Practice")
-            Text("Nothing to practise yet. Finish a lesson first.", Modifier.padding(16.dp))
+            PandaSays(Mood.THINK, "Nothing to practise yet. Finish a lesson first.", Modifier.padding(16.dp))
         }
         return
     }
 
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(44.dp).clip(CircleShape).clickable { app.back() }, contentAlignment = Alignment.Center) {
-                Text("✕", fontSize = 20.sp)
+                Text("✕", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             // Reading `step` keeps the bar in step with the session.
-            val shown = if (step >= 0) session.progress else 0f
-            LinearProgressIndicator(
-                progress = { shown },
-                modifier = Modifier.weight(1f).padding(horizontal = 8.dp).height(12.dp).clip(RoundedCornerShape(6.dp)),
-                color = MaterialTheme.colorScheme.secondary,
-            )
+            val target = if (step >= 0) session.progress else 0f
+            val shown by animateFloatAsState(target, tween(350), label = "progress")
+            Meter(shown, Jade, Modifier.weight(1f).padding(horizontal = 8.dp), height = 16.dp)
+            if (combo >= 2) Text("🔥 $combo", fontWeight = FontWeight.ExtraBold, color = Tangerine,
+                modifier = Modifier.padding(end = 8.dp))
         }
         val exercise = session.current
         val onDone: (Boolean) -> Unit = { correct ->
@@ -106,12 +117,19 @@ fun SessionScreen(app: AppState, content: Content, kind: SessionKind) {
                 result = r
             }
         }
+        // Called when an answer is judged, before the learner taps Continue.
+        val onJudged: (Boolean) -> Unit = { correct ->
+            combo = if (correct) combo + 1 else 0
+            haptics.performHapticFeedback(if (correct) HapticFeedbackType.TextHandleMove else HapticFeedbackType.LongPress)
+        }
         key(step) {
             when (exercise) {
                 is Teach -> TeachView(app, content, exercise) { onDone(true) }
-                is Choice -> ChoiceView(app, exercise, onDone)
-                is Match -> MatchView(app, exercise, onDone)
-                is Arrange -> ArrangeView(app, exercise, onDone)
+                is Choice -> ChoiceView(app, exercise, onJudged, onDone)
+                is Match -> MatchView(app, exercise, onJudged, onDone)
+                is Arrange -> ArrangeView(app, exercise, onJudged, onDone)
+                is Cloze -> ClozeView(app, exercise, onJudged, onDone)
+                is SentenceChoice -> SentenceChoiceView(app, exercise, onJudged, onDone)
                 null -> Unit
             }
         }
@@ -124,6 +142,7 @@ private fun buildExercises(app: AppState, content: Content, kind: SessionKind): 
         is SessionKind.LessonRun -> builder.lesson(kind.lesson)
         is SessionKind.LevelTest -> builder.levelTest(kind.level)
         is SessionKind.GrammarRun -> builder.grammarPractice(kind.point)
+        is SessionKind.SentenceDrill -> builder.sentenceDrill(kind.level)
         SessionKind.Practice -> {
             val due = app.progress.dueWordIds(app.today())
             val ids = due.ifEmpty { app.progress.cards.keys.shuffled() }.take(12)
@@ -132,6 +151,8 @@ private fun buildExercises(app: AppState, content: Content, kind: SessionKind): 
         }
     }
 }
+
+private val Praise = listOf("太棒了! Great!", "很好! Nice!", "对了! Correct!", "真厉害! Amazing!", "不错! Well done!")
 
 /** Shared layout: scrolling exercise on top, feedback and the main button at the bottom. */
 @Composable
@@ -142,29 +163,33 @@ private fun ExerciseFrame(
     answerText: String,
     onCheck: () -> Unit,
     onContinue: () -> Unit,
+    showCheck: Boolean = true,
     body: @Composable ColumnScope.() -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
-            Text(instruction, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
+            Text(instruction, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(vertical = 12.dp))
             body()
+            Spacer(Modifier.height(12.dp))
         }
         if (verdict == null) {
-            Button(onClick = onCheck, enabled = canCheck, modifier = Modifier.fillMaxWidth().padding(16.dp).height(52.dp)) {
-                Text("Check", fontSize = 18.sp)
-            }
+            if (showCheck) BigButton("Check", Modifier.padding(16.dp), enabled = canCheck, onClick = onCheck)
         } else {
             val color = if (verdict) Good else Bad
-            Surface(color = color.copy(alpha = 0.14f), modifier = Modifier.fillMaxWidth()) {
+            val praise = remember { Praise.random() }
+            Surface(color = color.copy(alpha = 0.14f), shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(if (verdict) "Correct!" else "Not quite", color = color,
-                        style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    if (answerText.isNotEmpty()) Text(answerText, modifier = Modifier.padding(top = 4.dp))
-                    Button(onClick = onContinue, colors = ButtonDefaults.buttonColors(containerColor = color),
-                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(52.dp)) {
-                        Text("Continue", fontSize = 18.sp, color = Color.White)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Panda(if (verdict) Mood.CHEER else Mood.SAD, size = 56.dp)
+                        Column(Modifier.padding(start = 10.dp)) {
+                            Text(if (verdict) praise else "Not quite. 再试试!", color = color,
+                                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+                            if (answerText.isNotEmpty()) Text(answerText, modifier = Modifier.padding(top = 2.dp))
+                        }
                     }
+                    BigButton("Continue", Modifier.padding(top = 12.dp), color = color, onClick = onContinue)
                 }
             }
         }
@@ -177,13 +202,11 @@ private fun TeachView(app: AppState, content: Content, teach: Teach, onNext: () 
     LaunchedEffect(word) { app.speaker.speak(word.hanzi) }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
-            Text("New word", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(vertical = 12.dp))
+            Pill("✨ NEW WORD", Gold, Color(0xFF4A3500))
+            Spacer(Modifier.height(8.dp))
             WordCard(app, content, word, teach.examples, teach.breakdown)
         }
-        Button(onClick = onNext, modifier = Modifier.fillMaxWidth().padding(16.dp).height(52.dp)) {
-            Text("Got it", fontSize = 18.sp)
-        }
+        BigButton("Got it", Modifier.padding(16.dp), onClick = onNext)
     }
 }
 
@@ -198,12 +221,12 @@ fun WordCard(
 ) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(word.hanzi, fontSize = if (word.hanzi.length > 3) 56.sp else 80.sp, fontWeight = FontWeight.Medium)
-        Text(word.pinyin, fontSize = 26.sp, color = MaterialTheme.colorScheme.secondary)
+        Text(word.pinyin, fontSize = 26.sp, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
         Row(Modifier.padding(vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             SpeakButton(app, word.hanzi)
             SpeakButton(app, word.hanzi, slow = true)
         }
-        Text(word.definitions.joinToString("; "), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        Text(word.definitions.take(3).joinToString("; "), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         if (word.traditional != word.hanzi) {
             Text("Traditional: ${word.traditional}", style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
@@ -224,24 +247,40 @@ fun WordCard(
     }
     val webCharacters = word.hanzi.map { it.toString() }.distinct().filter { content.wordWeb(it).size >= 2 }
     if (webCharacters.isNotEmpty()) {
-        SectionTitle("Word webs")
+        SectionTitle("Word map")
         Row(horizontalArrangement = SpacedSmall) {
             for (c in webCharacters.take(4)) {
-                Pill("🕸 $c", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer) {
+                Pill("🕸 $c", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer) {
                     app.open(Screen.Web(c))
                 }
+            }
+        }
+    }
+    val writable = word.hanzi.map { it.toString() }.distinct().filter { app.strokes?.has(it) == true }
+    if (writable.isNotEmpty()) {
+        SectionTitle("Write it")
+        Row(horizontalArrangement = SpacedSmall) {
+            for (c in writable.take(4)) {
+                Pill("✍ $c", Coral.copy(alpha = 0.16f), Coral.darker()) { app.open(Screen.Write(c)) }
             }
         }
     }
     if (examples.isNotEmpty()) {
         SectionTitle("Examples")
         for (s in examples) SentenceRow(app, s) { it == word.hanzi }
+        val total = content.sentencesWith(word.hanzi).size
+        if (total > examples.size) {
+            Pill("🗺 All $total sentences", MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer) {
+                app.open(Screen.SentenceMap(word.level.coerceIn(1, Content.LEVEL_COUNT), word.hanzi))
+            }
+        }
     }
     Spacer(Modifier.height(16.dp))
 }
 
 @Composable
-private fun ChoiceView(app: AppState, choice: Choice, onDone: (Boolean) -> Unit) {
+private fun ChoiceView(app: AppState, choice: Choice, onJudged: (Boolean) -> Unit, onDone: (Boolean) -> Unit) {
     var selected by remember { mutableIntStateOf(-1) }
     var verdict by remember { mutableStateOf<Boolean?>(null) }
     if (choice.kind == ChoiceKind.LISTEN) LaunchedEffect(choice) { app.speaker.speak(choice.word.hanzi) }
@@ -253,7 +292,8 @@ private fun ChoiceView(app: AppState, choice: Choice, onDone: (Boolean) -> Unit)
         answerText = "${word.hanzi}  ${word.pinyin}  —  ${word.gloss}",
         onCheck = {
             verdict = selected == choice.correctIndex
-            if (choice.kind != ChoiceKind.LISTEN || verdict == true) app.speaker.speak(word.hanzi)
+            onJudged(verdict == true)
+            app.speaker.speak(word.hanzi)
         },
         onContinue = { onDone(verdict == true) },
     ) {
@@ -275,29 +315,124 @@ private fun ChoiceView(app: AppState, choice: Choice, onDone: (Boolean) -> Unit)
         }
         val largeOptions = choice.kind == ChoiceKind.HANZI || choice.kind == ChoiceKind.LISTEN
         choice.options.forEachIndexed { i, option ->
-            val isAnswer = i == choice.correctIndex
-            val border = when {
-                verdict != null && isAnswer -> Good
-                verdict == false && i == selected -> Bad
-                i == selected -> MaterialTheme.colorScheme.secondary
-                else -> MaterialTheme.colorScheme.outlineVariant
+            OptionTile(option, if (largeOptions) 28 else 18, selected = i == selected,
+                state = optionState(verdict, i == choice.correctIndex, i == selected), enabled = verdict == null) { selected = i }
+        }
+    }
+}
+
+/** null = not judged yet, true = show as right, false = show as the wrong pick. */
+private fun optionState(verdict: Boolean?, isAnswer: Boolean, isSelected: Boolean): Boolean? = when {
+    verdict == null -> null
+    isAnswer -> true
+    isSelected -> false
+    else -> null
+}
+
+/** One answer option: a raised tile that turns green or red once judged. */
+@Composable
+private fun OptionTile(text: String, size: Int, selected: Boolean, state: Boolean?, enabled: Boolean, onClick: () -> Unit) {
+    val accent = when (state) {
+        true -> Good
+        false -> Bad
+        null -> if (selected) Sky else MaterialTheme.colorScheme.outlineVariant
+    }
+    val face = if (selected || state != null) lerp(MaterialTheme.colorScheme.surface, accent, 0.14f) else MaterialTheme.colorScheme.surface
+    Raised(face, Modifier.fillMaxWidth().padding(vertical = 5.dp), edge = 4.dp, edgeColor = accent, enabled = enabled, onClick = onClick) {
+        Text(text, fontSize = size.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium,
+            modifier = Modifier.fillMaxWidth().border(2.dp, accent, RoundedCornerShape(16.dp))
+                .padding(horizontal = 14.dp, vertical = 14.dp))
+    }
+}
+
+/** Fill the gap in a sentence. */
+@Composable
+private fun ClozeView(app: AppState, cloze: Cloze, onJudged: (Boolean) -> Unit, onDone: (Boolean) -> Unit) {
+    var selected by remember { mutableIntStateOf(-1) }
+    var verdict by remember { mutableStateOf<Boolean?>(null) }
+    val sentence = cloze.sentence
+    ExerciseFrame(
+        instruction = "Fill in the gap",
+        canCheck = selected >= 0,
+        verdict = verdict,
+        answerText = "${sentence.text}\n${sentence.pinyin}",
+        onCheck = {
+            verdict = selected == cloze.correctIndex
+            onJudged(verdict == true)
+            app.speaker.speak(sentence.text)
+        },
+        onContinue = { onDone(verdict == true) },
+    ) {
+        val gapColor = if (verdict == null) Sky else if (verdict == true) Good else Bad
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                Text(buildAnnotatedString {
+                    sentence.tokens.forEachIndexed { i, token ->
+                        if (i == cloze.blank) withStyle(SpanStyle(color = gapColor, fontWeight = FontWeight.ExtraBold)) {
+                            append(if (verdict != null) " ${cloze.word.hanzi} " else if (selected >= 0) " ${cloze.options[selected]} " else " ＿＿ ")
+                        } else append(token)
+                    }
+                }, fontSize = 28.sp, lineHeight = 40.sp)
+                Text(sentence.english, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
             }
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(2.dp, border),
-                color = if (i == selected) border.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(RoundedCornerShape(14.dp))
-                    .clickable(enabled = verdict == null) { selected = i },
-            ) {
-                Text(option, fontSize = if (largeOptions) 28.sp else 18.sp, textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp))
+        }
+        Spacer(Modifier.height(14.dp))
+        for (row in cloze.options.indices.chunked(2)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                for (i in row) Box(Modifier.weight(1f)) {
+                    OptionTile(cloze.options[i], 24, selected = i == selected,
+                        state = optionState(verdict, i == cloze.correctIndex, i == selected), enabled = verdict == null) { selected = i }
+                }
             }
         }
     }
 }
 
+/** Read or hear a sentence and pick its meaning, or what was said. */
 @Composable
-private fun MatchView(app: AppState, match: Match, onDone: (Boolean) -> Unit) {
+private fun SentenceChoiceView(app: AppState, item: SentenceChoice, onJudged: (Boolean) -> Unit, onDone: (Boolean) -> Unit) {
+    var selected by remember { mutableIntStateOf(-1) }
+    var verdict by remember { mutableStateOf<Boolean?>(null) }
+    val sentence = item.sentence
+    val listening = item.kind == SentenceKind.LISTEN
+    if (listening) LaunchedEffect(item) { app.speaker.speak(sentence.text) }
+    ExerciseFrame(
+        instruction = if (listening) "Which sentence do you hear?" else "What does this sentence mean?",
+        canCheck = selected >= 0,
+        verdict = verdict,
+        answerText = if (listening) "${sentence.pinyin}\n${sentence.english}" else "${sentence.pinyin}",
+        onCheck = {
+            verdict = selected == item.correctIndex
+            onJudged(verdict == true)
+            if (!listening) app.speaker.speak(sentence.text)
+        },
+        onContinue = { onDone(verdict == true) },
+    ) {
+        if (listening) {
+            Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically) {
+                SpeakButton(app, sentence.text, big = true)
+                SpeakButton(app, sentence.text, slow = true)
+            }
+            VoiceNotice(app)
+        } else {
+            Card(Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(sentence.text, fontSize = 28.sp, lineHeight = 40.sp, modifier = Modifier.weight(1f))
+                    SpeakButton(app, sentence.text)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+        }
+        item.options.forEachIndexed { i, option ->
+            OptionTile(option, if (listening) 22 else 17, selected = i == selected,
+                state = optionState(verdict, i == item.correctIndex, i == selected), enabled = verdict == null) { selected = i }
+        }
+    }
+}
+
+@Composable
+private fun MatchView(app: AppState, match: Match, onJudged: (Boolean) -> Unit, onDone: (Boolean) -> Unit) {
     val solved = remember { mutableStateListOf<Int>() }
     var left by remember { mutableIntStateOf(-1) }
     var right by remember { mutableIntStateOf(-1) }
@@ -309,6 +444,7 @@ private fun MatchView(app: AppState, match: Match, onDone: (Boolean) -> Unit) {
         if (left == right) {
             solved.add(left)
             app.speaker.speak(match.words[left].hanzi)
+            if (solved.size == match.words.size) onJudged(mistakes == 0)
         } else {
             mistakes++
         }
@@ -319,6 +455,7 @@ private fun MatchView(app: AppState, match: Match, onDone: (Boolean) -> Unit) {
     ExerciseFrame(
         instruction = "Match the pairs",
         canCheck = false,
+        showCheck = false,
         verdict = if (complete) mistakes == 0 else null,
         answerText = if (mistakes == 0) "" else "You needed $mistakes extra ${if (mistakes == 1) "try" else "tries"}.",
         onCheck = {},
@@ -341,19 +478,11 @@ private fun MatchView(app: AppState, match: Match, onDone: (Boolean) -> Unit) {
 
 @Composable
 private fun MatchTile(text: String, size: Int, selected: Boolean, done: Boolean, onClick: () -> Unit) {
-    val border = when {
-        done -> Good.copy(alpha = 0.4f)
-        selected -> MaterialTheme.colorScheme.secondary
-        else -> MaterialTheme.colorScheme.outlineVariant
-    }
-    Surface(
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(2.dp, border),
-        color = if (done) Good.copy(alpha = 0.10f) else if (selected) border.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp).height(72.dp).clip(RoundedCornerShape(14.dp))
-            .clickable(enabled = !done, onClick = onClick),
-    ) {
-        Box(Modifier.padding(6.dp), contentAlignment = Alignment.Center) {
+    val accent = if (done) Good.copy(alpha = 0.45f) else if (selected) Sky else MaterialTheme.colorScheme.outlineVariant
+    val face = if (done || selected) lerp(MaterialTheme.colorScheme.surface, accent, 0.16f) else MaterialTheme.colorScheme.surface
+    Raised(face, Modifier.fillMaxWidth().padding(vertical = 5.dp).height(76.dp), edge = 4.dp, edgeColor = accent,
+        enabled = !done, onClick = onClick) {
+        Box(Modifier.fillMaxSize().border(2.dp, accent, RoundedCornerShape(16.dp)).padding(6.dp), contentAlignment = Alignment.Center) {
             Text(text, fontSize = size.sp, textAlign = TextAlign.Center, maxLines = 3,
                 color = if (done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
         }
@@ -362,7 +491,7 @@ private fun MatchTile(text: String, size: Int, selected: Boolean, done: Boolean,
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ArrangeView(app: AppState, arrange: Arrange, onDone: (Boolean) -> Unit) {
+private fun ArrangeView(app: AppState, arrange: Arrange, onJudged: (Boolean) -> Unit, onDone: (Boolean) -> Unit) {
     // Indices into the word bank, in the order the learner tapped them.
     val chosen = remember { mutableStateListOf<Int>() }
     var verdict by remember { mutableStateOf<Boolean?>(null) }
@@ -374,6 +503,7 @@ private fun ArrangeView(app: AppState, arrange: Arrange, onDone: (Boolean) -> Un
         answerText = "${sentence.text}\n${sentence.pinyin}",
         onCheck = {
             verdict = arrange.isCorrect(chosen.map { arrange.bank[it] })
+            onJudged(verdict == true)
             app.speaker.speak(sentence.text)
         },
         onContinue = { onDone(verdict == true) },
@@ -403,14 +533,18 @@ private fun ArrangeView(app: AppState, arrange: Arrange, onDone: (Boolean) -> Un
 
 @Composable
 private fun Tile(text: String, enabled: Boolean, filled: Boolean, faded: Boolean = false, onClick: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outlineVariant),
-        color = if (filled) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
-        modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(enabled = enabled, onClick = onClick),
-    ) {
-        Text(text, fontSize = 24.sp, modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            color = if (faded) Color.Transparent else MaterialTheme.colorScheme.onSurface)
+    if (faded) {
+        // Leave a hollow where the tile was, so the bank does not jump around.
+        Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+            Text(text, fontSize = 24.sp, color = Color.Transparent, modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp))
+        }
+        return
+    }
+    val accent = if (filled) Sky else MaterialTheme.colorScheme.outlineVariant
+    Raised(if (filled) lerp(MaterialTheme.colorScheme.surface, Sky, 0.14f) else MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(14.dp), edge = 4.dp, edgeColor = accent, enabled = enabled, onClick = onClick) {
+        Text(text, fontSize = 24.sp, modifier = Modifier.border(2.dp, accent, RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp))
     }
 }
 
@@ -418,41 +552,45 @@ private fun Tile(text: String, enabled: Boolean, filled: Boolean, faded: Boolean
 private fun ResultView(app: AppState, kind: SessionKind, result: SessionResult) {
     val isTest = kind is SessionKind.LevelTest
     val passed = result.percent >= Progress.TEST_PASS_PERCENT
-    Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center) {
-        Text(if (isTest && !passed) "📘" else "🎉", fontSize = 72.sp)
-        Text(
-            when {
-                isTest && passed -> "Test passed!"
-                isTest -> "Keep going"
-                kind is SessionKind.LessonRun -> "Lesson complete!"
-                else -> "Practice complete!"
-            },
-            style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
-        )
-        Row(Modifier.padding(vertical = 24.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Stat("⚡ +${result.xp}", "XP earned")
-            Stat("${result.percent}%", "first-try accuracy")
-            Stat("🔥 ${app.progress.currentStreak(app.today())}", "day streak")
-        }
-        if (isTest) {
+    val happy = !isTest || passed
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center) {
+            Panda(if (happy) Mood.CHEER else Mood.THINK, size = 150.dp)
             Text(
-                if (passed) "Every lesson in this level is now unlocked."
-                else "You need ${Progress.TEST_PASS_PERCENT}% to pass. Work through more lessons and try again.",
-                textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 16.dp),
+                when {
+                    isTest && passed -> "Test passed! 恭喜!"
+                    isTest -> "Keep going! 加油!"
+                    kind is SessionKind.LessonRun -> if (result.percent == 100) "Perfect lesson! 完美!" else "Lesson complete!"
+                    else -> "Practice complete!"
+                },
+                style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, color = if (happy) Gold.darker(0.15f) else Sky,
+                textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp),
             )
+            Row(Modifier.padding(vertical = 24.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Stat("⚡ +${result.xp}", "XP earned", Gold)
+                Stat("🎯 ${result.percent}%", "accuracy", Good)
+                Stat("🔥 ${app.progress.currentStreak(app.today())}", "day streak", Tangerine)
+            }
+            if (isTest) {
+                Text(
+                    if (passed) "Every lesson in this level is now unlocked."
+                    else "You need ${Progress.TEST_PASS_PERCENT}% to pass. Work through more lessons and try again.",
+                    textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 16.dp),
+                )
+            }
+            BigButton("Continue") { app.back() }
         }
-        Button(onClick = { app.back() }, modifier = Modifier.fillMaxWidth().height(52.dp)) {
-            Text("Continue", fontSize = 18.sp)
-        }
+        if (happy) Confetti()
     }
 }
 
 @Composable
-private fun Stat(value: String, label: String) {
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(16.dp)) {
-        Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp).width(84.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+private fun Stat(value: String, label: String, color: Color) {
+    Raised(color, Modifier.width(102.dp), shape = RoundedCornerShape(18.dp)) {
+        Column(Modifier.fillMaxWidth().padding(3.dp).clip(RoundedCornerShape(15.dp)).background(MaterialTheme.colorScheme.surface)
+            .padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(value, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = color.darker(0.15f))
             Text(label, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
         }
     }

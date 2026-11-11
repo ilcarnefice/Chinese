@@ -84,14 +84,49 @@ class CurriculumTest {
             assertEquals(ExerciseBuilder.TEST_SIZE, test.count { it is Choice })
             assertEquals(ChoiceKind.entries.toSet(), test.filterIsInstance<Choice>().map { it.kind }.toSet())
             assertTrue("HSK $level has sentence questions", test.any { it is Arrange })
+            assertEquals(30, test.size)
         }
     }
 
     @Test fun grammarPracticeBuildsItsExampleSentences() {
         val point = content.grammarOf(1).first()
         val exercises = ExerciseBuilder(content, Random(1)).grammarPractice(point)
-        assertEquals(point.examples.size, exercises.size)
-        assertTrue(exercises.all { it is Arrange && it.sentence in point.examples })
+        assertEquals(ExerciseBuilder.GRAMMAR_DRILL_SIZE, exercises.size)
+        val sentences = exercises.map { (it as Arrange).sentence }
+        assertTrue(sentences.containsAll(point.examples))
+        assertTrue(sentences.all { it in content.grammarExamples(point, 30) })
+    }
+
+    @Test fun clozeBlanksTheWordInARealSentence() {
+        val builder = ExerciseBuilder(content, Random(6))
+        var made = 0
+        for (w in content.wordsOf(1) + content.wordsOf(3).take(100)) {
+            val c = builder.cloze(w) ?: continue
+            made++
+            assertEquals(w.hanzi, c.sentence.tokens[c.blank])
+            assertEquals(w.hanzi, c.options[c.correctIndex])
+            assertEquals(ExerciseBuilder.OPTIONS, c.options.distinct().size)
+            // No other option also appears in the sentence, so only one answer fits by sight.
+            assertTrue(c.options.filter { it != w.hanzi }.none { it in c.sentence.words })
+            assertTrue(c.sentence.level <= w.level)
+        }
+        assertTrue("only $made cloze questions", made >= 200)
+    }
+
+    @Test fun sentenceDrillMixesTranslatingListeningAndBuilding() {
+        for (level in content.levels) {
+            val drill = ExerciseBuilder(content, Random(level)).sentenceDrill(level)
+            assertEquals(ExerciseBuilder.DRILL_SIZE, drill.size)
+            assertEquals(4, drill.count { it is Arrange })
+            val choices = drill.filterIsInstance<SentenceChoice>()
+            assertEquals(setOf(SentenceKind.TRANSLATE, SentenceKind.LISTEN), choices.map { it.kind }.toSet())
+            for (c in choices) {
+                assertEquals(ExerciseBuilder.SENTENCE_OPTIONS, c.options.distinct().size)
+                val expected = if (c.kind == SentenceKind.TRANSLATE) c.sentence.english else c.sentence.text
+                assertEquals(expected, c.options[c.correctIndex])
+                assertEquals(level, c.sentence.level)
+            }
+        }
     }
 
     @Test fun practiceAsksAboutEveryWord() {

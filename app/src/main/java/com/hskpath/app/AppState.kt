@@ -10,6 +10,7 @@ import com.hskpath.core.Content
 import com.hskpath.core.GrammarPoint
 import com.hskpath.core.Lesson
 import com.hskpath.core.Progress
+import com.hskpath.core.StrokeBook
 import com.hskpath.core.Word
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,6 +22,7 @@ sealed interface SessionKind {
     data object Practice : SessionKind
     data class LevelTest(val level: Int) : SessionKind
     data class GrammarRun(val point: GrammarPoint) : SessionKind
+    data class SentenceDrill(val level: Int) : SessionKind
 }
 
 sealed interface Screen {
@@ -30,6 +32,9 @@ sealed interface Screen {
     data class Stories(val level: Int) : Screen
     data class Webs(val level: Int) : Screen
     data class Web(val character: String) : Screen
+    data class SentenceMap(val level: Int, val word: String? = null) : Screen
+    data class WriteList(val level: Int) : Screen
+    data class Write(val character: String) : Screen
     data class WordInfo(val word: Word) : Screen
     data object PinyinGuide : Screen
     data object Search : Screen
@@ -43,6 +48,10 @@ class AppState(private val context: Context) {
 
     var content by mutableStateOf<Content?>(null)
         private set
+    var strokes by mutableStateOf<StrokeBook?>(null)
+        private set
+    /** Selected bottom tab on the home screen. */
+    var tab by mutableIntStateOf(0)
     var progress by mutableStateOf(Progress.fromJson(prefs.getString(KEY_PROGRESS, null)))
         private set
     var level by mutableIntStateOf(prefs.getInt(KEY_LEVEL, 1))
@@ -59,9 +68,9 @@ class AppState(private val context: Context) {
     }
 
     suspend fun load() {
-        content = withContext(Dispatchers.IO) {
-            Content.load { path -> context.assets.open(path).bufferedReader().use { it.readText() } }
-        }
+        val read = { path: String -> context.assets.open(path).bufferedReader().use { it.readText() } }
+        content = withContext(Dispatchers.IO) { Content.load(read) }
+        strokes = withContext(Dispatchers.IO) { StrokeBook(read("strokes.tsv")) }
     }
 
     fun save(updated: Progress) {
