@@ -6,7 +6,10 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** One drawing layer of a mouth diagram: fixed artwork (`path`) or a moving outline (`shape`). */
+/**
+ * One drawing layer of a mouth diagram. `image` layers are pieces of the real
+ * picture; `path` (fixed) and `shape` (moving outline) layers are line art.
+ */
 @Serializable
 data class MouthLayer(
     val id: String,
@@ -20,8 +23,21 @@ data class MouthLayer(
     val strokeWidth: Float = 0f,
     val opacity: Float = 1f,
     val dash: List<Float>? = null,
+    /** For `image` layers: the picture file, as a path inside the app's assets. */
+    val src: String? = null,
+    /** The part of the picture file to use (x, y, width, height in its pixels); all of it when absent. */
+    val crop: List<Int>? = null,
+    /** Where the picture sits in the view when nothing has moved: x, y, width, height. */
+    val rect: List<Float>? = null,
+    /** The grid laid over the picture, in cells across and down. 0 means the picture never moves. */
+    val cols: Int = 0,
+    val rows: Int = 0,
 ) {
     val isShape: Boolean get() = type == "shape"
+    val isImage: Boolean get() = type == "image"
+    /** An image that is stretched over a grid whose corners move from pose to pose. */
+    val isMesh: Boolean get() = isImage && cols > 0 && rows > 0
+    val gridSize: Int get() = (cols + 1) * (rows + 1) * 2
 }
 
 /** A name for a part of the mouth, with a pointer line. */
@@ -45,10 +61,13 @@ data class MouthView(
 @Serializable
 data class MouthAnchors(val larynx: List<Float>, val mouthOut: List<Float>, val nasalPath: List<List<Float>>)
 
-/** One position of the mouth: where each moving layer's points are, plus markers. */
+/** One position of the mouth: where each moving layer is, plus markers. */
 @Serializable
 data class MouthPose(
+    /** Outline points of `shape` layers. */
     val points: Map<String, List<List<Float>>> = emptyMap(),
+    /** How far each grid corner of an `image` layer has moved (dx, dy, ...), in whole numbers of `meshUnit`. */
+    val mesh: Map<String, List<Int>> = emptyMap(),
     val contact: List<List<Float>> = emptyList(),
     val gap: List<List<Float>> = emptyList(),
     val airPath: List<List<Float>>? = null,
@@ -57,6 +76,9 @@ data class MouthPose(
 @Serializable
 data class MouthArt(
     val version: Int = 1,
+    /** Where the picture comes from, for the credits. */
+    val source: String = "",
+    val meshUnit: Float = 1f,
     val palette: Map<String, String>,
     val views: Map<String, MouthView>,
     val anchors: MouthAnchors,
@@ -68,22 +90,37 @@ data class MouthArt(
  * (format in tools/mouth/SPEC.md). Coordinates are flat arrays x0, y0, x1, y1, ...
  */
 class Mouth(val art: MouthArt) {
-    val side: MouthView = art.views.getValue("side")
-    val front: MouthView = art.views.getValue("front")
+    val side: MouthView = art.views.getValue(SIDE)
+    /** A view of the lips from the front, if the artwork has one. */
+    val front: MouthView? = art.views[FRONT]
 
-    private val shapeIds: List<String> = art.views.values.flatMap { v -> v.layers.filter { it.isShape }.map { it.id } }
+    private val layers: List<MouthLayer> = art.views.values.flatMap { it.layers }
+    private val shapeIds: List<String> = layers.filter { it.isShape }.map { it.id }
+    private val meshes: List<MouthLayer> = layers.filter { it.isMesh }
+    private val grids: Map<String, FloatArray> = meshes.associate { it.id to grid(it) }
     private val frames = HashMap<String, Map<String, FloatArray>>()
 
     val poseNames: Set<String> get() = art.poses.keys
 
     fun pose(name: String): MouthPose = art.poses[name] ?: art.poses.getValue(REST)
 
-    /** Points of every moving layer in a pose; layers the pose does not mention stay as in rest. */
+    /**
+     * Where every moving layer is in a pose: outline points for `shape` layers,
+     * grid corners for `image` layers. Layers the pose does not mention stay as in rest.
+     */
     fun frame(pose: String): Map<String, FloatArray> = synchronized(frames) {
         frames.getOrPut(pose) {
-            val own = art.poses[pose]?.points.orEmpty()
-            val rest = art.poses.getValue(REST).points
-            shapeIds.associateWith { id -> flatten(own[id] ?: rest.getValue(id)) }
+            val own = art.poses[pose] ?: art.poses.getValue(REST)
+            val rest = art.poses.getValue(REST)
+            val out = LinkedHashMap<String, FloatArray>()
+            for (id in shapeIds) out[id] = flatten(own.points[id] ?: rest.points.getValue(id))
+            for (layer in meshes) {
+                val grid = grids.getValue(layer.id)
+                val moved = own.mesh[layer.id] ?: rest.mesh[layer.id]
+                out[layer.id] = if (moved == null || moved.size != grid.size) grid
+                else FloatArray(grid.size) { i -> grid[i] + moved[i] * art.meshUnit }
+            }
+            out
         }
     }
 
@@ -101,25 +138,46 @@ class Mouth(val art: MouthArt) {
 
     fun colour(name: String?): String? = if (name == null) null else art.palette[name] ?: name
 
+    /** Every picture file the artwork uses. */
+    val pictures: Set<String> get() = layers.mapNotNull { it.src }.toSet()
+
     /** Everything wrong with the data, for tests: empty when the file is sound. */
     fun problems(requiredPoses: Collection<String>): List<String> {
         val out = mutableListOf<String>()
-        val rest = art.poses[REST]?.points
-        if (rest == null) return listOf("no rest pose")
+        val rest = art.poses[REST] ?: return listOf("no rest pose")
         for (name in requiredPoses) if (name !in art.poses) out += "pose $name is missing"
-        for (id in shapeIds) if (rest[id].isNullOrEmpty()) out += "rest has no points for $id"
-        for ((name, pose) in art.poses) for ((id, pts) in pose.points) {
-            if (id !in shapeIds) out += "pose $name moves unknown layer $id"
-            else if (pts.size != rest[id]?.size) out += "pose $name.$id has ${pts.size} points, rest has ${rest[id]?.size}"
-            if (pts.any { it.size != 2 }) out += "pose $name.$id has a point that is not [x, y]"
+        for (id in shapeIds) if (rest.points[id].isNullOrEmpty()) out += "rest has no points for $id"
+        val byId = layers.associateBy { it.id }
+        if (byId.size != layers.size) out += "layer ids are not unique"
+        for ((name, pose) in art.poses) {
+            for ((id, pts) in pose.points) {
+                if (id !in shapeIds) out += "pose $name moves unknown layer $id"
+                else if (pts.size != rest.points[id]?.size) out += "pose $name.$id has ${pts.size} points, rest has ${rest.points[id]?.size}"
+                if (pts.any { it.size != 2 }) out += "pose $name.$id has a point that is not [x, y]"
+            }
+            for ((id, moved) in pose.mesh) {
+                val layer = byId[id]
+                if (layer == null || !layer.isMesh) out += "pose $name moves unknown picture $id"
+                else if (moved.size != layer.gridSize) out += "pose $name.$id has ${moved.size} numbers, its grid needs ${layer.gridSize}"
+            }
         }
-        for (view in art.views.values) for (layer in view.layers) {
-            if (layer.type != "path" && layer.type != "shape") out += "layer ${layer.id} has unknown type ${layer.type}"
-            if (layer.type == "path" && layer.d.isNullOrBlank()) out += "path layer ${layer.id} has no data"
+        for (layer in layers) {
+            when (layer.type) {
+                "path" -> if (layer.d.isNullOrBlank()) out += "path layer ${layer.id} has no data"
+                "shape" -> {}
+                "image" -> {
+                    if (layer.src.isNullOrBlank()) out += "image layer ${layer.id} has no picture"
+                    if (layer.rect?.size != 4) out += "image layer ${layer.id} needs rect [x, y, width, height]"
+                    if (layer.crop != null && layer.crop.size != 4) out += "image layer ${layer.id} has a bad crop"
+                    if ((layer.cols > 0) != (layer.rows > 0) || layer.cols < 0) out += "image layer ${layer.id} has a bad grid"
+                }
+                else -> out += "layer ${layer.id} has unknown type ${layer.type}"
+            }
             for (c in listOfNotNull(layer.fill, layer.stroke)) {
                 if (c !in art.palette && !HEX.matches(c)) out += "layer ${layer.id} uses unknown colour $c"
             }
         }
+        if (art.meshUnit <= 0f) out += "meshUnit must be positive"
         for (c in OVERLAY_COLOURS) if (c !in art.palette) out += "palette lacks $c"
         for ((name, value) in art.palette) if (!HEX.matches(value)) out += "palette.$name is not #RRGGBB"
         if (art.anchors.nasalPath.size < 2) out += "nasalPath is too short"
@@ -138,6 +196,19 @@ class Mouth(val art: MouthArt) {
 
         fun flatten(points: List<List<Float>>): FloatArray =
             FloatArray(points.size * 2) { i -> points[i / 2][i % 2] }
+
+        /** The corners of an image layer's grid before anything moves, row by row. */
+        fun grid(layer: MouthLayer): FloatArray {
+            val r = layer.rect ?: return FloatArray(0)
+            if (!layer.isMesh || r.size != 4) return FloatArray(0)
+            val out = FloatArray(layer.gridSize)
+            var i = 0
+            for (row in 0..layer.rows) for (col in 0..layer.cols) {
+                out[i++] = r[0] + r[2] * col / layer.cols
+                out[i++] = r[1] + r[3] * row / layer.rows
+            }
+            return out
+        }
     }
 }
 

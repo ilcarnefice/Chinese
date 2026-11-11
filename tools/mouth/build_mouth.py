@@ -1,500 +1,749 @@
 #!/usr/bin/env python3
-"""Builds app/src/main/assets/mouth.json: the mouth diagrams for every Mandarin sound.
+"""Builds the mouth diagrams from one real textbook figure.
 
-The fixed anatomy (head, palate, teeth, throat) is traced from a public-domain
-midsagittal diagram (see trace_base.py and base_shapes.json). On top of it this
-script models the parts that move: the lower jaw swings on a hinge, the lips and
-the soft palate bend, and the tongue is a curve through a dozen control points.
-Each pose below is a jaw angle, lip and soft-palate settings and tongue points.
+The picture is "Anatomy of Nose-Pharynx-Mouth-Larynx" from OpenStax College,
+Anatomy & Physiology (CC BY 3.0), kept unchanged in tools/mouth/source/. This
+script does not draw anatomy; it takes that picture apart and moves the pieces:
 
-Usage: python3 tools/mouth/build_mouth.py app/src/main/assets/mouth.json
-Check:  python3 tools/mouth/check_mouth.py <file>; node tools/mouth/preview.cjs <file> <dir>
+  1. removes the printed pointer lines and crops the head;
+  2. cuts out the parts that move when we speak: the tongue, the lower jaw
+     (with lower lip and teeth) and the soft palate, and fills in what is
+     behind them;
+  3. for every mouth position ("pose") works out where each piece goes: the jaw
+     swings on its hinge, the lips shift, the soft palate lifts, and the tongue
+     is bent by a dozen handles on its surface;
+  4. writes the pieces as PNG files and the poses as mouth.json. A pose stores,
+     for each piece, how far every corner of a grid laid over it has moved; the
+     app (and preview.py) draws the piece stretched over that grid.
+
+Usage: python3 tools/mouth/build_mouth.py [assets dir] [--debug dir]
+Then:  python3 tools/mouth/check_mouth.py <assets dir>/mouth.json
+       python3 tools/mouth/preview.py <assets dir> <out dir>
 """
 import json
 import math
 import os
 import sys
 
+import cv2
+import numpy as np
+
 HERE = os.path.dirname(os.path.abspath(__file__))
-BASE = json.load(open(os.path.join(HERE, "base_shapes.json"), encoding="utf-8"))
-JAW, PAL, HEAD, EPI = BASE["jaw"], BASE["palate"], BASE["head"], BASE["epiglottis"]
+SOURCE = os.path.join(HERE, "source", "2303_Anatomy_of_Nose-Pharynx-Mouth-Larynx.jpg")
 
-PALETTE = {
-    "air": "#2F8FEB", "contact": "#FFB703", "voice": "#7C4DFF", "label": "#1F2333",
-    "background": "#EFF4FB", "skin": "#FBD5C2", "skinShade": "#F3BFA8", "outline": "#A8705C",
-    "tongue": "#F47B8E", "tongueEdge": "#C94F66", "lip": "#E8667A", "velum": "#EFA3B3",
-    "tooth": "#FFFFFF", "toothEdge": "#AEB6C6", "bone": "#FFF1E6", "mouthDark": "#7A2A3A",
-}
+X0, Y0, SIZE = 615, 258, 900        # the part of the figure we use, in its pixels
+VIEW = 1000.0                       # the view is VIEW x VIEW units
+K = VIEW / SIZE                     # view units per picture pixel
+MESH_UNIT = 0.25                    # grid movements are stored as whole numbers of this many view units
+CAVITY = (53, 70, 203)              # the dark red of the inside of the mouth (BGR)
+WHITE = (255, 255, 255)
 
-# ---------------------------------------------------------------- geometry helpers
-
-HINGE = (700.0, 300.0)      # the jaw swings about this point
-TRACED_JAW = 5.3            # degrees the jaw is open in the traced diagram
+PALETTE = {"air": "#1C7ED6", "contact": "#FFB703", "voice": "#7C4DFF", "label": "#1F2333"}
 
 
-def lerp(a, b, t):
-    return a + (b - a) * t
+def smoothstep(a, b, x):
+    t = np.clip((np.asarray(x, dtype=np.float64) - a) / (b - a), 0.0, 1.0)
+    return t * t * (3 - 2 * t)
 
 
-def rotate(p, degrees, centre):
-    a = math.radians(degrees)
-    dx, dy = p[0] - centre[0], p[1] - centre[1]
-    return (centre[0] + dx * math.cos(a) - dy * math.sin(a), centre[1] + dx * math.sin(a) + dy * math.cos(a))
+# ------------------------------------------------------------------ the picture
+
+def remove_lines(im):
+    """Paints out the black pointer lines. Each line pixel becomes a blend of two
+    clean pixels on opposite sides of the line. Of the directions that cross the
+    line, the one whose two ends look most alike is used, so an edge or a stripe
+    that the line cut through is joined up again instead of being smeared."""
+    h, w = im.shape[:2]
+    b, g, r = [im[:, :, i].astype(np.int32) for i in range(3)]
+    mx = np.maximum(np.maximum(r, g), b)
+    mn = np.minimum(np.minimum(r, g), b)
+    core = ((mx < 120) & (mx - mn < 50)).astype(np.uint8)
+    mask = cv2.dilate(core, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))) > 0
+    dirs = [(1, 0), (0, 1), (1, 1), (1, -1), (2, 1), (1, 2), (2, -1), (1, -2), (3, 1), (1, 3), (3, -1), (1, -3),
+            (3, 2), (2, 3), (3, -2), (2, -3)]
+    src = im.astype(np.float32)
+    out = src.copy()
+    for y, x in zip(*np.nonzero(mask)):
+        best = None
+        for dx, dy in dirs:
+            step = math.hypot(dx, dy)
+            ends = []
+            for sign in (1, -1):
+                k = 1
+                while k * step <= 22:
+                    xx, yy = x + sign * dx * k, y + sign * dy * k
+                    if not (0 <= xx < w and 0 <= yy < h):
+                        k = 999
+                        break
+                    if not mask[yy, xx]:
+                        break
+                    k += 1
+                if k * step > 22:
+                    ends = None
+                    break
+                ends.append((k, xx, yy))
+            if ends is None:
+                continue
+            (k1, x1, y1), (k2, x2, y2) = ends
+            cost = float(np.abs(src[y1, x1] - src[y2, x2]).sum()) + 5.0 * (k1 + k2) * step
+            if best is None or cost < best[0]:
+                best = (cost, ends)
+        if best is None:
+            continue
+        (k1, x1, y1), (k2, x2, y2) = best[1]
+        t = k1 / (k1 + k2)
+        out[y, x] = src[y1, x1] * (1 - t) + src[y2, x2] * t
+    return np.clip(out, 0, 255).astype(np.uint8)
 
 
-def jaw_move(p, jaw, weight=1.0):
-    """Where a point of the traced lower jaw is when the jaw is open by `jaw` degrees."""
-    return rotate(p, (TRACED_JAW - jaw) * weight, HINGE)
+def load_picture():
+    full = cv2.imread(SOURCE)
+    if full is None:
+        sys.exit("cannot read " + SOURCE)
+    pad = 16
+    part = full[Y0 - pad:Y0 + SIZE + pad, X0 - pad:X0 + SIZE + pad]
+    clean = remove_lines(part)
+    return clean[pad:pad + SIZE, pad:pad + SIZE].copy()
 
 
-def spline(points, per_segment=14):
+def fill_holes(mask):
+    flood = mask.copy()
+    h, w = mask.shape
+    cv2.floodFill(flood, np.zeros((h + 2, w + 2), np.uint8), (0, 0), 2)
+    out = mask.copy()
+    out[flood != 2] = 1
+    return out
+
+
+def tongue_mask(pic):
+    b, g, r = [pic[:, :, i].astype(np.int32) for i in range(3)]
+    m = ((r - g > 88) & (r - g < 121) & (r > 190) & (b < 125)).astype(np.uint8)
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+    _, labels = cv2.connectedComponents(m, connectivity=4)
+    m = (labels == labels[542, 385]).astype(np.uint8)
+    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
+    return fill_holes(m)
+
+
+VELUM_AREA = [(300, 256), (245, 254), (205, 259), (165, 271), (133, 288), (106, 310), (89, 344), (81, 382),
+              (81, 416), (90, 440), (110, 449), (128, 444), (141, 426), (145, 398), (153, 374), (168, 353),
+              (187, 338), (216, 326), (246, 318), (300, 312)]
+
+
+def velum_mask(pic):
+    b, g, r = [pic[:, :, i].astype(np.int32) for i in range(3)]
+    area = np.zeros(pic.shape[:2], np.uint8)
+    cv2.fillPoly(area, [np.array(VELUM_AREA, np.int32)], 1)
+    m = ((area > 0) & (r - g < 118) & (r - g > 60) & (r > 200)).astype(np.uint8)
+    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7)))
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(m, connectivity=8)
+    m = (labels == 1 + int(np.argmax(stats[1:, 4]))).astype(np.uint8)
+    m = fill_holes(m)
+    # the tonsil below the tip is yellow: keep its fringe out of the piece
+    m[cv2.dilate(tonsil_mask(pic), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))) > 0] = 0
+    return fill_holes(m)
+
+
+def tonsil_mask(pic):
+    b, g, r = [pic[:, :, i].astype(np.int32) for i in range(3)]
+    yellow = ((r - g < 58) & (r > 225) & (b < 185)).astype(np.uint8)
+    yellow[:415] = 0
+    yellow[:, 160:] = 0
+    return yellow
+
+
+THROAT_EDGE_Y = [286, 300, 318, 340, 470]     # behind the soft palate: where the throat wall (left) meets
+THROAT_EDGE_X = [175, 135, 112, 101, 101]     # the dark inside of the mouth (right)
+
+
+def paint_behind_velum(pic, hole):
+    """What is seen where the soft palate hung once it has lifted: the wall of the
+    throat on the left, continued up from below, and the dark mouth on the right."""
+    hole = hole.astype(np.uint8)
+    out = pic.copy()
+    h, w = hole.shape
+    # around the tonsil keep the tonsil: every pixel takes the colour of the nearest pixel outside the hole
+    _, labels = cv2.distanceTransformWithLabels(hole, cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+    lut = np.zeros((labels.max() + 1, 3), np.uint8)
+    lut[labels[hole == 0]] = pic[hole == 0]
+    nearest = lut[labels]
+    near_tonsil = cv2.distanceTransform(1 - tonsil_mask(pic), cv2.DIST_L2, 5) < 5
+    for x in range(w):
+        rows = np.nonzero(hole[:, x])[0]
+        if len(rows) == 0:
+            continue
+        below = pic[470, min(x, 96)]      # the throat wall, taken from under the soft palate's tip
+        for y in rows:
+            if near_tonsil[y, x]:
+                out[y, x] = nearest[y, x]
+            elif x < np.interp(y, THROAT_EDGE_Y, THROAT_EDGE_X):
+                out[y, x] = below
+            else:
+                out[y, x] = CAVITY
+    soft = cv2.GaussianBlur(out, (0, 0), 0.8)
+    out[hole > 0] = soft[hole > 0]
+    return out
+
+
+def background_mask(pic):
+    """The white paper outside the head, found by flooding in from the right edge."""
+    white = (pic.min(axis=2) > 236).astype(np.uint8)
+    _, labels = cv2.connectedComponents(white, connectivity=4)
+    return labels == labels[600, SIZE - 2]
+
+
+# ------------------------------------------------------------------ curves and warps
+
+def spline(points, per_segment=24):
     """Dense points along an open Catmull-Rom curve through `points`."""
-    n = len(points)
+    pts = [np.array(p, dtype=np.float64) for p in points]
+    n = len(pts)
     out = []
     for i in range(n - 1):
-        p0, p1, p2, p3 = points[max(i - 1, 0)], points[i], points[i + 1], points[min(i + 2, n - 1)]
+        p0, p1, p2, p3 = pts[max(i - 1, 0)], pts[i], pts[i + 1], pts[min(i + 2, n - 1)]
         for k in range(per_segment):
             t = k / per_segment
-            t2, t3 = t * t, t * t * t
-            out.append(tuple(
-                0.5 * ((2 * p1[d]) + (-p0[d] + p2[d]) * t + (2 * p0[d] - 5 * p1[d] + 4 * p2[d] - p3[d]) * t2
-                       + (-p0[d] + 3 * p1[d] - 3 * p2[d] + p3[d]) * t3) for d in (0, 1)))
-    out.append(tuple(points[-1]))
-    return out
+            out.append(0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
+                              + (-p0 + 3 * p1 - 3 * p2 + p3) * t ** 3))
+    out.append(pts[-1])
+    return np.array(out)
 
 
-def resample(points, count):
-    """`count` points evenly spaced along a polyline, end points included."""
-    lengths = [0.0]
-    for a, b in zip(points, points[1:]):
-        lengths.append(lengths[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
-    total = lengths[-1]
-    out, j = [], 0
-    for i in range(count):
-        target = total * i / (count - 1)
-        while j < len(points) - 2 and lengths[j + 1] < target:
-            j += 1
-        span = lengths[j + 1] - lengths[j] or 1.0
-        t = (target - lengths[j]) / span
-        out.append((lerp(points[j][0], points[j + 1][0], t), lerp(points[j][1], points[j + 1][1], t)))
-    return out
+def thin_plate(src, values):
+    """A smooth function that takes the given `values` at the points `src`."""
+    src = np.asarray(src, dtype=np.float64) / 100.0
+    values = np.asarray(values, dtype=np.float64)
+    n = len(src)
+
+    def kernel(d):
+        return np.where(d > 0, d * d * np.log(d + 1e-12), 0.0)
+
+    a = np.zeros((n + 3, n + 3))
+    a[:n, :n] = kernel(np.linalg.norm(src[:, None] - src[None], axis=2))
+    a[:n, n] = 1
+    a[:n, n + 1:] = src
+    a[n, :n] = 1
+    a[n + 1:, :n] = src.T
+    rhs = np.zeros((n + 3, values.shape[1]))
+    rhs[:n] = values
+    w = np.linalg.solve(a, rhs)
+
+    def f(p):
+        p = np.asarray(p, dtype=np.float64) / 100.0
+        u = kernel(np.linalg.norm(p[:, None] - src[None], axis=2))
+        return u @ w[:n] + w[n] + p @ w[n + 1:]
+
+    return f
 
 
-def r1(points):
-    return [[round(x, 1), round(y, 1)] for x, y in points]
+def sample(field, p):
+    """Bilinear look-up of a scalar picture `field` at float positions p (n x 2)."""
+    h, w = field.shape
+    x = np.clip(p[:, 0], 0, w - 1.001)
+    y = np.clip(p[:, 1], 0, h - 1.001)
+    x0 = np.floor(x).astype(int)
+    y0 = np.floor(y).astype(int)
+    fx, fy = x - x0, y - y0
+    return (field[y0, x0] * (1 - fx) * (1 - fy) + field[y0, x0 + 1] * fx * (1 - fy)
+            + field[y0 + 1, x0] * (1 - fx) * fy + field[y0 + 1, x0 + 1] * fx * fy)
 
 
-def path_d(points, closed=True):
-    """SVG path through points as a smooth closed curve (same spline the renderers use)."""
-    n = len(points)
-    at = lambda i: points[i % n]
-    d = "M%.1f %.1f" % tuple(points[0])
-    for i in range(n if closed else n - 1):
-        p0, p1, p2, p3 = at(i - 1), at(i), at(i + 1), at(i + 2)
-        d += " C%.1f %.1f %.1f %.1f %.1f %.1f" % (
-            p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6,
-            p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1])
-    return d + (" Z" if closed else "")
+# ------------------------------------------------------------------ the lower jaw and the lips
+
+HINGE = np.array([65.0, 232.0])     # the jaw swings about this point (just in front of the ear)
+JAW_BACK, JAW_FRONT = 330.0, 540.0  # the jaw's pull fades out between these x positions
+
+CUT = [(330, 494), (603, 494), (603, 490), (660, 475), (679, 472), (900, 472)]   # top edge of the jaw piece
+LIP_LINE = np.array([664.0, 476.0])  # where the red inside of the mouth ends between the lips
+
+UPPER_LIP = np.array([688.0, 461.0])     # the middle of each lip's free edge: the lip handles pull here
+LOWER_LIP = np.array([686.0, 485.0])
 
 
-def weights(table, count):
-    """Per-index weights from a sparse {index: weight} table, linear in between."""
-    keys = sorted(table)
-    out = [0.0] * count
-    for a, b in zip(keys, keys[1:]):
-        for i in range(a, b + 1):
-            out[i] = lerp(table[a], table[b], (i - a) / (b - a))
-    return out
+def jaw_weight(p):
+    return smoothstep(JAW_BACK, JAW_FRONT, p[:, 0])
 
 
-# ---------------------------------------------------------------- the moving parts
+def swing(p, degrees):
+    a = math.radians(degrees)
+    r = p - HINGE
+    return HINGE + np.stack([r[:, 0] * math.cos(a) - r[:, 1] * math.sin(a),
+                             r[:, 0] * math.sin(a) + r[:, 1] * math.cos(a)], axis=1)
 
-# Lower jaw outline: the traced contour without the tongue (points 69..115 are the
-# tongue's surface). It runs: floor of the mouth, lower tooth, lip, chin, neck, voice
-# box wall, epiglottis, and closes under the tongue.
-JAW_ORDER = list(range(116, 147)) + list(range(0, 69))
-JAW_WEIGHT = [0.0] * 147
-for i in list(range(116, 147)) + list(range(0, 31)):
-    JAW_WEIGHT[i] = 1.0
-for i in range(31, 45):
-    JAW_WEIGHT[i] = max(0.0, 1.0 - (i - 30) / 12.0)       # the neck stretches, its base stays
-for i in range(48, 61):
-    JAW_WEIGHT[i] = 0.15                                   # the voice box hardly moves
-for i in range(61, 69):
-    JAW_WEIGHT[i] = lerp(0.15, 0.5, (i - 60) / 8.0)        # epiglottis and the tongue's root
-LOWER_LIP = weights({132: 0, 136: 0.6, 140: 0.95, 141: 1.0, 146: 1.0}, 147)
-for i, w in enumerate(weights({0: 1.0, 2: 0.95, 4: 0.8, 8: 0.2, 10: 0.0}, 147)[:11]):
-    LOWER_LIP[i] = w
-UPPER_LIP = weights({0: 0.1, 3: 0.3, 6: 0.55, 9: 0.8, 12: 0.95, 15: 1.0, 21: 1.0, 24: 0.85, 27: 0.4, 29: 0.0, 90: 0.0}, 91)
-VELUM = weights({0: 0, 57: 0, 61: 1.0, 74: 1.0, 78: 0, 90: 0}, 91)
-VELUM_PIVOT = (522.0, 186.0)
-VELUM_UP, VELUM_OPEN = -12.0, 9.0     # degrees: raised against the throat wall / hanging open
 
-# Tongue control points in the traced jaw's frame: floor attachment, underside,
-# tip (under and top), blade, front, middle, back (two), root (two), vallecula.
-TONGUE_REST = {
-    "floor": (291, 458), "under": (284, 428), "tipUnder": (246, 380), "tip": (241, 351), "blade": (293, 312),
-    "front": (373, 289), "mid": (442, 287), "back": (514, 304), "back2": (554, 342), "root": (574, 395),
-    "root2": (582, 480), "vallecula": (563, 543),
+def jaw_shift(p, degrees):
+    """How far each point moves when the jaw opens by `degrees` (negative closes it)."""
+    return jaw_weight(p)[:, None] * (swing(p, degrees) - p)
+
+
+def upper_lip_weight(p):
+    d2 = ((p - UPPER_LIP) ** 2).sum(axis=1)
+    return np.exp(-d2 / (2 * 28.0 ** 2)) * smoothstep(634, 654, p[:, 0])
+
+
+def lower_lip_weight(p):
+    d2 = ((p - LOWER_LIP) ** 2).sum(axis=1)
+    return np.exp(-d2 / (2 * 30.0 ** 2)) * smoothstep(626, 650, p[:, 0])
+
+
+def cut_y(x):
+    xs = [c[0] for c in CUT]
+    ys = [c[1] for c in CUT]
+    return np.interp(x, xs, ys)
+
+
+# ------------------------------------------------------------------ the soft palate
+
+VELUM_REST = [(290, 285), (262, 286), (232, 289), (202, 297), (173, 311), (150, 329), (132, 352), (120, 378),
+              (114, 402), (112, 426)]
+VELUM_UP = [(290, 285), (262, 286), (232, 284), (200, 281), (168, 280), (137, 283), (108, 290), (85, 302),
+            (69, 322), (63, 347)]
+VELUM_LINE = spline(VELUM_REST)
+VELUM_LINE_UP = spline(VELUM_UP)
+
+
+def frame_of(line):
+    t = np.gradient(line, axis=0)
+    t /= np.linalg.norm(t, axis=1)[:, None]
+    return t, np.stack([-t[:, 1], t[:, 0]], axis=1)
+
+
+def along(line):
+    return np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(line, axis=0), axis=1))])
+
+
+VELUM_S = along(VELUM_LINE)
+
+
+def velum_place(p):
+    """For each point: index of the nearest point of the soft palate's middle line,
+    and its offsets across and along that line."""
+    d = np.linalg.norm(p[:, None] - VELUM_LINE[None], axis=2)
+    i = np.argmin(d, axis=1)
+    t, n = frame_of(VELUM_LINE)
+    rel = p - VELUM_LINE[i]
+    return i, (rel * n[i]).sum(axis=1), (rel * t[i]).sum(axis=1)
+
+
+def velum_shift(p, amount):
+    """How far each point of the soft palate moves when it is lifted by `amount` (0..1)."""
+    if amount == 0:
+        return np.zeros_like(p)
+    i, across, extra = velum_place(p)
+    line = VELUM_LINE + (VELUM_LINE_UP - VELUM_LINE) * amount
+    t, n = frame_of(line)
+    target = line[i] + across[:, None] * n[i] + extra[:, None] * t[i]
+    return smoothstep(15, 55, VELUM_S[i])[:, None] * (target - p)
+
+
+# ------------------------------------------------------------------ the tongue
+
+# Handles on the surface of the tongue, from the root round the top to the tip and under it.
+HANDLES = {
+    "root": (152, 530), "back": (160, 440), "backtop": (212, 382), "dorsum": (290, 353), "mid": (370, 354),
+    "front": (450, 376), "blade": (515, 410), "pretip": (560, 446), "tip": (588, 496), "under": (570, 515),
+    "under2": (538, 545),
 }
-TONGUE_ORDER = list(TONGUE_REST)
-TONGUE_WEIGHT = {"back2": 0.95, "root": 0.85, "root2": 0.7, "vallecula": 0.5}
-TONGUE_INSIDE = [(528, 574), (410, 560), (322, 510)]      # the tongue's lower edge inside the jaw
+SURFACE = ["back", "backtop", "dorsum", "mid", "front", "blade", "pretip", "tip"]
+# Where the tongue is rooted (to the jaw in front, to the throat behind): these never move by themselves.
+PINS = [(548, 588), (555, 630), (557, 680), (165, 585), (195, 640), (250, 700)]
+FREE_BELOW = 585       # the tongue's outline above this line is its free surface
+MOVE_FROM, MOVE_TO = 15.0, 150.0     # how deep under the surface the bending reaches
+SHOW_TO = 190.0                      # the tongue piece fades out between MOVE_TO and SHOW_TO
+ERASE_TO = 135.0                     # the tongue is painted out of the pieces below it down to this depth
 
 
-JAW_HIDDEN = [(545, 566), (470, 556), (400, 540), (340, 505), (305, 472)]   # closes the outline under the tongue
+# Extra handles inside the tip; only used when a pose turns the tip as a block.
+INNER = {"tipTop": (577, 470), "tipCore": (561, 489), "bladeCore": (536, 468)}
+TIP_BLOCK = ["pretip", "tipTop", "tip", "under", "tipCore"]
 
 
-def jaw_body(pose):
-    jaw, (ldx, ldy) = pose["jaw"], pose["lowerLip"]
-    out = []
-    for i in JAW_ORDER:
-        x, y = jaw_move(JAW[i], jaw, JAW_WEIGHT[i])
-        out.append((x + ldx * LOWER_LIP[i], y + ldy * LOWER_LIP[i]))
-    return out + [jaw_move(p, jaw, 0.8) for p in JAW_HIDDEN]
+class Tongue:
+    def __init__(self, mask):
+        self.mask = mask
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        outline = max(contours, key=len).reshape(-1, 2)
+        free = outline[outline[:, 1] < FREE_BELOW]
+        seed = np.ones(mask.shape, np.uint8)
+        seed[free[:, 1], free[:, 0]] = 0
+        self.depth = cv2.distanceTransform(seed, cv2.DIST_L2, 5)
+        self.handles = {}
+        for name, (x, y) in HANDLES.items():
+            j = np.argmin(((outline - (x, y)) ** 2).sum(axis=1))
+            self.handles[name] = outline[j].astype(np.float64)
+        for name, p in INNER.items():
+            self.handles[name] = np.array(p, dtype=np.float64)
+
+    def shift(self, p, jaw, local):
+        """How far each point of the tongue moves. `local` gives, per handle, its own
+        movement on top of being carried by the jaw. Surface handles that are not
+        named stay put; inner handles that are not named are left free."""
+        names = list(HANDLES) + [n for n in INNER if n in local]
+        points = np.array([self.handles[n] for n in names] + [np.array(q, float) for q in PINS])
+        values = np.zeros_like(points)
+        for k, name in enumerate(names):
+            values[k] = local.get(name, (0.0, 0.0))
+        bend = thin_plate(points, values)(p)
+        reach = 1.0 - smoothstep(MOVE_FROM, MOVE_TO, sample(self.depth, p))
+        return jaw_shift(p, jaw) + reach[:, None] * bend
 
 
-def band(points, depth):
-    """A band along an outline: the points themselves and a copy pulled towards their centre."""
-    cx = sum(p[0] for p in points) / len(points)
-    cy = sum(p[1] for p in points) / len(points)
-    inner = [(lerp(x, cx, depth), lerp(y, cy, depth)) for x, y in points]
-    return points + inner[::-1]
+# ------------------------------------------------------------------ the poses
+
+def pose(jaw=0.0, velum=1.0, ulip=(0, 0), llip=(0, 0), tongue=None, to=None, turn=None, contact=(), gap=(),
+         air="auto", via=None):
+    """One mouth position.
+    jaw: degrees open (+) or closed (-) from the picture. velum: 1 lifted (nose shut), 0 hanging (nose open).
+    ulip, llip: movement of the upper and lower lip (the lower lip on top of the jaw's movement).
+    tongue: per handle, movement on top of the jaw's. to: per handle, the exact place it must reach.
+    turn: (degrees, pivot, where the tip ends up): swings the whole tip of the tongue as one block.
+    contact / gap: marker positions. air: "auto" for a breath route through the mouth, None for none.
+    via: extra points the breath route must pass, replacing the automatic ones in front of them."""
+    return dict(jaw=jaw, velum=velum, ulip=ulip, llip=llip, tongue=tongue or {}, to=to or {}, turn=turn,
+                contact=list(contact), gap=list(gap), air=air, via=via)
 
 
-def lower_tooth(pose):
-    """The lower incisor's crown: the traced tooth above the gum line."""
-    pts = [JAW[i] for i in range(121, 132)]
-    crown = [p for p in pts if p[1] < 404]
-    crown = [(244.0, 404.0)] + crown + [(215.5, 404.0)]
-    return [jaw_move(p, pose["jaw"]) for p in crown]
+RIDGE_TONGUE = dict(turn=(-42, (530, 468), (590, 397)), to={"blade": (506, 393), "under2": (549, 492)},
+                    tongue={"front": (0, -4)})
+PALATAL_TONGUE = {"dorsum": (292, 335), "mid": (372, 319), "front": (450, 318), "blade": (512, 343),
+                  "pretip": (562, 408)}
+RETROFLEX_TONGUE = dict(turn=(-92, (530, 468), (548, 359)),
+                        to={"blade": (470, 404), "front": (422, 398), "mid": (360, 372), "under2": (556, 470)})
+DENTAL_TONGUE = dict(turn=(-22, (530, 468), (602, 424)), to={"blade": (512, 390), "front": (450, 367),
+                                                             "under2": (549, 502)})
+VELAR_TONGUE = {"back": (158, 402), "backtop": (208, 313), "dorsum": (285, 323), "mid": (370, 356),
+                "front": (450, 388), "blade": (514, 424), "pretip": (557, 458), "tip": (584, 498)}
+HIGH_FRONT = {"dorsum": (292, 337), "mid": (372, 320), "front": (452, 329), "blade": (514, 362),
+              "pretip": (562, 416)}
+HIGH_BACK = {"back": (156, 406), "backtop": (205, 327), "dorsum": (285, 331), "mid": (368, 362),
+             "front": (446, 392), "blade": (510, 426), "pretip": (554, 458), "tip": (582, 500)}
 
 
-def lower_lip_tint(body):
-    index = {i: n for n, i in enumerate(JAW_ORDER)}
-    return band([body[index[i]] for i in [139, 140, 141, 142, 143, 144, 145, 146, 0, 1, 2, 3, 4, 5, 6, 7]], 0.82)
+def shifted(points, dx, dy, names=None):
+    return {k: (v[0] + dx, v[1] + dy) if (names is None or k in names) else v for k, v in points.items()}
 
 
-def palate(pose):
-    (udx, udy), velum = pose["upperLip"], pose["velum"]
-    out = []
-    for i, p in enumerate(PAL):
-        x, y = rotate(p, velum * VELUM[i], VELUM_PIVOT)
-        out.append((x + udx * UPPER_LIP[i], y + udy * UPPER_LIP[i]))
-    return out
-
-
-def velum_shape(pal):
-    return [pal[i] for i in range(57, 79)]
-
-
-def upper_lip_tint(pal):
-    return band([pal[i] for i in range(10, 27)], 0.82)
-
-
-def tongue_controls(pose):
-    """Tongue control points in view coordinates for a pose."""
-    spec = dict(TONGUE_REST)
-    absolute = {}
-    for name, value in pose.get("tongue", {}).items():
-        if len(value) == 3:           # ("abs", x, y): a point fixed against the palate or teeth
-            absolute[name] = (value[1], value[2])
-        else:
-            spec[name] = value
-    out = []
-    for name in TONGUE_ORDER:
-        if name in absolute:
-            out.append(absolute[name])
-        else:
-            out.append(jaw_move(spec[name], pose["jaw"], TONGUE_WEIGHT.get(name, 1.0)))
-    return out
-
-
-def tongue(pose):
-    surface = resample(spline(tongue_controls(pose)), 24)
-    inside = [jaw_move(p, pose["jaw"]) for p in TONGUE_INSIDE]
-    return surface + inside
-
-
-# Fixed upper anatomy used to place markers and breath routes.
-UPPER_TOOTH = [PAL[i] for i in range(29, 43)]
-ROOF = [PAL[i] for i in range(33, 58)]          # behind the upper tooth, ridge, hard palate
-
-
-def roof_line(pal):
-    """The roof of the mouth from the upper tooth to the uvula, for this pose's soft palate."""
-    return ROOF + [pal[i] for i in range(58, 67)]
-
-
-def nearest(a_points, b_points):
-    """The closest pair between two point sets: (distance, point on a, point on b)."""
-    best = None
-    for a in a_points:
-        for b in b_points:
-            d = math.hypot(a[0] - b[0], a[1] - b[1])
-            if best is None or d < best[0]:
-                best = (d, a, b)
-    return best
-
-
-def dense(points, step=4.0):
-    out = []
-    for a, b in zip(points, points[1:]):
-        n = max(1, int(math.hypot(b[0] - a[0], b[1] - a[1]) / step))
-        out += [(lerp(a[0], b[0], k / n), lerp(a[1], b[1], k / n)) for k in range(n)]
-    return out + [points[-1]]
-
-
-def air_path(pose, body, pal, surface):
-    """Route of the breath: up the throat, between tongue and roof, out between the lips."""
-    roof = dense(roof_line(pal))
-    top = dense(surface[3:])                       # the tongue's upper surface, tip to root
-    route = [(592.0, 700.0), (598.0, 630.0), (604.0, 560.0)]
-    for x in (585, 540, 490, 440, 390, 340, 295, 258):
-        above = [p for p in roof if abs(p[0] - x) < 9]
-        below = [p for p in top if abs(p[0] - x) < 9]
-        if not above or not below:
-            continue
-        ya, yb = max(p[1] for p in above), min(p[1] for p in below)
-        route.append((float(x), (ya + yb) / 2 if yb > ya else ya + 2))
-    index = {i: n for n, i in enumerate(JAW_ORDER)}
-    lower_tip = body[index[126]]
-    upper_tip = PAL[31]
-    route.append(((lower_tip[0] + upper_tip[0]) / 2 + 2, (lower_tip[1] + upper_tip[1]) / 2))
-    lip_low, lip_up = body[index[144]], pal[21]
-    y = (lip_low[1] + lip_up[1]) / 2
-    route.append(((lip_low[0] + lip_up[0]) / 2 - 6, y))
-    route.append((92.0, y + 2))
-    return route
-
-
-# ---------------------------------------------------------------- front view
-
-FRONT_SCALE = 1.28
-
-
-def front(pose):
-    f = pose["front"]
-    cx, cy = 250.0, 214.0
-    w, h = f["w"] * FRONT_SCALE, f["h"] * FRONT_SCALE          # half width of the mouth, height of the opening
-    tu, tl = f.get("upper_lip", 30.0) * FRONT_SCALE, f.get("lower_lip", 38.0) * FRONT_SCALE     # lip thickness
-    rnd = f.get("round", 0.0)
-    top, bottom = cy - h / 2, cy + h / 2
-    k = 0.55 + 0.22 * rnd                       # rounder lips bulge more evenly
-    lips = [
-        (cx - w - 7, cy), (cx - w * 0.62, top - tu * 0.6), (cx - w * 0.24, top - tu), (cx, top - tu * (0.72 + 0.22 * rnd)),
-        (cx + w * 0.24, top - tu), (cx + w * 0.62, top - tu * 0.6), (cx + w + 7, cy),
-        (cx + w * k, bottom + tl * 0.78), (cx + w * 0.2, bottom + tl), (cx - w * 0.2, bottom + tl), (cx - w * k, bottom + tl * 0.78),
-    ]
-    hole = [
-        (cx - w + 4, cy), (cx - w * 0.55, top + h * 0.08), (cx, top), (cx + w * 0.55, top + h * 0.08), (cx + w - 4, cy),
-        (cx + w * 0.55, bottom - h * 0.08), (cx, bottom), (cx - w * 0.55, bottom - h * 0.08),
-    ]
-    centre = [(cx, cy)]
-    # Teeth: a band under the upper lip and one above the lower lip, as far as they show.
-    up = min(f.get("teethUp", 0.0) * FRONT_SCALE, h * 0.7)
-    tw = w * 0.74
-    if h < 8 or up <= 0:
-        upper_teeth = centre * 10
-    else:
-        upper_teeth = [(cx - tw, top + h * 0.06), (cx - tw * 0.5, top + 1), (cx, top), (cx + tw * 0.5, top + 1), (cx + tw, top + h * 0.06),
-                       (cx + tw * 0.96, top + up * 0.8), (cx + tw * 0.5, top + up), (cx, top + up), (cx - tw * 0.5, top + up), (cx - tw * 0.96, top + up * 0.8)]
-        if f.get("bite"):                       # f: the upper teeth come down onto the lower lip
-            drop = f["bite"] * FRONT_SCALE
-            upper_teeth = [(x, y + (drop if n >= 5 else 0)) for n, (x, y) in enumerate(upper_teeth)]
-    low = min(f.get("teethLow", 0.0) * FRONT_SCALE, h * 0.5)
-    lw = w * 0.6
-    if h < 8 or low <= 0:
-        lower_teeth = centre * 10
-    else:
-        lower_teeth = [(cx - lw, bottom - low * 0.8), (cx - lw * 0.5, bottom - low), (cx, bottom - low), (cx + lw * 0.5, bottom - low), (cx + lw, bottom - low * 0.8),
-                       (cx + lw * 0.9, bottom - h * 0.04), (cx + lw * 0.5, bottom - 1), (cx, bottom), (cx - lw * 0.5, bottom - 1), (cx - lw * 0.9, bottom - h * 0.04)]
-    # Tongue: seen low in the opening; `tongue_show` is how much of the opening's height it fills.
-    t = f.get("tongue_show", 0.0)
-    if h < 8 or t <= 0:
-        tongue_shape = centre * 8
-    else:
-        ty = bottom - h * t
-        tw2 = w * 0.6
-        tongue_shape = [(cx - tw2, bottom - h * 0.12), (cx - tw2 * 0.6, ty + h * 0.03), (cx, ty), (cx + tw2 * 0.6, ty + h * 0.03),
-                        (cx + tw2, bottom - h * 0.12), (cx + tw2 * 0.5, bottom - 1), (cx, bottom), (cx - tw2 * 0.5, bottom - 1)]
-    return {"frontLips": lips, "frontHole": hole, "frontTongue": tongue_shape, "frontUpperTeeth": upper_teeth, "frontLowerTeeth": lower_teeth}
-
-
-FRONT_STATIC = [
-    {"id": "frontBg", "type": "path", "d": "M0 0H500V400H0Z", "fill": "skin"},
-    # nostrils, the groove under the nose, and the shadow under the lower lip
-    {"id": "frontNose", "type": "path", "fill": "skinShade",
-     "d": "M196 34 C206 20 228 22 232 38 C234 50 216 56 204 50 C196 46 192 40 196 34 Z "
-          "M268 38 C272 22 294 20 304 34 C308 40 304 46 296 50 C284 56 266 50 268 38 Z"},
-    {"id": "frontGroove", "type": "path", "stroke": "skinShade", "strokeWidth": 5, "d": "M238 66 C234 92 236 116 240 136 M262 66 C266 92 264 116 260 136"},
-    {"id": "frontChin", "type": "path", "stroke": "skinShade", "strokeWidth": 6, "d": "M170 372 C206 392 294 392 330 372"},
-]
-
-# ---------------------------------------------------------------- the poses
-
-UP, OPEN = VELUM_UP, VELUM_OPEN
-UPPER_LIP_BOTTOM = 321.0
-
-
-def P(jaw, kind, velum=UP, tongue=None, gap=None, lip=(0, 0), upper=(0, 0), mark=None, air=False, **front_view):
-    """One pose. `gap` is the space wanted between the lips; `lip` shifts the lower lip sideways and
-    `upper` moves the upper lip. `kind` is contact, gap or air; `mark` is where the contact or gap is."""
-    natural = 9.07 * jaw - 17.1                 # lip gap the jaw angle alone would give
-    dy = 0.0 if gap is None else gap - natural + upper[1]
-    return {"jaw": jaw, "kind": kind, "velum": velum, "tongue": tongue or {}, "lowerLip": (lip[0], dy + lip[1]),
-            "upperLip": upper, "mark": mark, "air": air or kind in ("air", "gap"), "front": front_view}
-
-
-def A(x, y):
-    return ("abs", x, y)
-
-
-SPREAD = dict(upper=(3, -1), lip=(3, 0))
-ROUND = dict(upper=(-15, 4), lip=(-17, 0))
-F_SPREAD = dict(w=132, h=20, upper_lip=24, lower_lip=30, teethUp=11, teethLow=9)
-F_ROUND = dict(w=42, h=18, upper_lip=36, lower_lip=42, round=1.0)
-
-RIDGE_TONGUE = {"tip": A(243, 253), "tipUnder": A(244, 287), "blade": A(288, 242), "front": A(360, 240),
-                "mid": A(440, 262), "back": A(512, 288)}
-VELAR_TONGUE = {"tip": (247, 372), "tipUnder": (250, 392), "blade": (302, 354), "front": (380, 328), "mid": A(466, 262),
-                "back": A(546, 207), "back2": A(592, 262)}
-PALATAL_TONGUE = {"blade": A(286, 234), "front": A(345, 209), "mid": A(430, 222), "back": A(510, 264)}
-RETRO_TONGUE = {"tip": A(298, 229), "tipUnder": A(282, 268), "blade": A(332, 264), "front": A(392, 288),
-                "mid": A(456, 280), "back": A(522, 270)}
-DENTAL_TONGUE = {"tip": A(234, 291), "tipUnder": A(238, 320), "blade": A(270, 252), "front": A(350, 250),
-                 "mid": A(440, 264), "back": A(512, 288)}
-HIGH_FRONT = {"blade": A(291, 252), "front": A(350, 228), "mid": A(430, 233), "back": A(506, 270)}
-HIGH_BACK = {"tip": (258, 374), "tipUnder": (262, 392), "blade": (308, 350), "front": A(382, 294), "mid": A(462, 242),
-             "back": A(536, 228), "back2": A(588, 264)}
-MID_BACK = {"tip": (258, 376), "tipUnder": (262, 394), "blade": (312, 346), "front": (388, 312), "mid": (458, 286),
-            "back": (528, 290), "back2": (564, 334)}
+OPEN_LIPS = dict(ulip=(0, -5), llip=(0, 10))
+SPREAD_LIPS = dict(ulip=(-3, -7), llip=(-4, 25))
+ROUND_LIPS = dict(ulip=(19, -4), llip=(21, 13))
 
 POSES = {
-    "rest": P(1.4, "air", gap=3, w=104, h=4),
-    "lips": P(1.0, "contact", gap=-3, upper=(0, 1), mark=(158, 322), w=104, h=0),
-    "lipsNasal": P(1.0, "contact", velum=OPEN, gap=-3, upper=(0, 1), mark=(158, 322), w=104, h=0),
-    "lipTeeth": P(2.2, "gap", gap=-4, lip=(25, 0), upper=(-2, -6), mark=(203, 319), w=104, h=24, teethUp=20, bite=10),
-    "ridge": P(1.8, "contact", tongue=RIDGE_TONGUE, gap=9, mark=(243, 250), w=100, h=16, teethUp=8, tongue_show=0.5),
-    "ridgeNasal": P(1.8, "contact", velum=OPEN, tongue=RIDGE_TONGUE, gap=9, mark=(243, 250), w=100, h=16, teethUp=8, tongue_show=0.5),
-    "ridgeLateral": P(2.6, "contact", air=True, gap=12, mark=(243, 250), w=100, h=20, teethUp=8, tongue_show=0.5,
-                      tongue=dict(RIDGE_TONGUE, front=A(360, 264), mid=A(440, 292), back=A(512, 308))),
-    "velar": P(2.6, "contact", tongue=VELAR_TONGUE, gap=12, mark=(552, 205), w=96, h=22, teethUp=6),
-    "velarFric": P(2.8, "gap", tongue=dict(VELAR_TONGUE, mid=A(462, 262), back=A(544, 224), back2=A(590, 274)), gap=12,
-                   mark=(552, 213), w=96, h=24, teethUp=6),
-    "velarNasal": P(2.4, "contact", velum=13.0, tongue=dict(VELAR_TONGUE, mid=A(462, 262), back=A(540, 226), back2=A(572, 268)),
-                    gap=12, mark=(548, 221), w=96, h=22, teethUp=6),
-    "palatal": P(1.2, "contact", tongue=PALATAL_TONGUE, gap=7, mark=(318, 215), **SPREAD, **F_SPREAD),
-    "palatalFric": P(1.5, "gap", tongue=dict(PALATAL_TONGUE, blade=A(288, 243), front=A(345, 219)), gap=8, mark=(320, 216),
-                     **SPREAD, **F_SPREAD),
-    "retroflex": P(2.6, "contact", tongue=RETRO_TONGUE, gap=12, lip=(-7, 0), upper=(-6, 1), mark=(297, 223),
-                   w=74, h=26, upper_lip=32, lower_lip=38, round=0.4, teethUp=6),
-    "retroflexFric": P(2.8, "gap", tongue=dict(RETRO_TONGUE, tip=A(299, 242), tipUnder=A(283, 274)), gap=12, lip=(-7, 0),
-                       upper=(-6, 1), mark=(298, 231), w=74, h=26, upper_lip=32, lower_lip=38, round=0.4, teethUp=6),
-    "dental": P(0.8, "contact", tongue=DENTAL_TONGUE, gap=7, mark=(229, 294), **SPREAD, **F_SPREAD),
-    "dentalFric": P(1.0, "gap", tongue=dict(DENTAL_TONGUE, tip=A(240, 298), tipUnder=A(243, 324)), gap=7, mark=(232, 298),
-                    **SPREAD, **F_SPREAD),
-    "a": P(12.0, "air", gap=74, w=104, h=128, teethUp=16, teethLow=12, tongue_show=0.34,
-           tongue={"tip": (243, 357), "tipUnder": (246, 380), "blade": (300, 332), "front": (375, 320), "mid": (445, 320),
-                   "back": (512, 332), "back2": (551, 364), "root": (568, 412)}),
-    "o": P(6.8, "air", tongue=MID_BACK, gap=30, upper=(-11, 3), lip=(-13, 0), w=62, h=58, upper_lip=34, lower_lip=40, round=1.0,
-           tongue_show=0.2),
-    "e": P(6.0, "air", tongue=dict(MID_BACK, mid=(458, 280), back=(528, 282)), gap=26, w=100, h=44, teethUp=8, tongue_show=0.25),
-    "eFront": P(6.0, "air", gap=26, **SPREAD, w=120, h=46, upper_lip=26, lower_lip=32, teethUp=10, tongue_show=0.4,
-                tongue={"blade": (290, 300), "front": (365, 272), "mid": (440, 282), "back": (512, 314)}),
-    "schwa": P(4.2, "air", gap=18, w=98, h=32, teethUp=8, tongue_show=0.3),
-    "i": P(1.6, "air", tongue=HIGH_FRONT, gap=8, **SPREAD, **F_SPREAD),
-    "u": P(2.2, "air", tongue=HIGH_BACK, gap=8, **ROUND, **F_ROUND),
-    "yu": P(1.8, "air", tongue=HIGH_FRONT, gap=8, **ROUND, **F_ROUND),
-    "er": P(6.0, "air", gap=26, w=98, h=44, teethUp=8, tongue_show=0.45,
-            tongue={"tip": A(312, 258), "tipUnder": A(293, 290), "blade": A(348, 280), "front": A(398, 292),
-                    "mid": A(456, 288), "back": A(516, 302)}),
+    "rest": pose(velum=0, air="auto"),
+    "lips": pose(contact=[(679, 472)], air=None),
+    "lipsNasal": pose(velum=0, contact=[(679, 472)], air=None),
+    "lipTeeth": pose(jaw=-0.6, ulip=(2, -12), llip=(-38, -17), gap=[(622, 451)]),
+    "ridge": pose(jaw=-1.0, **OPEN_LIPS, **RIDGE_TONGUE, contact=[(591, 392)], air=None),
+    "ridgeNasal": pose(jaw=-1.0, velum=0, **OPEN_LIPS, **RIDGE_TONGUE, contact=[(591, 392)], air=None),
+    "ridgeLateral": pose(jaw=-0.6, **OPEN_LIPS, turn=RIDGE_TONGUE["turn"], to=RIDGE_TONGUE["to"],
+                         tongue={"front": (0, 10), "mid": (0, 12), "dorsum": (0, 8)}, contact=[(591, 392)]),
+    "velar": pose(jaw=0.5, **OPEN_LIPS, to=VELAR_TONGUE, contact=[(222, 309)], air=None),
+    "velarFric": pose(jaw=0.5, **OPEN_LIPS, to=shifted(VELAR_TONGUE, 0, 12, ["backtop", "dorsum"]),
+                      gap=[(222, 313)]),
+    "velarNasal": pose(jaw=0.5, velum=0, **OPEN_LIPS,
+                       to={"back": (160, 404), "backtop": (204, 338), "dorsum": (288, 340), "mid": (370, 358),
+                           "front": (450, 386), "blade": (514, 420), "pretip": (558, 454)},
+                       contact=[(196, 336)], air=None),
+    "palatal": pose(jaw=-1.2, **SPREAD_LIPS, to=PALATAL_TONGUE, contact=[(478, 322)], air=None),
+    "palatalFric": pose(jaw=-1.2, **SPREAD_LIPS, to=shifted(PALATAL_TONGUE, 0, 10, ["mid", "front", "blade"]),
+                        gap=[(478, 326)]),
+    "retroflex": pose(jaw=0.5, ulip=(5, -5), llip=(6, 10), **RETROFLEX_TONGUE, contact=[(549, 354)], air=None),
+    "retroflexFric": pose(jaw=0.5, ulip=(5, -5), llip=(6, 10), turn=(-92, (530, 468), (546, 370)),
+                          to=RETROFLEX_TONGUE["to"], gap=[(548, 359)]),
+    "dental": pose(jaw=-1.5, **SPREAD_LIPS, **DENTAL_TONGUE, contact=[(604, 419)], air=None),
+    "dentalFric": pose(jaw=-1.5, **SPREAD_LIPS, turn=(-22, (530, 468), (598, 429)), to=DENTAL_TONGUE["to"],
+                       gap=[(605, 421)]),
+    "a": pose(jaw=7.0, ulip=(0, -5),
+              tongue={"back": (-10, 8), "backtop": (-8, 16), "dorsum": (0, 18), "mid": (0, 14), "front": (0, 6),
+                      "blade": (0, 2)}),
+    "o": pose(jaw=3.2, ulip=(12, 6), llip=(14, -13),
+              tongue={"back": (-10, -8), "backtop": (-10, -22), "dorsum": (-8, -14), "mid": (-6, 4),
+                      "front": (-6, 12), "blade": (-6, 12), "pretip": (-6, 6), "tip": (-8, 2)}),
+    "e": pose(jaw=2.6, ulip=(0, -5),
+              tongue={"back": (-8, -10), "backtop": (-8, -30), "dorsum": (-6, -22), "mid": (-4, -2),
+                      "front": (-4, 10), "blade": (-4, 10), "pretip": (-4, 4), "tip": (-6, 2)}),
+    "eFront": pose(jaw=2.0, ulip=(-3, -6), llip=(-4, 3),
+                   tongue={"dorsum": (0, -6), "mid": (2, -18), "front": (4, -22), "blade": (4, -18),
+                           "pretip": (2, -8)}),
+    "schwa": pose(jaw=2.0, ulip=(0, -4)),
+    "i": pose(jaw=-1.2, **SPREAD_LIPS, to=HIGH_FRONT, tongue={"back": (8, 4)}),
+    "u": pose(jaw=-0.3, **ROUND_LIPS, to=HIGH_BACK),
+    "yu": pose(jaw=-1.0, ulip=(19, -4), llip=(21, 22), to=HIGH_FRONT, tongue={"back": (8, 4)}),
+    "er": pose(jaw=3.0, ulip=(0, -4), turn=(-80, (530, 468), (546, 404)),
+               to={"blade": (474, 432), "front": (426, 412), "mid": (362, 376), "under2": (556, 505)}),
 }
 
+LARYNX = (192, 830)
+MOUTH_OUT = (742, 474)
+THROAT = [(192, 830), (152, 776), (108, 690), (88, 600), (84, 520)]
+NASAL = THROAT + [(74, 440), (62, 370), (70, 300), (100, 240), (170, 222), (300, 222), (440, 226), (570, 226),
+                  (660, 232), (725, 252), (762, 286), (792, 326)]
+
+# The roof of the mouth: y of the palate's underside at each x (soft palate hanging / lifted, then hard palate).
+ROOF_X = [130, 150, 170, 190, 210, 230, 250, 300, 350, 400, 450, 500, 550, 575, 600]
+ROOF_HANGING = [440, 368, 351, 334, 323, 314, 307, 301, 302, 305, 314, 330, 356, 372, 392]
+ROOF_LIFTED = [304, 303, 303, 303, 304, 305, 306, 301, 302, 305, 314, 330, 356, 372, 392]
+UPPER_TOOTH = np.array([616.0, 447.0])
+LOWER_TOOTH = np.array([603.0, 490.0])
+UPPER_LIP_EDGE = np.array([672.0, 470.0])
+LOWER_LIP_EDGE = np.array([672.0, 476.0])
 
 LABELS = [
-    {"text": "nose cavity", "at": [330, 82], "to": [330, 128], "align": "middle"},
-    {"text": "hard palate", "at": [420, 244], "to": [400, 204], "align": "middle"},
-    {"text": "soft palate", "at": [770, 150], "to": [578, 198], "align": "start"},
-    {"text": "ridge", "at": [300, 286], "to": [256, 240], "align": "start"},
-    {"text": "upper teeth", "at": [8, 232], "from": [150, 240], "to": [214, 292], "align": "start"},
-    {"text": "upper lip", "at": [8, 290], "from": [112, 294], "to": [138, 300], "align": "start"},
-    {"text": "lower lip", "at": [8, 380], "from": [118, 372], "to": [156, 344], "align": "start"},
-    {"text": "lower teeth", "at": [8, 440], "from": [150, 432], "to": [224, 350], "align": "start"},
-    {"text": "tongue tip", "at": [70, 640], "from": [150, 620], "to": [250, 338], "align": "start"},
-    {"text": "tongue front", "at": [330, 690], "to": [345, 296], "align": "middle"},
-    {"text": "tongue back", "at": [470, 730], "to": [500, 300], "align": "middle"},
-    {"text": "throat", "at": [800, 430], "to": [612, 430], "align": "start"},
-    {"text": "voice box", "at": [800, 716], "to": [600, 716], "align": "start"},
+    # text, where the text sits, where its pointer starts, where it points (picture pixels), alignment
+    ("nose passage", (430, 160), (430, 175), (430, 224), "middle"),
+    ("hard palate", (352, 240), (372, 254), (392, 296), "middle"),
+    ("soft palate", (150, 232), (158, 247), (178, 300), "middle"),
+    ("ridge", (728, 372), (722, 372), (594, 388), "start"),
+    ("upper teeth", (728, 416), (722, 416), (620, 432), "start"),
+    ("lips", (728, 472), (722, 472), (704, 472), "start"),
+    ("lower teeth", (728, 528), (722, 528), (607, 512), "start"),
+    ("tongue tip", (500, 528), (540, 514), (583, 496), "middle"),
+    ("tongue front", (452, 440), (460, 426), (478, 394), "middle"),
+    ("tongue back", (264, 440), (256, 426), (238, 378), "middle"),
+    ("throat", (66, 612), (66, 627), (66, 664), "middle"),
+    ("voice box", (318, 852), (312, 852), (208, 832), "start"),
 ]
 
 
-def build_pose(name, pose):
-    body = jaw_body(pose)
-    pal = palate(pose)
-    tng = tongue(pose)
-    points = {
-        "palate": r1(pal), "velum": r1(velum_shape(pal)), "upperLipTint": r1(upper_lip_tint(pal)),
-        "jaw": r1(body), "lowerLipTint": r1(lower_lip_tint(body)), "lowerTooth": r1(lower_tooth(pose)),
-        "tongue": r1(tng),
-    }
-    points.update({k: r1(v) for k, v in front(pose).items()})
-    out = {"points": points}
-    if pose["air"]:
-        route = air_path(pose, body, pal, tng[:24])
-        if name == "ridgeLateral":
-            # The tip blocks the middle, so the breath slips past the sides of the tongue:
-            # drawn running down along the tongue instead of over its tip.
-            top = dense(tng[3:24])
-            side = []
-            for x, drop in ((440, 14), (390, 26), (340, 38), (295, 50)):
-                near = [p[1] for p in top if abs(p[0] - x) < 9]
-                if near:
-                    side.append((float(x), min(near) + drop))
-            route = [p for p in route if p[0] > 460] + side + [(250.0, 322.0)] + [p for p in route if p[0] < 200]
-        out["airPath"] = r1(route)
-    if pose["mark"]:
-        out["contact" if pose["kind"] == "contact" else "gap"] = r1([pose["mark"]])
+def roof(x, velum):
+    hanging = np.interp(x, ROOF_X, ROOF_HANGING)
+    lifted = np.interp(x, ROOF_X, ROOF_LIFTED)
+    return hanging + (lifted - hanging) * velum
+
+
+# ------------------------------------------------------------------ building
+
+def grid(rect, cols, rows):
+    x, y, w, h = rect
+    xs = np.linspace(x, x + w, cols + 1)
+    ys = np.linspace(y, y + h, rows + 1)
+    return np.array([(gx, gy) for gy in ys for gx in xs], dtype=np.float64)
+
+
+def folds(points, moved, cols, rows, alpha):
+    """Number of visible grid triangles a warp has turned inside out or squashed nearly flat."""
+    bad = 0
+    for r in range(rows):
+        for c in range(cols):
+            i = r * (cols + 1) + c
+            x0, y0 = points[i]
+            x1, y1 = points[i + cols + 2]
+            if alpha[int(y0):int(math.ceil(y1)), int(x0):int(math.ceil(x1))].max() < 0.5:
+                continue
+            for tri in ((i, i + cols + 1, i + cols + 2), (i, i + cols + 2, i + 1)):
+                def area(pts):
+                    a, b, d = [pts[t] for t in tri]
+                    return (b[0] - a[0]) * (d[1] - a[1]) - (b[1] - a[1]) * (d[0] - a[0])
+                if area(moved) / area(points) < 0.08:
+                    bad += 1
+    return bad
+
+
+def bounds(alpha, pad=4):
+    ys, xs = np.nonzero(alpha > 0)
+    x0, x1 = max(xs.min() - pad, 0), min(xs.max() + pad + 1, SIZE)
+    y0, y1 = max(ys.min() - pad, 0), min(ys.max() + pad + 1, SIZE)
+    return int(x0), int(y0), int(x1 - x0), int(y1 - y0)
+
+
+def piece(pic, alpha, rect):
+    x, y, w, h = rect
+    out = np.dstack([pic[y:y + h, x:x + w], np.clip(alpha[y:y + h, x:x + w] * 255, 0, 255).astype(np.uint8)])
     return out
 
 
-def main():
-    side_layers = [
-        {"id": "bg", "type": "path", "d": "M0 0H1000V800H0Z", "fill": "background"},
-        {"id": "head", "type": "path", "d": path_d(HEAD), "fill": "skin", "stroke": "outline", "strokeWidth": 5},
-        {"id": "epiglottis", "type": "path", "d": path_d(EPI), "fill": "skin", "stroke": "outline", "strokeWidth": 5},
-        {"id": "palate", "type": "shape", "fill": "skin", "stroke": "outline", "strokeWidth": 5},
-        {"id": "velum", "type": "shape", "fill": "velum", "stroke": "outline", "strokeWidth": 5},
-        {"id": "upperLipTint", "type": "shape", "fill": "lip", "opacity": 0.85},
-        {"id": "upperTooth", "type": "path", "d": path_d(UPPER_TOOTH), "fill": "tooth", "stroke": "toothEdge", "strokeWidth": 4},
-        {"id": "jaw", "type": "shape", "fill": "skin", "stroke": "outline", "strokeWidth": 5},
-        {"id": "tongue", "type": "shape", "fill": "tongue", "stroke": "tongueEdge", "strokeWidth": 5},
-        {"id": "lowerTooth", "type": "shape", "fill": "tooth", "stroke": "toothEdge", "strokeWidth": 4},
-        {"id": "lowerLipTint", "type": "shape", "fill": "lip", "opacity": 0.85},
+def soften(mask, sigma=0.7):
+    return cv2.GaussianBlur(mask.astype(np.float32), (0, 0), sigma)
+
+
+def build(out_dir, debug_dir=None):
+    pic = load_picture()
+    tongue = Tongue(tongue_mask(pic))
+    velum = velum_mask(pic)
+    paper = background_mask(pic)
+    ys, xs = np.mgrid[0:SIZE, 0:SIZE]
+    everywhere = np.stack([xs.ravel(), ys.ravel()], axis=1).astype(np.float64)
+
+    # --- soft palate piece: fades in over its first few pixels, where it does not move
+    box = bounds(velum, 6)
+    vx, vy, vw, vh = box
+    sub = np.stack([xs[vy:vy + vh, vx:vx + vw].ravel(), ys[vy:vy + vh, vx:vx + vw].ravel()], axis=1).astype(float)
+    index, _, _ = velum_place(sub)
+    s_map = np.zeros((SIZE, SIZE))
+    s_map[vy:vy + vh, vx:vx + vw] = VELUM_S[index].reshape(vh, vw)
+    velum_alpha = soften(velum) * smoothstep(0, 18, s_map)
+    velum_rect = bounds(velum_alpha > 0.01, 6)
+
+    # --- tongue piece
+    tongue_alpha = soften(tongue.mask) * (1.0 - smoothstep(MOVE_TO, SHOW_TO, tongue.depth))
+    tongue_rect = bounds(tongue_alpha > 0.01, 6)
+
+    # --- lower jaw piece: everything under the cut, except the tongue's top layer and the paper beside the lips
+    under_cut = ys > cut_y(xs)
+    jaw_rect = (int(JAW_BACK), 440, 760 - int(JAW_BACK), SIZE - 440)
+    erased_tongue = (tongue.mask > 0) & (tongue.depth < ERASE_TO)
+    jaw_mask = under_cut & ~cv2.dilate(erased_tongue.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)
+    jaw_mask &= ~(paper & (ys < 530))
+    jaw_alpha = soften(jaw_mask)
+    # the tongue's own outline is hidden by the tongue piece, so keep that edge hard and fully covered
+    jaw_alpha[(tongue.mask > 0) & (tongue.depth >= ERASE_TO)] = 1.0
+
+    # --- the head with the moving parts taken out and what is behind them painted in
+    head = pic.copy()
+    hole = ((velum > 0) & (s_map > 46)).astype(np.uint8)
+    hole = cv2.dilate(hole, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
+    hole[(s_map <= 40) & (velum > 0)] = 0
+    head = paint_behind_velum(head, hole)
+    wide = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
+    head[cv2.dilate(erased_tongue.astype(np.uint8), wide) > 0] = CAVITY
+    # under the cut the lower jaw can drop away: behind it is the dark mouth, and open air in front of the lips
+    angles = np.linspace(0, 14, 60)
+    arc = np.array([swing(LIP_LINE[None], a)[0] for a in angles])
+    arc_x = np.interp(ys, arc[:, 1], arc[:, 0], left=LIP_LINE[0])
+    band = under_cut & (ys < 665) & (xs > 500) & ~((tongue.mask > 0) & (tongue.depth >= ERASE_TO))
+    head[band & (xs <= arc_x)] = CAVITY
+    head[band & (xs > arc_x)] = WHITE
+
+    lip_crop = (626, 330, 120, 162)
+
+    layers = [
+        dict(id="head", src="mouth/head.png", rect=(0, 0, SIZE, SIZE), cols=0, rows=0),
+        dict(id="upperLip", src="mouth/head.png", crop=lip_crop, rect=lip_crop, cols=8, rows=10),
+        dict(id="softPalate", src="mouth/velum.png", rect=velum_rect, cols=14, rows=13),
+        dict(id="jaw", src="mouth/jaw.png", rect=jaw_rect, cols=22, rows=23),
+        dict(id="tongue", src="mouth/tongue.png", rect=tongue_rect, cols=32, rows=29),
     ]
-    front_layers = FRONT_STATIC + [
-        {"id": "frontLips", "type": "shape", "fill": "lip", "stroke": "tongueEdge", "strokeWidth": 4},
-        {"id": "frontHole", "type": "shape", "fill": "mouthDark"},
-        {"id": "frontTongue", "type": "shape", "fill": "tongue"},
-        {"id": "frontLowerTeeth", "type": "shape", "fill": "tooth"},
-        {"id": "frontUpperTeeth", "type": "shape", "fill": "tooth"},
-    ]
-    poses = {name: build_pose(name, pose) for name, pose in POSES.items()}
+    os.makedirs(os.path.join(out_dir, "mouth"), exist_ok=True)
+    cv2.imwrite(os.path.join(out_dir, "mouth", "head.png"), head)
+    cv2.imwrite(os.path.join(out_dir, "mouth", "velum.png"), piece(pic, velum_alpha, velum_rect))
+    cv2.imwrite(os.path.join(out_dir, "mouth", "jaw.png"), piece(pic, jaw_alpha, jaw_rect))
+    cv2.imwrite(os.path.join(out_dir, "mouth", "tongue.png"), piece(pic, tongue_alpha, tongue_rect))
+    if debug_dir:
+        os.makedirs(debug_dir, exist_ok=True)
+        cv2.imwrite(os.path.join(debug_dir, "picture.png"), pic)
+        marks = pic.copy()
+        for name, p in tongue.handles.items():
+            cv2.circle(marks, (int(p[0]), int(p[1])), 4, (0, 255, 0), -1)
+        for p in PINS:
+            cv2.circle(marks, p, 4, (255, 0, 0), -1)
+        cv2.polylines(marks, [VELUM_LINE.astype(np.int32)], False, (0, 255, 255), 1)
+        cv2.polylines(marks, [VELUM_LINE_UP.astype(np.int32)], False, (255, 255, 0), 1)
+        cv2.imwrite(os.path.join(debug_dir, "marks.png"), marks)
+
+    grids = {l["id"]: grid(l["rect"], l["cols"], l["rows"]) for l in layers if l["cols"]}
+    alphas = {"upperLip": np.ones((SIZE, SIZE)), "softPalate": velum_alpha, "jaw": jaw_alpha, "tongue": tongue_alpha}
+    poses = {}
+    report = []
+    for name, spec in POSES.items():
+        local = dict(spec["tongue"])
+        for handle, target in spec["to"].items():
+            rest = tongue.handles[handle][None]
+            carried = rest + jaw_shift(rest, spec["jaw"])
+            local[handle] = tuple((np.array(target, float) - carried[0]).tolist())
+        if spec["turn"]:
+            degrees, pivot, tip_to = spec["turn"]
+            a = math.radians(degrees)
+            pivot = np.array(pivot, float)
+            pivot = pivot + jaw_shift(pivot[None], spec["jaw"])[0]
+            turned = {}
+            for handle in TIP_BLOCK:
+                rest = tongue.handles[handle]
+                carried = rest + jaw_shift(rest[None], spec["jaw"])[0]
+                r = carried - pivot
+                turned[handle] = (carried, pivot + np.array([r[0] * math.cos(a) - r[1] * math.sin(a),
+                                                            r[0] * math.sin(a) + r[1] * math.cos(a)]))
+            slide = np.array(tip_to, float) - turned["tip"][1]
+            for handle, (carried, there) in turned.items():
+                local[handle] = tuple((there + slide - carried).tolist())
+        ulip = np.array(spec["ulip"], float)
+        llip = np.array(spec["llip"], float)
+
+        def lower(p):
+            return jaw_shift(p, spec["jaw"]) + lower_lip_weight(p)[:, None] * llip
+
+        moves = {
+            "upperLip": upper_lip_weight(grids["upperLip"])[:, None] * ulip,
+            "softPalate": velum_shift(grids["softPalate"], spec["velum"]),
+            "jaw": lower(grids["jaw"]),
+            "tongue": tongue.shift(grids["tongue"], spec["jaw"], local),
+        }
+        mesh = {}
+        for layer in layers:
+            lid = layer["id"]
+            if lid not in moves or not np.abs(moves[lid]).max() > 0.05:
+                continue
+            bad = folds(grids[lid], grids[lid] + moves[lid], layer["cols"], layer["rows"], alphas[lid])
+            if bad:
+                report.append(f"{name}.{lid}: {bad} folded triangles")
+            mesh[lid] = [int(round(float(v) * K / MESH_UNIT)) for v in moves[lid].ravel()]
+
+        entry = {"mesh": mesh}
+        if spec["contact"]:
+            entry["contact"] = [[round(x * K, 1), round(y * K, 1)] for x, y in spec["contact"]]
+        if spec["gap"]:
+            entry["gap"] = [[round(x * K, 1), round(y * K, 1)] for x, y in spec["gap"]]
+        if spec["air"] == "auto":
+            where = {n: tongue.handles[n] + jaw_shift(tongue.handles[n][None], spec["jaw"])[0]
+                     + np.array(local.get(n, (0, 0)), float) for n in SURFACE}
+            if debug_dir is not None:
+                pass
+            route = list(THROAT)
+            back = where["back"]
+            route.append(((back[0] + 42) / 2, back[1] + 10))
+            for n in SURFACE[1:-1]:
+                x, y = where[n]
+                route.append((x, (y + roof(x, spec["velum"])) / 2))
+            lower_tooth = LOWER_TOOTH + jaw_shift(LOWER_TOOTH[None], spec["jaw"])[0]
+            route.append(tuple((UPPER_TOOTH + lower_tooth) / 2 + (0, 2)))
+            top = UPPER_LIP_EDGE + upper_lip_weight(UPPER_LIP_EDGE[None])[0] * ulip
+            bottom = LOWER_LIP_EDGE + lower(LOWER_LIP_EDGE[None])[0]
+            between = (top + bottom) / 2
+            if spec["via"]:
+                route = route[:-1] + list(spec["via"])
+            route.append((between[0] + 4, between[1]))
+            route.append((between[0] + 66, between[1] + 2))
+            entry["airPath"] = [[round(x * K, 1), round(y * K, 1)] for x, y in route]
+        poses[name] = entry
+
+    def view_rect(r):
+        return [round(v * K, 2) for v in r]
+
     art = {
-        "version": 1,
+        "version": 2,
+        "meshUnit": MESH_UNIT,
+        "source": "OpenStax College, Anatomy & Physiology, figure 'Anatomy of Nose-Pharynx-Mouth-Larynx' (CC BY 3.0)",
         "palette": PALETTE,
-        "views": {
-            "side": {"width": 1000, "height": 800, "layers": side_layers, "labels": LABELS},
-            "front": {"width": 500, "height": 400, "layers": front_layers},
+        "views": {"side": {
+            "width": VIEW, "height": VIEW,
+            "layers": [dict({"id": l["id"], "type": "image", "src": l["src"], "rect": view_rect(l["rect"]),
+                             "cols": l["cols"], "rows": l["rows"]},
+                            **({"crop": list(l["crop"])} if "crop" in l else {})) for l in layers],
+            "labels": [{"text": t, "at": [round(a[0] * K, 1), round(a[1] * K, 1)],
+                        "from": [round(f[0] * K, 1), round(f[1] * K, 1)],
+                        "to": [round(b[0] * K, 1), round(b[1] * K, 1)], "align": al} for t, a, f, b, al in LABELS],
+        }},
+        "anchors": {
+            "larynx": [round(LARYNX[0] * K, 1), round(LARYNX[1] * K, 1)],
+            "mouthOut": [round(MOUTH_OUT[0] * K, 1), round(MOUTH_OUT[1] * K, 1)],
+            "nasalPath": [[round(x * K, 1), round(y * K, 1)] for x, y in NASAL],
         },
-        "anchors": {"larynx": [592, 716], "mouthOut": [96, 338],
-                    "nasalPath": [[600, 420], [612, 300], [590, 170], [480, 112], [300, 104], [176, 138], [98, 214]]},
         "poses": poses,
     }
-    with open(sys.argv[1], "w", encoding="utf-8") as f:
+    path = os.path.join(out_dir, "mouth.json")
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(art, f, ensure_ascii=False, separators=(",", ":"))
-    print("wrote %s (%d poses, %d bytes)" % (sys.argv[1], len(poses), os.path.getsize(sys.argv[1])))
+        f.write("\n")
+    print(f"wrote {path} ({os.path.getsize(path)} bytes), {len(poses)} poses")
+    for line in report:
+        print("WARNING", line)
+    return report
 
 
 if __name__ == "__main__":
-    main()
+    args = [a for a in sys.argv[1:]]
+    debug = None
+    if "--debug" in args:
+        i = args.index("--debug")
+        debug = args[i + 1]
+        del args[i:i + 2]
+    target = args[0] if args else os.path.join(HERE, "..", "..", "app", "src", "main", "assets")
+    build(target, debug)

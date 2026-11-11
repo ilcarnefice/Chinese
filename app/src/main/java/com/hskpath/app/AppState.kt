@@ -111,7 +111,9 @@ class AppState(private val context: Context) {
         val read = { path: String -> context.assets.open(path).bufferedReader().use { it.readText() } }
         content = withContext(Dispatchers.IO) { Content.load(read) }
         strokes = withContext(Dispatchers.IO) { StrokeBook(read("strokes.tsv")) }
-        mouth = withContext(Dispatchers.IO) { Mouth.parse(read("mouth.json")) }
+        mouth = withContext(Dispatchers.IO) {
+            Mouth.parse(read("mouth.json")).also { com.hskpath.app.ui.MouthPictures.warm(context, it) }
+        }
     }
 
     fun save(updated: Progress) {

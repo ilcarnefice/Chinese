@@ -1,6 +1,10 @@
 package com.hskpath.app.ui
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.Typeface
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -58,6 +62,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -96,37 +101,82 @@ private fun shapePath(points: FloatArray, closed: Boolean, smooth: Boolean): Pat
 
 private fun flat(points: List<List<Float>>): FloatArray = Mouth.flatten(points)
 
+/** The pieces of the real picture that the mouth diagrams are made of, decoded once and kept. */
+object MouthPictures {
+    private val cache = HashMap<String, Bitmap>()
+
+    fun get(context: Context, layer: MouthLayer): Bitmap? = synchronized(cache) {
+        val src = layer.src ?: return null
+        val crop = layer.crop?.takeIf { it.size == 4 }
+        val key = if (crop == null) src else src + crop.joinToString(",", "#")
+        cache[key]?.let { return it }
+        val whole = cache[src] ?: runCatching { context.assets.open(src).use { BitmapFactory.decodeStream(it) } }
+            .getOrNull()?.also { cache[src] = it } ?: return null
+        if (crop == null) return whole
+        val part = runCatching { Bitmap.createBitmap(whole, crop[0], crop[1], crop[2], crop[3]) }.getOrNull() ?: return null
+        cache[key] = part
+        part
+    }
+
+    /** Decodes every picture of the diagrams ahead of time, off the main thread. */
+    fun warm(context: Context, mouth: Mouth) {
+        for (layer in mouth.side.layers) if (layer.isImage) get(context, layer)
+    }
+}
+
 /**
- * Draws one view of the mouth diagrams ("side" or "front") for the given point
- * positions, following the rules in tools/mouth/SPEC.md. [flow] (0..1, repeating)
- * makes the breath arrows move.
+ * Draws the side view of the mouth for the given positions of its moving parts,
+ * following the rules in tools/mouth/SPEC.md. [flow] (0..1, repeating) makes the
+ * breath arrows move.
  */
 @Composable
 fun MouthCanvas(
     mouth: Mouth,
-    viewName: String,
     frame: Map<String, FloatArray>,
     modifier: Modifier = Modifier,
     overlay: MouthOverlay? = null,
     labels: Boolean = false,
     flow: Float = 0f,
 ) {
-    val view = if (viewName == Mouth.FRONT) mouth.front else mouth.side
-    val fixed = remember(mouth, viewName) {
-        view.layers.filter { !it.isShape }.associate { it.id to PathParser().parsePathString(it.d.orEmpty()).toPath() }
+    val view = mouth.side
+    val context = LocalContext.current
+    val fixed = remember(mouth) {
+        view.layers.filter { it.type == "path" }.associate { it.id to PathParser().parsePathString(it.d.orEmpty()).toPath() }
     }
+    val pictures = remember(mouth) {
+        view.layers.filter { it.isImage }.mapNotNull { layer -> MouthPictures.get(context, layer)?.let { layer.id to it } }.toMap()
+    }
+    val paint = remember { Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG) }
     Canvas(modifier.aspectRatio(view.width / view.height)) {
         val s = size.width / view.width
         scale(s, s, pivot = Offset.Zero) {
-            // The artwork may run past the edge of the view (a head is bigger than the picture of it).
+            // The artwork may run past the edge of the view; keep it inside the picture.
             clipRect(0f, 0f, view.width, view.height) {
+                drawRect(Color.White, size = androidx.compose.ui.geometry.Size(view.width, view.height))
                 for (layer in view.layers) {
-                    val path = fixed[layer.id] ?: shapePath(frame[layer.id] ?: FloatArray(0), layer.closed, layer.smooth)
-                    drawLayer(mouth, layer, path, view)
+                    if (layer.isImage) {
+                        pictures[layer.id]?.let { drawPicture(layer, it, frame[layer.id], paint) }
+                    } else {
+                        val path = fixed[layer.id] ?: shapePath(frame[layer.id] ?: FloatArray(0), layer.closed, layer.smooth)
+                        drawLayer(mouth, layer, path, view)
+                    }
                 }
                 if (overlay != null && overlay.alpha > 0.01f) drawOverlay(mouth, overlay, flow)
                 if (labels) drawLabels(mouth, view)
             }
+        }
+    }
+}
+
+/** A piece of the real picture: stretched over its grid if it moves, drawn as it is if not. */
+private fun DrawScope.drawPicture(layer: MouthLayer, bitmap: Bitmap, grid: FloatArray?, paint: Paint) {
+    paint.alpha = (layer.opacity.coerceIn(0f, 1f) * 255).toInt()
+    drawIntoCanvas { canvas ->
+        if (layer.isMesh && grid != null && grid.size == layer.gridSize) {
+            canvas.nativeCanvas.drawBitmapMesh(bitmap, layer.cols, layer.rows, grid, 0, null, 0, paint)
+        } else {
+            val r = layer.rect ?: return@drawIntoCanvas
+            if (r.size == 4) canvas.nativeCanvas.drawBitmap(bitmap, null, RectF(r[0], r[1], r[0] + r[2], r[1] + r[3]), paint)
         }
     }
 }
@@ -223,10 +273,13 @@ private fun DrawScope.drawOverlay(mouth: Mouth, overlay: MouthOverlay, flow: Flo
 
 private fun DrawScope.drawLabels(mouth: Mouth, view: MouthView) {
     val ink = hex(mouth.colour("label") ?: "#1F2333")
-    for (label in view.labels) {
+    // Pointers get a white edge so they stay readable on the dark parts of the picture.
+    for (white in listOf(true, false)) for (label in view.labels) {
         val from = label.from ?: label.at
-        drawLine(ink, Offset(from[0], from[1]), Offset(label.to[0], label.to[1]), strokeWidth = 3f, cap = StrokeCap.Round)
-        drawCircle(ink, 6f, Offset(label.to[0], label.to[1]))
+        val a = Offset(from[0], from[1])
+        val b = Offset(label.to[0], label.to[1])
+        drawLine(if (white) Color.White else ink, a, b, strokeWidth = if (white) 8f else 3.5f, cap = StrokeCap.Round)
+        drawCircle(if (white) Color.White else ink, if (white) 9.5f else 7f, b)
     }
     val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textSize = 30f
@@ -253,7 +306,12 @@ private fun DrawScope.drawLabels(mouth: Mouth, view: MouthView) {
     }
 }
 
-/** Side view with the front view inset, as used on the sound screen and in tests. */
+/**
+ * The mouth picture as used on the sound screen: the moving side view, what the
+ * markers mean, and where the picture comes from. With [names] the relaxed
+ * mouth is shown instead, with every part named.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MouthPicture(
     mouth: Mouth,
@@ -261,27 +319,30 @@ fun MouthPicture(
     modifier: Modifier = Modifier,
     overlay: MouthOverlay? = null,
     flow: Float = 0f,
+    names: Boolean = false,
 ) {
     Column(modifier) {
-        MouthCanvas(mouth, Mouth.SIDE, frame, Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)), overlay, flow = flow)
-        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(0.42f), horizontalAlignment = Alignment.CenterHorizontally) {
-                MouthCanvas(mouth, Mouth.FRONT, frame, Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)))
-                Text("From the front", style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
-            }
-            Column(Modifier.weight(0.58f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                val contact = hex(mouth.colour("contact") ?: "#FFB703")
-                val air = hex(mouth.colour("air") ?: "#339AF0")
-                val voice = hex(mouth.colour("voice") ?: "#845EF7")
-                Key(contact, filled = true, "touching: air blocked")
-                Key(contact, filled = false, "narrow gap: air hisses")
-                Key(air, filled = true, "path of the breath")
-                Key(voice, filled = true, "voice switched on")
-            }
+        MouthCanvas(mouth, if (names) mouth.frame(Mouth.REST) else frame,
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)), if (names) null else overlay, labels = names, flow = flow)
+        Text("A head seen from the side, cut down the middle. Nose and lips are on the right.",
+            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp))
+        FlowRow(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            val contact = hex(mouth.colour("contact") ?: "#FFB703")
+            val air = hex(mouth.colour("air") ?: "#339AF0")
+            val voice = hex(mouth.colour("voice") ?: "#845EF7")
+            Key(contact, filled = true, "touching: air blocked")
+            Key(contact, filled = false, "narrow gap: air hisses")
+            Key(air, filled = true, "path of the breath")
+            Key(voice, filled = true, "voice switched on")
         }
+        Text(PICTURE_CREDIT, style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
     }
 }
+
+const val PICTURE_CREDIT = "Picture adapted from OpenStax, Anatomy & Physiology (CC BY 3.0)."
 
 @Composable
 private fun Key(color: Color, filled: Boolean, label: String) {
@@ -307,6 +368,7 @@ fun SoundScreen(app: AppState, content: Content, letters: String, isInitial: Boo
         var from by remember { mutableStateOf(Mouth.REST) }
         var replay by remember { mutableIntStateOf(0) }
         var playing by remember { mutableStateOf(true) }
+        var names by remember { mutableStateOf(false) }
         val move = remember { Animatable(1f) }
         val flow by rememberInfiniteTransition(label = "flow").animateFloat(
             0f, 1f, infiniteRepeatable(tween(900, easing = LinearEasing)), label = "flow")
@@ -334,7 +396,13 @@ fun SoundScreen(app: AppState, content: Content, letters: String, isInitial: Boo
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Card(Modifier.fillMaxWidth()) {
-                MouthPicture(mouth, frame, Modifier.padding(10.dp), overlay, flow)
+                Box {
+                    MouthPicture(mouth, frame, Modifier.padding(10.dp), overlay, flow, names)
+                    Box(Modifier.align(Alignment.TopStart).padding(18.dp)) {
+                        Pill(if (names) "Hide names" else "Name the parts", if (names) Sky else Color.White.copy(alpha = 0.92f),
+                            if (names) Color.White else Sky.darker(0.15f)) { names = !names }
+                    }
+                }
             }
             Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -407,10 +475,14 @@ fun SoundScreen(app: AppState, content: Content, letters: String, isInitial: Boo
 fun MouthMap(mouth: Mouth, modifier: Modifier = Modifier) {
     Card(modifier.fillMaxWidth()) {
         Column(Modifier.padding(10.dp)) {
-            MouthCanvas(mouth, Mouth.SIDE, mouth.frame(Mouth.REST), Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)),
+            MouthCanvas(mouth, mouth.frame(Mouth.REST), Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)),
                 labels = true)
-            Text("The parts of the mouth named in the instructions.", style = MaterialTheme.typography.labelMedium,
+            Text("A real textbook picture of a head seen from the side, cut down the middle, with the parts named " +
+                "in the instructions. Tap a sound below to watch these parts move.",
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+            Text(PICTURE_CREDIT, style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
         }
     }
 }

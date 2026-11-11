@@ -225,8 +225,10 @@ fun AboutScreen(app: AppState) {
                 "film-subtitle frequencies. The sentence corpus comes from Tatoeba (tatoeba.org), licensed CC BY 2.0 FR; " +
                 "its word splitting and pinyin were added automatically and may contain occasional mistakes. Stroke " +
                 "order comes from Hanzi Writer data, built on Make Me a Hanzi and the Arphic fonts (Arphic Public " +
-                "License). The head anatomy in the mouth diagrams is traced from a public-domain (CC0) diagram by " +
-                "Wugapodes on Wikimedia Commons. Beginner glosses, the hand-written examples, grammar notes, phrase " +
+                "License). The mouth diagrams are adapted from the figure \"Anatomy of Nose-Pharynx-Mouth-Larynx\" by " +
+                "OpenStax College, Anatomy & Physiology (cnx.org/content/col11496/1.6), used under the Creative " +
+                "Commons Attribution 3.0 licence: its labels were removed and its tongue, jaw and soft palate are " +
+                "moved to show each sound. Beginner glosses, the hand-written examples, grammar notes, phrase " +
                 "books and dialogues were written for " +
                 "this app. Audio is produced by your device's text-to-speech voice.")
             Text("This app is independent and is not affiliated with Hanban, Chinese Testing International, " +

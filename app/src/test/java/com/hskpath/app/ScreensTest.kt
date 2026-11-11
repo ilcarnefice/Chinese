@@ -192,7 +192,7 @@ class ScreensTest {
         }
     }
 
-    /** Every pose drawn by the app, for comparing with tools/mouth/preview.cjs. */
+    /** Every pose drawn by the app, for comparing with tools/mouth/preview.py. */
     @Test fun everyMouthPoseDraws() {
         val mouth = app.mouth!!
         val pages = com.hskpath.core.Sounds.shapes.toList().chunked(6)
@@ -215,10 +215,8 @@ class ScreensTest {
                     for (name in row) {
                         val typical = com.hskpath.core.Sounds.all.flatMap { it.steps }.firstOrNull { it.shape == name }
                         androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
-                            com.hskpath.app.ui.MouthCanvas(mouth, com.hskpath.core.Mouth.SIDE, mouth.frame(name),
+                            com.hskpath.app.ui.MouthCanvas(mouth, mouth.frame(name),
                                 overlay = typical?.let { com.hskpath.app.ui.MouthOverlay(name, it.air, it.voiced) })
-                            com.hskpath.app.ui.MouthCanvas(mouth, com.hskpath.core.Mouth.FRONT, mouth.frame(name),
-                                Modifier.fillMaxWidth(0.5f))
                             androidx.compose.material3.Text(name)
                         }
                     }

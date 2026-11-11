@@ -8,27 +8,71 @@ import org.junit.Test
 import java.io.File
 
 class MouthTest {
-    private val mouth = Mouth.parse(
-        File(System.getProperty("assetsDir") ?: "../app/src/main/assets", "mouth.json").readText())
+    private val assets = File(System.getProperty("assetsDir") ?: "../app/src/main/assets")
+    private val mouth = Mouth.parse(File(assets, "mouth.json").readText())
 
     @Test fun theShippedDiagramsAreComplete() {
         assertEquals(emptyList<String>(), mouth.problems(Sounds.shapes))
         assertEquals(1000f, mouth.side.width)
-        assertEquals(800f, mouth.side.height)
-        assertEquals(500f, mouth.front.width)
-        assertEquals(400f, mouth.front.height)
-        assertTrue(mouth.side.layers.any { it.isShape } && mouth.front.layers.any { it.isShape })
+        assertEquals(1000f, mouth.side.height)
         assertTrue(mouth.side.labels.size >= 8)
+        assertTrue(mouth.art.source.contains("OpenStax"))
+    }
+
+    @Test fun theDiagramsAreOneRealPictureTakenApart() {
+        // Nothing is drawn: every layer is a piece of the textbook picture.
+        assertTrue(mouth.side.layers.all { it.isImage })
+        assertEquals(null, mouth.front)
+        val moving = mouth.side.layers.filter { it.isMesh }.map { it.id }
+        assertEquals(listOf("upperLip", "softPalate", "jaw", "tongue"), moving)
+        assertTrue(mouth.pictures.isNotEmpty())
+        for (picture in mouth.pictures) assertTrue("$picture is missing", File(assets, picture).isFile)
     }
 
     @Test fun everyPoseUsedByASoundCanBeDrawn() {
         for (shape in Sounds.shapes) {
             assertTrue(shape, shape in mouth.poseNames)
             val frame = mouth.frame(shape)
-            for (layer in mouth.side.layers + mouth.front.layers) if (layer.isShape) {
-                assertTrue("$shape.${layer.id}", frame.getValue(layer.id).size >= 4)
+            for (layer in mouth.side.layers) if (layer.isMesh) {
+                assertEquals("$shape.${layer.id}", layer.gridSize, frame.getValue(layer.id).size)
             }
         }
+    }
+
+    @Test fun theRelaxedMouthIsThePictureUntouched() {
+        val rest = mouth.frame("rest")
+        for (layer in mouth.side.layers) if (layer.isMesh) {
+            assertArrayEquals(layer.id, Mouth.grid(layer), rest.getValue(layer.id), 0f)
+        }
+    }
+
+    @Test fun theSoftPalateShutsTheNoseExceptForNasalSounds() {
+        val rest = mouth.frame("rest").getValue("softPalate")
+        for (shape in Sounds.shapes) {
+            val lifted = !mouth.frame(shape).getValue("softPalate").contentEquals(rest)
+            val nasal = shape in setOf("rest", "lipsNasal", "ridgeNasal", "velarNasal")
+            assertEquals("soft palate in $shape", !nasal, lifted)
+        }
+    }
+
+    @Test fun pictureGridsMoveByWholeUnits() {
+        val tiny = Mouth.parse("""{"meshUnit":0.5,"palette":{"contact":"#FFB703","air":"#339AF0","voice":"#845EF7","label":"#1F2333"},
+            "views":{"side":{"width":1000,"height":1000,"layers":[
+                {"id":"head","type":"image","src":"mouth/head.png","rect":[0,0,1000,1000]},
+                {"id":"jaw","type":"image","src":"mouth/jaw.png","rect":[10,20,100,50],"cols":1,"rows":1}]}},
+            "anchors":{"larynx":[1,2],"mouthOut":[3,4],"nasalPath":[[0,0],[1,1]]},
+            "poses":{"rest":{},"a":{"mesh":{"jaw":[2,0,0,0,0,0,0,-4]}},"bad":{"mesh":{"jaw":[1,2],"head":[0,0,0,0,0,0,0,0]}}}}""")
+        assertEquals(setOf("mouth/head.png", "mouth/jaw.png"), tiny.pictures)
+        assertArrayEquals(floatArrayOf(10f, 20f, 110f, 20f, 10f, 70f, 110f, 70f), tiny.frame("rest").getValue("jaw"), 0f)
+        assertArrayEquals(floatArrayOf(11f, 20f, 110f, 20f, 10f, 70f, 110f, 68f), tiny.frame("a").getValue("jaw"), 0f)
+        assertArrayEquals(floatArrayOf(10.5f, 20f, 110f, 20f, 10f, 70f, 110f, 69f), tiny.blend("rest", "a", 0.5f).getValue("jaw"), 0f)
+        // The head has no grid, so it is not in the frame at all.
+        assertTrue("head" !in tiny.frame("a"))
+        val problems = tiny.problems(listOf("rest", "a"))
+        assertTrue(problems.any { it.contains("bad.jaw has 2 numbers, its grid needs 8") })
+        assertTrue(problems.any { it.contains("bad moves unknown picture head") })
+        // A grid of the wrong size is ignored rather than drawn wrongly.
+        assertArrayEquals(tiny.frame("rest").getValue("jaw"), tiny.frame("bad").getValue("jaw"), 0f)
     }
 
     @Test fun closuresTouchAndNarrowingsLeaveAGap() {
@@ -45,7 +89,8 @@ class MouthTest {
 
     @Test fun posesDifferFromRestAndFromEachOther() {
         val rest = mouth.frame("rest")
-        for (shape in Sounds.shapes - "rest") {
+        // The picture itself shows a closed mouth breathing through the nose, which is exactly m without the voice.
+        for (shape in Sounds.shapes - "rest" - "lipsNasal") {
             val frame = mouth.frame(shape)
             assertTrue("$shape is identical to rest", frame.any { (id, pts) -> !pts.contentEquals(rest.getValue(id)) })
         }

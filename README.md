@@ -16,7 +16,7 @@ in short game-like lessons.
 | Phrase books | 900 phrases with audio and drills: 500 everyday phrases in 20 topics, 100 travel phrases in 10 topics, 300 business phrases in 12 topics |
 | Training plans | A day-by-day schedule through each level (HSK 1-3 in 30 days each, HSK 4 in 60, HSK 5 in 100, HSK 6 in 150): lessons, a grammar formula, a sentence workout and optional handwriting each day, ending with the level test |
 | Dialogues | 17 short conversations covering every level, with line-by-line audio and "play all" |
-| Sounds and mouth positions | For all 21 initials and 35 finals: an animated anatomical side section and a front view of the lips, played step by step (closure, release, vowel) with the breath through mouth or nose, the puff of aspirated sounds and voicing shown; a labelled map of the mouth; instructions, the nearest English sound and practice words; plus the tones with pitch contours and tone-change rules |
+| Sounds and mouth positions | For all 21 initials and 35 finals: a real textbook picture of the head in side section that moves — jaw, lips, tongue and soft palate — played step by step (closure, release, vowel) with the breath through mouth or nose, the puff of aspirated sounds and voicing marked; a button that names the parts; instructions, the nearest English sound and practice words; plus the tones with pitch contours and tone-change rules |
 | Practice | Spaced-repetition word review, sentence workouts (translate, listen, build), grammar drills, and a 30-question test per level |
 | Dictionary | Search all 11,001 words by characters, pinyin (tones optional) or English |
 | Motivation | XP, ranks, a daily goal, day streaks, a weekly chart, 13 achievements, and a panda that cheers you on |
@@ -49,8 +49,9 @@ Every push also builds the APK on GitHub Actions; download it from the run's
   Edit `content/` by hand to add or correct material; `content/outline_hsk<N>.txt`
   sets the units, their themes and where grammar lessons go
   (`python3 tools/check_outline.py <N> <file>` checks one).
-- `tools/` — scripts that regenerate the word lists, sentence corpus and stroke data
-  from the open sources below.
+- `tools/` — scripts that regenerate the word lists, sentence corpus, stroke data and
+  mouth diagrams from the open sources below (`tools/mouth/SPEC.md` describes the
+  mouth diagrams).
 
 ## Content sources and licences
 
@@ -66,10 +67,14 @@ Every push also builds the APK on GitHub Actions; download it from the run's
 - Stroke order (`app/src/main/assets/strokes.tsv`): derived from
   [Hanzi Writer data](https://github.com/chanind/hanzi-writer-data), built on Make Me
   a Hanzi and the Arphic fonts; see `licenses/ARPHICPL.TXT`.
-- Mouth diagrams (`app/src/main/assets/mouth.json`): the head anatomy is traced from
-  "Midsagittal diagram unlabeled" by Wugapodes on Wikimedia Commons, public domain
-  (CC0); the moving tongue, lips, jaw and soft palate, and every pose, were modelled
-  for this app (`tools/mouth/`).
+- Mouth diagrams (`app/src/main/assets/mouth/`, `mouth.json`): adapted from the figure
+  "Anatomy of Nose-Pharynx-Mouth-Larynx" by OpenStax College, *Anatomy & Physiology*
+  (Connexions, http://cnx.org/content/col11496/1.6/), licensed
+  [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), via
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:2303_Anatomy_of_Nose-Pharynx-Mouth-Larynx.jpg).
+  Changes: labels removed, cropped, and the tongue, lower jaw and soft palate cut out
+  and moved to show each sound (`tools/mouth/source/README.md`). The adapted pictures
+  carry the same licence.
 - Beginner glosses for HSK 1-2, about 215 hand-written example sentences, the grammar
   formulas, the phrase books and the dialogues were written for this app.
 
