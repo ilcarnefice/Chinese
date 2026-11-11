@@ -13,7 +13,9 @@ in short game-like lessons.
 | Sentence Map | About 24,300 sentences with pinyin and English, grouped by key word and graded by HSK level |
 | Grammar Map | 100 formulas drawn as colour-coded building blocks, each with an explanation, examples pulled from the corpus and a sentence-building drill |
 | Writing | Stroke-order animation and stroke-by-stroke tracing for all 2,663 characters in HSK 1-6 |
-| Dialogues | 9 short conversations (HSK 1-4) with line-by-line audio and "play all" |
+| Phrase books | 900 phrases with audio and drills: 500 everyday phrases in 20 topics, 100 travel phrases in 10 topics, 300 business phrases in 12 topics |
+| Training plans | A day-by-day schedule through each level (HSK 1-3 in 30 days each, HSK 4 in 60, HSK 5 in 100, HSK 6 in 150): lessons, a grammar formula, a sentence workout and optional handwriting each day, ending with the level test |
+| Dialogues | 17 short conversations covering every level, with line-by-line audio and "play all" |
 | Sounds and mouth positions | An animated side-view diagram of lips, teeth and tongue for all 21 initials and 35 finals, with instructions, the nearest English sound and practice words; plus the tones with pitch contours and the tone-change rules |
 | Practice | Spaced-repetition word review, sentence workouts (translate, listen, build), grammar drills, and a 30-question test per level |
 | Dictionary | Search all 11,001 words by characters, pinyin (tones optional) or English |
@@ -62,7 +64,7 @@ Every push also builds the APK on GitHub Actions; download it from the run's
   [Hanzi Writer data](https://github.com/chanind/hanzi-writer-data), built on Make Me
   a Hanzi and the Arphic fonts; see `licenses/ARPHICPL.TXT`.
 - Beginner glosses for HSK 1-2, about 215 hand-written example sentences, the grammar
-  formulas and the dialogues were written for this app.
+  formulas, the phrase books and the dialogues were written for this app.
 
 The app is independent. It is not affiliated with any textbook publisher or with the
 organisations that run the HSK exam, and it contains no material from commercial books.

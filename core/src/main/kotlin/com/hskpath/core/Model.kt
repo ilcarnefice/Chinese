@@ -88,3 +88,10 @@ data class GrammarPoint(
 data class DialogueLine(val speaker: String, val sentence: Sentence)
 
 data class Dialogue(val level: Int, val title: String, val lines: List<DialogueLine>)
+
+/** A themed group of phrases inside a phrase book. */
+data class PhraseTopic(val title: String, val phrases: List<Sentence>)
+
+data class PhraseBook(val id: String, val icon: String, val title: String, val blurb: String, val topics: List<PhraseTopic>) {
+    val size: Int get() = topics.sumOf { it.phrases.size }
+}

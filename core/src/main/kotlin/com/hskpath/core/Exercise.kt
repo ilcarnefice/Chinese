@@ -113,6 +113,16 @@ class ExerciseBuilder(private val content: Content, private val random: Random =
         }
     }
 
+    /** Practice for one phrase-book topic: understand, hear and rebuild its phrases. */
+    fun phraseDrill(topic: PhraseTopic, size: Int = DRILL_SIZE): List<Exercise> =
+        topic.phrases.shuffled(random).take(size).mapIndexed { i, s ->
+            when {
+                i % 3 == 1 && s.words.size in 2..9 -> arrange(s, emptyList())
+                i % 3 == 2 -> sentenceChoice(SentenceKind.LISTEN, s, topic.phrases)
+                else -> sentenceChoice(SentenceKind.TRANSLATE, s, topic.phrases)
+            }
+        }
+
     /** A graded test over a whole level: listening, reading and sentences. */
     fun levelTest(level: Int, size: Int = TEST_SIZE): List<Exercise> {
         val words = content.wordsOf(level).shuffled(random).take(size)

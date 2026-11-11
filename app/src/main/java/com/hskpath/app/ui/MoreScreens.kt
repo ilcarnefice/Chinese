@@ -52,7 +52,7 @@ fun StoriesScreen(app: AppState, content: Content, level: Int) {
         TopBar(app, "Dialogues · HSK $level")
         VoiceNotice(app)
         if (dialogues.isEmpty()) {
-            Text("There are no dialogues for this level yet. Levels 1 to 4 have them.", Modifier.padding(16.dp))
+            Text("There are no dialogues for this level yet.", Modifier.padding(16.dp))
         }
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
             items(dialogues) { dialogue ->
@@ -204,7 +204,8 @@ fun AboutScreen(app: AppState) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("HSK Path teaches the 5,000 words of HSK levels 1 to 6 in short lessons, with a word map of 11,000 " +
-                "words, a sentence map of 24,000 sentences, 100 grammar formulas, stroke-order writing, dialogues " +
+                "words, a sentence map of 24,000 sentences, 100 grammar formulas, 900 phrase-book phrases, mouth " +
+                "positions for every sound, stroke-order writing, day-by-day training plans, dialogues " +
                 "and spaced practice. It works fully offline and keeps your progress on this device only.")
             Text("How it works", fontWeight = FontWeight.Bold)
             Text("• Each lesson teaches five words, then drills them: meaning, characters, pronunciation, " +

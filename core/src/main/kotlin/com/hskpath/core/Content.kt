@@ -11,6 +11,7 @@ class Content(
     val sentences: List<Sentence>,
     val grammar: List<GrammarPoint>,
     val dialogues: List<Dialogue>,
+    val phraseBooks: List<PhraseBook> = emptyList(),
 ) {
     val levels: List<Int> = words.keys.sorted()
 
@@ -93,6 +94,8 @@ class Content(
         return all.take(max)
     }
 
+    fun phraseBook(id: String): PhraseBook? = phraseBooks.firstOrNull { it.id == id }
+
     fun dialoguesOf(level: Int) = dialogues.filter { it.level == level }
 
     /** Finds words by characters, pinyin (tones optional) or English meaning. */
@@ -126,6 +129,8 @@ class Content(
     companion object {
         const val LEVEL_COUNT = 6
         const val EXTRA_LEVEL = 7
+        /** Phrase-book sentences are not graded; this level picks the spare tiles in drills. */
+        const val PHRASE_LEVEL = 2
         private const val CORPUS_EXAMPLES = 40
 
         /** Loads everything through [read], which returns the text of an asset path. */
@@ -139,6 +144,14 @@ class Content(
                 sentences = parseSentences(read("content/sentences.tsv")) + corpus,
                 grammar = parseGrammar(read("content/grammar.txt")),
                 dialogues = parseDialogues(read("content/dialogues.txt")),
+                phraseBooks = listOf(
+                    PhraseBook("everyday", "💬", "Everyday phrases", "The sentences you will say and hear every day",
+                        parsePhrases(read("content/phrases_everyday_1.txt")) + parsePhrases(read("content/phrases_everyday_2.txt"))),
+                    PhraseBook("travel", "🧳", "Travel phrases", "Airports, hotels, taxis, restaurants and sights",
+                        parsePhrases(read("content/phrases_travel.txt"))),
+                    PhraseBook("business", "💼", "Business phrases", "From first meetings to contracts",
+                        parsePhrases(read("content/phrases_business.txt"))),
+                ),
             )
         }
 
@@ -165,6 +178,28 @@ class Content(
         /** Corpus sentences of one level: "words|pinyin|English". */
         fun parseCorpus(level: Int, text: String): List<Sentence> =
             text.lineSequence().filter { it.isNotBlank() }.map { sentence(level, it.split('|'), curated = false) }.toList()
+
+        /** Phrase books: "## topic" lines followed by "words | pinyin | English" lines. */
+        fun parsePhrases(text: String): List<PhraseTopic> {
+            val topics = mutableListOf<PhraseTopic>()
+            var title: String? = null
+            val phrases = mutableListOf<Sentence>()
+            fun flush() {
+                val t = title ?: return
+                topics += PhraseTopic(t, phrases.toList())
+                phrases.clear()
+            }
+            for (raw in text.lines()) {
+                val line = raw.trim()
+                when {
+                    line.startsWith("## ") -> { flush(); title = line.removePrefix("## ").trim() }
+                    line.startsWith("#") || line.isEmpty() -> Unit
+                    else -> phrases += sentence(PHRASE_LEVEL, line.split('|'), true)
+                }
+            }
+            flush()
+            return topics
+        }
 
         fun parseGrammar(text: String): List<GrammarPoint> {
             val points = mutableListOf<GrammarPoint>()

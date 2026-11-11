@@ -57,6 +57,7 @@ import com.hskpath.core.CourseUnit
 import com.hskpath.core.Curriculum
 import com.hskpath.core.Lesson
 import com.hskpath.core.Progress
+import com.hskpath.core.TrainingPlan
 
 private val Tabs = listOf("🏠" to "Learn", "🧭" to "Explore", "🎯" to "Practice", "🐼" to "Me")
 
@@ -148,6 +149,7 @@ private fun LearnTab(app: AppState, content: Content) {
             if (unit.number == (next?.unit ?: 1)) {
                 Column(Modifier.padding(horizontal = 16.dp).padding(top = 8.dp)) {
                     DailyGoal(progress, today)
+                    PlanBanner(app, content, level)
                     VoiceNotice(app)
                 }
             }
@@ -177,6 +179,25 @@ private fun DailyGoal(progress: Progress, today: Long) {
                 Text("$xp / ${Progress.DAILY_GOAL_XP} XP today", style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+        }
+    }
+}
+
+/** Entry to the day-by-day training plan, showing which day the learner is on. */
+@Composable
+private fun PlanBanner(app: AppState, content: Content, level: Int) {
+    val days = remember(level) { TrainingPlan.days(level, content) }
+    val current = TrainingPlan.today(days, app.progress)
+    Raised(MaterialTheme.colorScheme.surface, Modifier.fillMaxWidth().padding(top = 10.dp), shape = RoundedCornerShape(20.dp),
+        edgeColor = Tangerine, onClick = { app.open(Screen.Plan(level)) }) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("📅", fontSize = 28.sp)
+            Column(Modifier.padding(start = 12.dp).weight(1f)) {
+                Text("HSK $level in ${days.size} days", fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
+                Text(if (current == null) "Plan complete! 太棒了!" else "Today: day ${current.number} of ${days.size}",
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Text("›", fontSize = 28.sp, color = Tangerine)
         }
     }
 }
@@ -314,6 +335,12 @@ private fun ExploreTab(app: AppState, content: Content) {
                 Modifier.weight(1f)) { app.open(Screen.Stories(level)) }
             FeatureCard("👄", "Sounds & Mouth", "Lips, teeth and tongue for every sound", Pink,
                 Modifier.weight(1f)) { app.open(Screen.PinyinGuide) }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            FeatureCard("📖", "Phrase Books", "%,d everyday, travel and business phrases".format(content.phraseBooks.sumOf { it.size }),
+                Color(0xFF20C997), Modifier.weight(1f)) { app.open(Screen.PhraseBooks) }
+            FeatureCard("📅", "Training Plan", "HSK $level in ${TrainingPlan.lengths.getValue(level)} days, day by day", Gold.darker(0.12f),
+                Modifier.weight(1f)) { app.open(Screen.Plan(level)) }
         }
         FeatureCard("🔍", "Dictionary", "Search by characters, pinyin or English", Color(0xFF5C7CFA),
             Modifier.fillMaxWidth()) { app.open(Screen.Search) }

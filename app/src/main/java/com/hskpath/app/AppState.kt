@@ -23,11 +23,16 @@ sealed interface SessionKind {
     data class LevelTest(val level: Int) : SessionKind
     data class GrammarRun(val point: GrammarPoint) : SessionKind
     data class SentenceDrill(val level: Int) : SessionKind
+    data class PhraseDrill(val bookId: String, val topic: Int) : SessionKind
 }
 
 sealed interface Screen {
     data object Home : Screen
-    data class Run(val kind: SessionKind) : Screen
+    /** [planKey] ticks off a training-plan task when the session is finished. */
+    data class Run(val kind: SessionKind, val planKey: String? = null) : Screen
+    data class Plan(val level: Int) : Screen
+    data object PhraseBooks : Screen
+    data class Phrases(val bookId: String, val topic: Int) : Screen
     data class Grammar(val level: Int) : Screen
     data class Stories(val level: Int) : Screen
     data class Webs(val level: Int) : Screen

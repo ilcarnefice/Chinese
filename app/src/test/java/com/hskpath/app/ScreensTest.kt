@@ -116,6 +116,16 @@ class ScreensTest {
 
     @Test fun pinyin() = show("17-pinyin") { PinyinScreen(app) }
 
+    @Test fun trainingPlan() = show("21-plan") { com.hskpath.app.ui.PlanScreen(app, content, 1) }
+
+    @Test fun longestTrainingPlan() = show("22-plan-hsk6") { com.hskpath.app.ui.PlanScreen(app, content, 6) }
+
+    @Test fun phraseBooks() = show("23-phrase-books") { com.hskpath.app.ui.PhraseBooksScreen(app, content) }
+
+    @Test fun phraseTopic() = show("24-phrases") { com.hskpath.app.ui.PhrasesScreen(app, content, "travel", 0) }
+
+    @Test fun phraseDrill() = show("25-phrase-drill") { SessionScreen(app, content, SessionKind.PhraseDrill("business", 3)) }
+
     @Test fun mouthGuideForAnInitial() = show("18-mouth-zh") { SoundScreen(app, content, "zh", true) }
 
     @Test fun mouthGuideForAFinal() = show("19-mouth-u") { SoundScreen(app, content, "ü", false) }

@@ -41,6 +41,8 @@ data class Progress(
     val lastStudyDay: Long = -1,
     /** Level -> best level-test score in percent. */
     val testBest: Map<Int, Int> = emptyMap(),
+    /** Training-plan tasks ticked off, as keys from [PlanTask.key]. */
+    val planDone: Set<String> = emptySet(),
 ) {
     fun isCompleted(lesson: Lesson) = (completed[lesson.id] ?: 0) > 0
 
@@ -87,6 +89,8 @@ data class Progress(
     /** Records a level-test score; XP and streak come from [afterSession]. */
     fun withTestScore(level: Int, percent: Int): Progress =
         copy(testBest = testBest + (level to max(percent, testBest[level] ?: 0)))
+
+    fun withPlanTask(key: String): Progress = copy(planDone = planDone + key)
 
     fun toJson(): String = json.encodeToString(this)
 

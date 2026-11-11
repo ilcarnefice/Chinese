@@ -25,6 +25,9 @@ import com.hskpath.app.ui.HomeScreen
 import com.hskpath.app.ui.HskTheme
 import com.hskpath.app.ui.PinyinScreen
 import com.hskpath.app.ui.SearchScreen
+import com.hskpath.app.ui.PlanScreen
+import com.hskpath.app.ui.PhraseBooksScreen
+import com.hskpath.app.ui.PhrasesScreen
 import com.hskpath.app.ui.SoundScreen
 import com.hskpath.app.ui.SentenceMapScreen
 import com.hskpath.app.ui.WriteListScreen
@@ -59,7 +62,10 @@ class MainActivity : ComponentActivity() {
                         key(screen) {
                             when (screen) {
                                 Screen.Home -> HomeScreen(app, content)
-                                is Screen.Run -> SessionScreen(app, content, screen.kind)
+                                is Screen.Run -> SessionScreen(app, content, screen.kind, screen.planKey)
+                                is Screen.Plan -> PlanScreen(app, content, screen.level)
+                                Screen.PhraseBooks -> PhraseBooksScreen(app, content)
+                                is Screen.Phrases -> PhrasesScreen(app, content, screen.bookId, screen.topic)
                                 is Screen.Grammar -> GrammarScreen(app, content, screen.level)
                                 is Screen.Stories -> StoriesScreen(app, content, screen.level)
                                 is Screen.Webs -> WebListScreen(app, content, screen.level)

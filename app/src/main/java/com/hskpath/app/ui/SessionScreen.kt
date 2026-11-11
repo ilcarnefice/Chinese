@@ -72,7 +72,7 @@ import com.hskpath.core.Word
 
 /** Plays one lesson, practice round, drill or level test from start to results. */
 @Composable
-fun SessionScreen(app: AppState, content: Content, kind: SessionKind) {
+fun SessionScreen(app: AppState, content: Content, kind: SessionKind, planKey: String? = null) {
     val exercises = remember { buildExercises(app, content, kind) }
     val session = remember { Session(exercises, retryMistakes = kind !is SessionKind.LevelTest) }
     var step by remember { mutableIntStateOf(0) }
@@ -113,6 +113,7 @@ fun SessionScreen(app: AppState, content: Content, kind: SessionKind) {
                 val r = session.result()
                 var p = app.progress.afterSession(r, app.today(), (kind as? SessionKind.LessonRun)?.lesson?.id)
                 if (kind is SessionKind.LevelTest) p = p.withTestScore(kind.level, r.percent)
+                if (planKey != null) p = p.withPlanTask(planKey)
                 app.save(p)
                 result = r
             }
@@ -143,6 +144,8 @@ private fun buildExercises(app: AppState, content: Content, kind: SessionKind): 
         is SessionKind.LevelTest -> builder.levelTest(kind.level)
         is SessionKind.GrammarRun -> builder.grammarPractice(kind.point)
         is SessionKind.SentenceDrill -> builder.sentenceDrill(kind.level)
+        is SessionKind.PhraseDrill -> content.phraseBook(kind.bookId)?.topics?.getOrNull(kind.topic)
+            ?.let { builder.phraseDrill(it) }.orEmpty()
         SessionKind.Practice -> {
             val due = app.progress.dueWordIds(app.today())
             val ids = due.ifEmpty { app.progress.cards.keys.shuffled() }.take(12)
