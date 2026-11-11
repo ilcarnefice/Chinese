@@ -1,0 +1,183 @@
+# HSK 4 course outline: 600 words in themed units of four lessons of five words.
+# The first fifteen units hold the more common half of the level. Grammar lessons
+# are placed automatically (none are listed here).
+
+## Doing things, and how well
+干 弄 行 等 停
+发生 出现 成为 继续 进行
+得 棒 够 挺 呀
+完全 确实 实在 真正 十分
+
+## But, and, if: linking
+而 却 不过 可是 尽管
+与 并且 另外 甚至 连
+以 之 由 对于 通过
+只要 要是 不管 无论 即使
+
+## Maybe, surely, I guess
+也许 肯定 好像 大概 恐怕
+感觉 以为 猜 估计 怀疑
+到底 究竟 难道 竟然 是否
+考虑 理解 保证 证明 调查
+
+## Family, life and bedtime
+父亲 母亲 咱们 俩 小伙子
+生活 生命 死 出生 经历
+留 陪 抱 约会 聚会
+困 脱 躺 梦 醒
+
+## Sorry, thanks and opinions
+抱歉 道歉 原谅 感谢 麻烦
+打扰 邀请 接受 拒绝 允许
+谈 讨论 解释 说明 表示
+主意 意见 建议 支持 反对
+
+## When: just now, still, next
+刚 当 当时 本来 原来
+从来 永远 仍然 重新 正好
+首先 接着 于是 同时 顺便
+秒 遍 内 赶 出发
+
+## How much: all, part, full
+所有 一切 任何 全部 无
+部分 其中 至少 许多 差不多
+满 空 剩 超过 到处
+重 轻 深 低 底
+
+## Safety, law and university
+安全 危险 保护 严重 正常
+警察 律师 法律 社会 骗
+博士 教授 研究 申请 毕业
+答案 正确 错误 假 交
+
+## Work: plans and success
+计划 安排 任务 负责 责任
+成功 失败 赢 输 敢
+坚持 放弃 困难 顺利 能力
+职业 生意 赚 免费 浪费
+
+## Using your hands at home
+拉 推 提 举 指
+掉 扔 丢 倒 转
+戴 挂 收拾 钥匙 厕所
+厨房 刀 味道 辣 巧克力
+
+## Why: reasons and results
+情况 原因 结果 目的 作用
+使 引起 受到 改变 发展
+因此 既然 否则 不得不 比如
+方法 方面 过程 关键 好处
+
+## Shows, trips and nature
+表演 演出 演员 观众 精彩
+场 台 座 节 活动
+旅行 方向 地点 周围 来自
+自然 地球 火 光 照
+
+## Messages, media and info
+联系 通知 提醒 消息 短信
+号码 地址 寄 收 取
+杂志 广告 记者 著名 份
+信息 技术 使用 提供 获得
+
+## Feelings: joy, stress, love
+开心 开玩笑 愉快 兴奋 激动
+紧张 冷静 放松 轻松 压力
+讨厌 失望 伤心 可怜 无聊
+感情 爱情 幸福 尊重 互相
+
+## Describing looks and manner
+美丽 帅 厉害 有趣 骄傲
+样子 印象 毛 破 乱
+合适 适合 值得 正式 复杂
+动作 直接 仔细 故意 随便
+
+## Views, rules and reasons
+看法 态度 判断 效果 实际
+规定 条件 按照 符合 禁止
+由于 随着 然而 不仅 例如
+区别 相同 相反 共同 普遍
+
+## Feelings: regret and envy
+心情 吃惊 感动 可惜 同情
+熟悉 适应 回忆 重视 吸引
+后悔 受不了 辛苦 难受 烦恼
+信心 理想 浪漫 羡慕 得意
+
+## Numbers, amounts, measures
+数字 千万 倍 百分之 各
+大约 左右 准确 稍微 尤其
+数量 质量 速度 距离 温度
+增加 减少 降低 缺少 丰富
+
+## Reading, writing, knowledge
+文章 篇 页 内容 重点
+知识 科学 教育 艺术 专业
+小说 作家 作者 日记 阅读
+总结 详细 顺序 排列 其次
+
+## Body, health and looks
+皮肤 肚子 胳膊 汗 脏
+护士 大夫 打针 咳嗽 抽烟
+力气 抬 减肥 散步 功夫
+打扮 理发 镜子 眼镜 袜子
+
+## Friends, events and hobbies
+交流 商量 打招呼 误会 笑话
+儿童 孙子 亲戚 友谊 年龄
+举行 举办 祝贺 热闹 流行
+弹钢琴 京剧 网球 乒乓球 羽毛球
+
+## Home: rooms, chores, rent
+擦 整理 修理 敲 响
+窗户 沙发 家具 客厅 卫生间
+租 房东 郊区 对面 邮局
+盒子 垃圾桶 塑料袋 毛巾 牙膏
+
+## Personality: brave or lazy
+勇敢 自信 诚实 优秀 积极
+耐心 礼貌 友好 幽默 活泼
+性格 脾气 优点 缺点 特点
+笨 懒 害羞 粗心 马虎
+
+## Money: earn, save, spend
+工资 奖金 收入 经济 竞争
+存 省 节约 富 穷
+价格 现金 零钱 付款 打折
+购物 顾客 售货员 逛 排队
+
+## Timing: early, late, on time
+平时 偶尔 往往 暂时 将来
+提前 推迟 及时 准时 按时
+堵车 来不及 来得及 只好 最好
+世纪 礼拜天 学期 寒假 放暑假
+
+## Tastes, snacks and dishes
+餐厅 汤 糖 盐 勺子
+尝 香 苦 酸 咸
+饼干 果汁 葡萄 西红柿 矿泉水
+小吃 饺子 包子 烤鸭 干杯
+
+## Roads, flights and visas
+交通 乘坐 座位 入口 趟
+高速公路 加油站 桥 迷路 公里
+航班 降落 登机牌 导游 参观
+签证 大使馆 国际 国籍 性别
+
+## Jobs, office and internet
+招聘 应聘 经验 材料 硕士
+密码 网站 互联网 占线 广播
+加班 出差 管理 师傅 专门
+打印 复印 传真 表格 信封
+
+## Weather, nature and China
+空气 气候 污染 森林 海洋
+阳光 暖和 凉快 厚 云
+植物 棵 叶子 老虎 景色
+长城 长江 首都 亚洲 民族
+
+## At language school
+语言 普通话 标准 流利 翻译
+批评 表扬 鼓励 严格 养成
+语法 词语 对话 填空 橡皮
+报名 预习 基础 积累 合格

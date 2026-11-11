@@ -256,6 +256,9 @@ class ScreensTest {
             for (grammar in listOf(false, true)) {
                 rule.runOnUiThread { app.selectLevel(level); showGrammar = grammar }
                 rule.waitForIdle()
+                if (!grammar && level > 1 && System.getProperty("screenshots") == "true") {
+                    rule.onRoot().captureRoboImage("build/screens/level-$level.png")
+                }
             }
         }
         rule.runOnUiThread { app.selectLevel(1) }
