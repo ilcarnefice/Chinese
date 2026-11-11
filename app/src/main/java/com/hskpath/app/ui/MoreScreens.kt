@@ -134,6 +134,10 @@ fun PinyinScreen(app: AppState) {
                     }
                 }
             }
+            app.mouth?.let { mouth ->
+                SectionTitle("Inside the mouth")
+                MouthMap(mouth)
+            }
             SectionTitle("Initials: tap for mouth position")
             FlowRow(horizontalArrangement = SpacedSmall, verticalArrangement = SpacedSmall) {
                 for (sound in Sounds.initials) SoundChip(app, sound.letters, sound.example, true)

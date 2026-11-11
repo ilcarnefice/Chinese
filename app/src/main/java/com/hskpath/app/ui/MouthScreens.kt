@@ -1,10 +1,17 @@
 package com.hskpath.app.ui
 
+import android.graphics.Paint
+import android.graphics.Typeface
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,206 +44,295 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hskpath.app.AppState
 import com.hskpath.app.Screen
+import com.hskpath.core.Air
 import com.hskpath.core.Content
+import com.hskpath.core.Mouth
+import com.hskpath.core.MouthLayer
+import com.hskpath.core.MouthStep
+import com.hskpath.core.MouthView
 import com.hskpath.core.Sounds
+import com.hskpath.core.Spline
 import kotlinx.coroutines.delay
 
+/** Which markers to draw over the side view: the pose they belong to and what the breath is doing. */
+data class MouthOverlay(val pose: String, val air: Air, val voiced: Boolean, val alpha: Float = 1f)
+
+private fun hex(value: String): Color = Color(0xFF000000 or value.removePrefix("#").toLong(16))
+
+private fun shapePath(points: FloatArray, closed: Boolean, smooth: Boolean): Path {
+    val path = Path()
+    if (points.size < 4) return path
+    path.moveTo(points[0], points[1])
+    if (smooth) {
+        val c = Spline.cubics(points, closed)
+        for (i in 0 until c.size / 6) {
+            path.cubicTo(c[i * 6], c[i * 6 + 1], c[i * 6 + 2], c[i * 6 + 3], c[i * 6 + 4], c[i * 6 + 5])
+        }
+    } else {
+        for (i in 1 until points.size / 2) path.lineTo(points[i * 2], points[i * 2 + 1])
+    }
+    if (closed) path.close()
+    return path
+}
+
+private fun flat(points: List<List<Float>>): FloatArray = Mouth.flatten(points)
+
 /**
- * Where everything in the mouth is for one sound, on a 0..1 grid of a head seen
- * from the side and facing left. The tongue's top surface runs tip → blade → mid → back.
+ * Draws one view of the mouth diagrams ("side" or "front") for the given point
+ * positions, following the rules in tools/mouth/SPEC.md. [flow] (0..1, repeating)
+ * makes the breath arrows move.
  */
-data class MouthPose(
-    val tipX: Float, val tipY: Float,
-    val bladeY: Float, val midY: Float, val backY: Float,
-    /** How far the jaw drops (0 = teeth together). */
-    val jaw: Float = 0.03f,
-    /** 0 closed, 1 relaxed, 2 wide open. */
-    val lipGap: Float = 1f,
-    /** 0 spread into a smile, 1 neutral, 2 rounded and pushed forward. */
-    val lipRound: Float = 1f,
-    /** 1 when the upper teeth rest on the lower lip (f). */
-    val lipToTeeth: Float = 0f,
-    /** Where the tongue or lips make contact or squeeze the air, if anywhere. */
-    val contactX: Float = -1f, val contactY: Float = -1f,
-) {
-    fun blend(o: MouthPose, t: Float): MouthPose {
-        fun m(a: Float, b: Float) = a + (b - a) * t
-        val showContact = if (t < 0.5f) this else o
-        return MouthPose(m(tipX, o.tipX), m(tipY, o.tipY), m(bladeY, o.bladeY), m(midY, o.midY), m(backY, o.backY),
-            m(jaw, o.jaw), m(lipGap, o.lipGap), m(lipRound, o.lipRound), m(lipToTeeth, o.lipToTeeth),
-            showContact.contactX, showContact.contactY)
-    }
-}
-
-/** The drawable mouth shape for each name used by [Sounds]. */
-val MouthPoses: Map<String, MouthPose> = mapOf(
-    "rest" to MouthPose(0.33f, 0.56f, 0.53f, 0.52f, 0.56f),
-    "lips" to MouthPose(0.33f, 0.57f, 0.54f, 0.53f, 0.56f, jaw = 0.01f, lipGap = 0f, contactX = 0.165f, contactY = 0.505f),
-    "lipteeth" to MouthPose(0.33f, 0.57f, 0.54f, 0.53f, 0.56f, jaw = 0.02f, lipGap = 0.5f, lipToTeeth = 1f, contactX = 0.225f, contactY = 0.50f),
-    "ridge" to MouthPose(0.305f, 0.425f, 0.47f, 0.52f, 0.57f, jaw = 0.04f, contactX = 0.305f, contactY = 0.42f),
-    "dental" to MouthPose(0.268f, 0.475f, 0.50f, 0.53f, 0.57f, jaw = 0.02f, lipRound = 0.4f, contactX = 0.262f, contactY = 0.47f),
-    "retro" to MouthPose(0.39f, 0.365f, 0.44f, 0.54f, 0.57f, jaw = 0.05f, lipRound = 1.2f, contactX = 0.385f, contactY = 0.355f),
-    "palatal" to MouthPose(0.275f, 0.575f, 0.385f, 0.40f, 0.52f, jaw = 0.03f, lipRound = 0f, contactX = 0.43f, contactY = 0.36f),
-    "velar" to MouthPose(0.34f, 0.60f, 0.57f, 0.47f, 0.385f, jaw = 0.05f, contactX = 0.665f, contactY = 0.385f),
-    "velarOpen" to MouthPose(0.34f, 0.60f, 0.57f, 0.48f, 0.42f, jaw = 0.06f, contactX = 0.665f, contactY = 0.395f),
-    "a" to MouthPose(0.32f, 0.66f, 0.65f, 0.64f, 0.62f, jaw = 0.13f, lipGap = 2f),
-    "o" to MouthPose(0.35f, 0.62f, 0.60f, 0.55f, 0.49f, jaw = 0.07f, lipGap = 1.2f, lipRound = 2f),
-    "e" to MouthPose(0.36f, 0.60f, 0.57f, 0.52f, 0.47f, jaw = 0.06f, lipGap = 1.2f),
-    "i" to MouthPose(0.275f, 0.57f, 0.41f, 0.41f, 0.53f, jaw = 0.02f, lipGap = 0.7f, lipRound = 0f),
-    "u" to MouthPose(0.37f, 0.62f, 0.59f, 0.50f, 0.41f, jaw = 0.03f, lipGap = 0.5f, lipRound = 2f),
-    "ü" to MouthPose(0.275f, 0.57f, 0.41f, 0.41f, 0.53f, jaw = 0.02f, lipGap = 0.5f, lipRound = 2f),
-    "er" to MouthPose(0.40f, 0.40f, 0.47f, 0.54f, 0.52f, jaw = 0.06f, lipGap = 1.2f),
-    "n" to MouthPose(0.305f, 0.425f, 0.47f, 0.52f, 0.57f, jaw = 0.03f, contactX = 0.305f, contactY = 0.42f),
-    "ng" to MouthPose(0.34f, 0.60f, 0.57f, 0.47f, 0.385f, jaw = 0.04f, contactX = 0.665f, contactY = 0.385f),
-)
-
-/** Side view of the mouth for [pose]: lips, teeth, palate and tongue. */
 @Composable
-fun MouthDiagram(pose: MouthPose, modifier: Modifier = Modifier) {
-    val skin = Color(0xFFFFE0CC)
-    val line = Color(0xFF8D5B4C)
-    val tongue = Color(0xFFFF7B8A)
-    val lip = Color(0xFFE5576B)
-    val cavity = Color(0xFFA8485A)
-    Canvas(modifier.aspectRatio(1.25f)) {
-        val w = size.width
-        val h = size.height
-        // The grid is 1 wide and 0.8 tall; (0.1..0.9) x (0.2..0.9) holds the head.
-        fun p(x: Float, y: Float) = Offset(x * w, (y - 0.15f) / 0.8f * h)
-        val jaw = pose.jaw
-        val push = (pose.lipRound - 1f).coerceAtLeast(0f) * 0.02f // rounded lips move forward
-
-        // Face and neck silhouette.
-        val face = Path().apply {
-            moveTo(p(0.34f, 0.15f).x, p(0.34f, 0.15f).y)
-            quadTo(p(0.22f, 0.24f), p(0.20f, 0.33f))                    // forehead to nose bridge
-            quadTo(p(0.12f, 0.40f), p(0.105f, 0.42f))                   // nose
-            quadTo(p(0.13f, 0.46f), p(0.19f - push, 0.455f))            // under the nose
-            lineTo(p(0.19f - push, 0.57f + jaw).x, p(0.19f - push, 0.57f + jaw).y)
-            quadTo(p(0.17f, 0.66f + jaw), p(0.22f, 0.73f + jaw))        // chin
-            quadTo(p(0.36f, 0.80f + jaw), p(0.62f, 0.82f + jaw * 0.5f)) // jaw line
-            lineTo(p(0.62f, 0.95f).x, p(0.62f, 0.95f).y)
-            lineTo(p(0.98f, 0.95f).x, p(0.98f, 0.95f).y)
-            lineTo(p(0.98f, 0.15f).x, p(0.98f, 0.15f).y)
-            close()
-        }
-        drawPath(face, skin)
-
-        // Mouth cavity and throat.
-        val hole = Path().apply {
-            moveTo(p(0.20f - push, 0.50f).x, p(0.20f - push, 0.50f).y)
-            lineTo(p(0.255f, 0.455f).x, p(0.255f, 0.455f).y)
-            quadTo(p(0.30f, 0.40f), p(0.36f, 0.35f))                    // ridge
-            quadTo(p(0.50f, 0.27f), p(0.64f, 0.34f))                    // hard palate
-            quadTo(p(0.74f, 0.36f), p(0.765f, 0.455f))                  // soft palate and uvula
-            quadTo(p(0.80f, 0.43f), p(0.83f, 0.50f))                    // back wall of the throat
-            lineTo(p(0.83f, 0.95f).x, p(0.83f, 0.95f).y)
-            lineTo(p(0.60f, 0.95f).x, p(0.60f, 0.95f).y)
-            quadTo(p(0.58f, 0.80f + jaw), p(0.48f, 0.75f + jaw))        // floor of the mouth
-            quadTo(p(0.32f, 0.72f + jaw), p(0.26f, 0.60f + jaw))
-            lineTo(p(0.20f - push, 0.52f + jaw).x, p(0.20f - push, 0.52f + jaw).y)
-            close()
-        }
-        drawPath(hole, cavity)
-        drawPath(hole, line, style = Stroke(w * 0.006f, join = StrokeJoin.Round))
-
-        // Tongue: a body from the root over the back, middle and blade, plus a rounded
-        // tip drawn as a thick line so it can point up, forward or down.
-        val drop = jaw * 0.3f
-        val body = Path().apply {
-            moveTo(p(0.76f, 0.95f).x, p(0.76f, 0.95f).y)
-            quadTo(p(0.79f, pose.backY + 0.10f + drop), p(0.70f, pose.backY + 0.01f + drop))
-            quadTo(p(0.61f, pose.backY - 0.035f + drop), p(0.53f, pose.midY + drop))
-            quadTo(p(0.47f, pose.midY - 0.012f + drop), p(0.42f, pose.bladeY + drop))
-            quadTo(p(0.385f, pose.bladeY + 0.05f + drop), p(0.395f, 0.665f + jaw))
-            quadTo(p(0.47f, 0.75f + jaw), p(0.58f, 0.95f))
-            close()
-        }
-        drawPath(body, tongue)
-        val tipWidth = 0.062f * w
-        drawLine(tongue, p(0.435f, pose.bladeY + 0.045f + drop), p(pose.tipX + 0.022f, pose.tipY + 0.028f + drop),
-            strokeWidth = tipWidth, cap = StrokeCap.Round)
-
-        // Teeth.
-        val toothW = 0.028f * w
-        val round = androidx.compose.ui.geometry.CornerRadius(toothW / 2)
-        drawRoundRect(Color.White, p(0.236f, 0.425f), Size(toothW, 0.10f * h), round)
-        drawRoundRect(Color.White, p(0.242f, 0.535f + jaw), Size(toothW, 0.085f * h), round)
-
-        // Lips: the lower lip closes the gap, tucks under the teeth for f, and both round forward.
-        val gap = (pose.lipGap * 0.022f)
-        val lipW = (0.055f + (pose.lipRound - 1f).coerceAtLeast(0f) * 0.012f) * w
-        val lipH = (0.060f - (1f - pose.lipRound).coerceAtLeast(0f) * 0.012f) * h
-        drawOval(lip, p(0.175f - push, 0.455f - gap * 0.3f), Size(lipW, lipH))
-        val lowerX = 0.178f - push + pose.lipToTeeth * 0.04f
-        val lowerY = 0.505f + gap + jaw * 0.9f - pose.lipToTeeth * 0.02f
-        drawOval(lip, p(lowerX, lowerY), Size(lipW, lipH))
-
-        // Mark the point of contact or the narrow gap for the air.
-        if (pose.contactX >= 0f) {
-            val c = p(pose.contactX, pose.contactY)
-            drawCircle(Gold, w * 0.022f, c)
-            drawCircle(Color.White, w * 0.022f, c, style = Stroke(w * 0.006f))
+fun MouthCanvas(
+    mouth: Mouth,
+    viewName: String,
+    frame: Map<String, FloatArray>,
+    modifier: Modifier = Modifier,
+    overlay: MouthOverlay? = null,
+    labels: Boolean = false,
+    flow: Float = 0f,
+) {
+    val view = if (viewName == Mouth.FRONT) mouth.front else mouth.side
+    val fixed = remember(mouth, viewName) {
+        view.layers.filter { !it.isShape }.associate { it.id to PathParser().parsePathString(it.d.orEmpty()).toPath() }
+    }
+    Canvas(modifier.aspectRatio(view.width / view.height)) {
+        val s = size.width / view.width
+        scale(s, s, pivot = Offset.Zero) {
+            for (layer in view.layers) {
+                val path = fixed[layer.id] ?: shapePath(frame[layer.id] ?: FloatArray(0), layer.closed, layer.smooth)
+                drawLayer(mouth, layer, path, view)
+            }
+            if (overlay != null && overlay.alpha > 0.01f) drawOverlay(mouth, overlay, flow)
+            if (labels) drawLabels(mouth, view)
         }
     }
 }
 
-/** How to shape the mouth for one sound, with an animated diagram and words to practise. */
+private fun DrawScope.drawLayer(mouth: Mouth, layer: MouthLayer, path: Path, view: MouthView) {
+    val fill = mouth.colour(layer.fill)?.let(::hex)
+    val stroke = mouth.colour(layer.stroke)?.takeIf { layer.strokeWidth > 0f }?.let(::hex)
+    val draw = {
+        if (fill != null) drawPath(path, fill)
+        if (stroke != null) {
+            val dash = layer.dash?.takeIf { it.size == 2 }?.let { PathEffect.dashPathEffect(floatArrayOf(it[0], it[1])) }
+            drawPath(path, stroke, style = Stroke(layer.strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round, pathEffect = dash))
+        }
+    }
+    if (layer.opacity >= 0.999f) {
+        draw()
+    } else {
+        // Fade the layer as a whole, so its outline and fill do not show through each other.
+        drawIntoCanvas { canvas ->
+            canvas.saveLayer(Rect(0f, 0f, view.width, view.height), androidx.compose.ui.graphics.Paint().apply { alpha = layer.opacity })
+            draw()
+            canvas.restore()
+        }
+    }
+}
+
+private fun DrawScope.polyline(points: FloatArray, color: Color, width: Float, alpha: Float) {
+    drawPath(shapePath(points, closed = false, smooth = false), color, alpha = alpha,
+        style = Stroke(width, cap = StrokeCap.Round, join = StrokeJoin.Round))
+}
+
+/** A dashed arrow along a route of the breath; the dashes drift towards the tip. */
+private fun DrawScope.arrow(points: FloatArray, color: Color, alpha: Float, flow: Float) {
+    val n = points.size / 2
+    if (n < 2) return
+    val path = shapePath(points, closed = false, smooth = true)
+    drawPath(path, Color.White, alpha = 0.55f * alpha, style = Stroke(18f, cap = StrokeCap.Round))
+    drawPath(path, color, alpha = alpha, style = Stroke(10f, cap = StrokeCap.Round,
+        pathEffect = PathEffect.dashPathEffect(floatArrayOf(22f, 18f), -flow * 40f)))
+    val tx = points[(n - 1) * 2]
+    val ty = points[(n - 1) * 2 + 1]
+    val dx = tx - points[(n - 2) * 2]
+    val dy = ty - points[(n - 2) * 2 + 1]
+    val len = kotlin.math.hypot(dx, dy).takeIf { it > 0f } ?: 1f
+    val ux = dx / len
+    val uy = dy / len
+    val bx = tx - ux * 34f
+    val by = ty - uy * 34f
+    val head = Path().apply {
+        moveTo(tx + ux * 8f, ty + uy * 8f)
+        lineTo(bx - uy * 19f, by + ux * 19f)
+        lineTo(bx + uy * 19f, by - ux * 19f)
+        close()
+    }
+    drawPath(head, color, alpha = alpha)
+    drawPath(head, Color.White, alpha = alpha, style = Stroke(3f, join = StrokeJoin.Round))
+}
+
+private fun DrawScope.drawOverlay(mouth: Mouth, overlay: MouthOverlay, flow: Float) {
+    val pose = mouth.pose(overlay.pose)
+    val a = overlay.alpha.coerceIn(0f, 1f)
+    val air = hex(mouth.colour("air") ?: "#339AF0")
+    val voice = hex(mouth.colour("voice") ?: "#845EF7")
+    val contact = hex(mouth.colour("contact") ?: "#FFB703")
+    val anchors = mouth.art.anchors
+    if (overlay.air == Air.ORAL || overlay.air == Air.PUFF) pose.airPath?.let { arrow(flat(it), air, a, flow) }
+    if (overlay.air == Air.NASAL) arrow(flat(anchors.nasalPath), air, a, flow)
+    if (overlay.air == Air.PUFF) {
+        // The burst swells outwards as it plays.
+        for ((i, r) in listOf(30f, 54f, 78f).withIndex()) {
+            val pulse = (1f - ((flow + 1f - i / 3f) % 1f)) * 0.6f + 0.4f
+            polyline(Spline.arc(anchors.mouthOut[0], anchors.mouthOut[1], r, 140f, 220f, 12), air, 10f, a * pulse)
+        }
+    }
+    if (overlay.voiced) {
+        val x = anchors.larynx[0]
+        val y = anchors.larynx[1]
+        val pulse = 0.55f + 0.45f * kotlin.math.abs(1f - 2f * ((flow * 2f) % 1f))
+        drawCircle(voice, 8f, Offset(x, y), alpha = a)
+        for (r in listOf(22f, 38f)) {
+            polyline(Spline.arc(x, y, r, -40f, 40f, 8), voice, 7f, a * pulse)
+            polyline(Spline.arc(x, y, r, 140f, 220f, 8), voice, 7f, a * pulse)
+        }
+    }
+    for (p in pose.gap) {
+        drawCircle(Color.White, 17f, Offset(p[0], p[1]), alpha = 0.35f * a)
+        drawCircle(contact, 17f, Offset(p[0], p[1]), alpha = a, style = Stroke(7f))
+    }
+    for (p in pose.contact) {
+        drawCircle(contact, 17f, Offset(p[0], p[1]), alpha = a)
+        drawCircle(Color.White, 17f, Offset(p[0], p[1]), alpha = a, style = Stroke(5f))
+    }
+}
+
+private fun DrawScope.drawLabels(mouth: Mouth, view: MouthView) {
+    val ink = hex(mouth.colour("label") ?: "#1F2333")
+    for (label in view.labels) {
+        val from = label.from ?: label.at
+        drawLine(ink, Offset(from[0], from[1]), Offset(label.to[0], label.to[1]), strokeWidth = 3f, cap = StrokeCap.Round)
+        drawCircle(ink, 6f, Offset(label.to[0], label.to[1]))
+    }
+    val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 30f
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textAlign = Paint.Align.CENTER
+    }
+    drawIntoCanvas { canvas ->
+        for (label in view.labels) {
+            text.textAlign = when (label.align) {
+                "start" -> Paint.Align.LEFT
+                "end" -> Paint.Align.RIGHT
+                else -> Paint.Align.CENTER
+            }
+            val baseline = label.at[1] - (text.descent() + text.ascent()) / 2f
+            text.style = Paint.Style.STROKE
+            text.strokeWidth = 7f
+            text.strokeJoin = Paint.Join.ROUND
+            text.color = android.graphics.Color.WHITE
+            canvas.nativeCanvas.drawText(label.text, label.at[0], baseline, text)
+            text.style = Paint.Style.FILL
+            text.color = ink.toArgb()
+            canvas.nativeCanvas.drawText(label.text, label.at[0], baseline, text)
+        }
+    }
+}
+
+/** Side view with the front view inset, as used on the sound screen and in tests. */
+@Composable
+fun MouthPicture(
+    mouth: Mouth,
+    frame: Map<String, FloatArray>,
+    modifier: Modifier = Modifier,
+    overlay: MouthOverlay? = null,
+    flow: Float = 0f,
+) {
+    Column(modifier) {
+        MouthCanvas(mouth, Mouth.SIDE, frame, Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)), overlay, flow = flow)
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(0.42f), horizontalAlignment = Alignment.CenterHorizontally) {
+                MouthCanvas(mouth, Mouth.FRONT, frame, Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)))
+                Text("From the front", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+            }
+            Column(Modifier.weight(0.58f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                val contact = hex(mouth.colour("contact") ?: "#FFB703")
+                val air = hex(mouth.colour("air") ?: "#339AF0")
+                val voice = hex(mouth.colour("voice") ?: "#845EF7")
+                Key(contact, filled = true, "touching: air blocked")
+                Key(contact, filled = false, "narrow gap: air hisses")
+                Key(air, filled = true, "path of the breath")
+                Key(voice, filled = true, "voice switched on")
+            }
+        }
+    }
+}
+
+@Composable
+private fun Key(color: Color, filled: Boolean, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(14.dp).clip(CircleShape)
+            .then(if (filled) Modifier.background(color) else Modifier.border(3.dp, color, CircleShape)))
+        Text(label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 6.dp))
+    }
+}
+
+/** How to shape the mouth for one sound: an animated diagram, the steps in words, and words to practise. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SoundScreen(app: AppState, content: Content, letters: String, isInitial: Boolean) {
     val sound = Sounds.find(letters, isInitial)
+    val mouth = app.mouth
     Column(Modifier.fillMaxSize()) {
         TopBar(app, if (isInitial) "Initial  $letters" else "Final  $letters")
-        if (sound == null) return@Column
-        val poses = remember(sound) { listOf(MouthPoses.getValue("rest")) + sound.steps.map { MouthPoses.getValue(it) } }
-        val blend = remember { Animatable(0f) }
-        var from by remember { mutableIntStateOf(0) }
+        if (sound == null || mouth == null) return@Column
+        val steps = sound.steps
+        // `at` is the step being shown or moved to (-1 = the relaxed start); `from` is the pose it moves from.
+        var at by remember { mutableIntStateOf(-1) }
+        var from by remember { mutableStateOf(Mouth.REST) }
         var replay by remember { mutableIntStateOf(0) }
         var playing by remember { mutableStateOf(true) }
-        // Move through the shapes: rest → each step, pause, and repeat a few times.
+        val move = remember { Animatable(1f) }
+        val flow by rememberInfiniteTransition(label = "flow").animateFloat(
+            0f, 1f, infiniteRepeatable(tween(900, easing = LinearEasing)), label = "flow")
+
         LaunchedEffect(replay) {
             playing = true
-            repeat(3) { round ->
-                if (round == 0) app.speaker.speak(sound.example, slow = true)
-                for (i in 0 until poses.size - 1) {
-                    from = i
-                    blend.snapTo(0f)
-                    blend.animateTo(1f, tween(if (i == 0) 550 else 700, easing = FastOutSlowInEasing))
-                    delay(if (i == poses.size - 2) 900 else 150)
-                }
-                if (round < 2) { from = 0; blend.snapTo(0f); delay(350) }
+            from = Mouth.REST
+            at = -1
+            move.snapTo(1f)
+            app.speaker.speak(sound.example, slow = true)
+            delay(450)
+            for (i in steps.indices) {
+                from = if (i == 0) Mouth.REST else steps[i - 1].shape
+                at = i
+                move.snapTo(0f)
+                move.animateTo(1f, tween(if (from == steps[i].shape) 300 else 700, easing = FastOutSlowInEasing))
+                if (i < steps.lastIndex) delay(if (steps[i].air == Air.PUFF) 650 else 800)
             }
             playing = false
         }
-        val pose = poses[from].blend(poses[(from + 1).coerceAtMost(poses.size - 1)], blend.value)
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+
+        val step: MouthStep? = steps.getOrNull(at)
+        val frame = mouth.blend(from, step?.shape ?: Mouth.REST, move.value)
+        val overlay = step?.let { MouthOverlay(it.shape, it.air, it.voiced, ((move.value - 0.5f) / 0.5f).coerceIn(0f, 1f)) }
+
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(12.dp)) {
-                    MouthDiagram(pose, Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant))
-                    Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalAlignment = Alignment.CenterVertically) {
-                        Legend(Color(0xFFFF7B8A), "tongue")
-                        Legend(Color(0xFFE5576B), "lips")
-                        Legend(Color(0xFFC9CEDB), "teeth")
-                        Legend(Gold, if (sound.steps.any { MouthPoses.getValue(it).contactX >= 0f }) "contact point" else "")
-                    }
-                }
+                MouthPicture(mouth, frame, Modifier.padding(10.dp), overlay, flow)
             }
-            Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically,
+            Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(sound.letters, fontSize = 44.sp, fontWeight = FontWeight.ExtraBold, color = Sky)
                 Text(sound.example, fontSize = 36.sp)
@@ -244,14 +340,41 @@ fun SoundScreen(app: AppState, content: Content, letters: String, isInitial: Boo
                 SpeakButton(app, sound.example, slow = true)
             }
             VoiceNotice(app)
+            SectionTitle("Step by step")
+            steps.forEachIndexed { i, s ->
+                val current = i == at
+                val accent = if (current) Sky else MaterialTheme.colorScheme.outlineVariant
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(14.dp))
+                        .background(if (current) Sky.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface)
+                        .border(2.dp, accent, RoundedCornerShape(14.dp))
+                        .clickable(enabled = !playing) { from = s.shape; at = i }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.size(28.dp).clip(CircleShape).background(if (current) Sky else MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center) {
+                        Text("${i + 1}", fontWeight = FontWeight.ExtraBold, fontSize = 14.sp,
+                            color = if (current) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Column(Modifier.padding(start = 10.dp).weight(1f)) {
+                        Text(s.caption, fontWeight = if (current) FontWeight.Bold else FontWeight.Normal)
+                        Text(
+                            when (s.air) {
+                                Air.NONE -> "Air held back"
+                                Air.ORAL -> "Air flows out through the mouth"
+                                Air.NASAL -> "Air flows out through the nose"
+                                Air.PUFF -> "Strong burst of air"
+                            } + if (s.voiced) "  ·  voice on" else "  ·  no voice",
+                            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
             SectionTitle("How to make it")
             Text(sound.how)
             SectionTitle("Sounds like")
             Text(sound.like)
-            if (!isInitial && sound.steps.size > 1) {
-                SectionTitle("Mouth movement")
-                Text(sound.steps.joinToString("  →  "), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Grape)
-            }
             val words = remember(sound) { Sounds.examples(content, sound) }
             if (words.isNotEmpty()) {
                 SectionTitle("Practise with these words")
@@ -275,12 +398,16 @@ fun SoundScreen(app: AppState, content: Content, letters: String, isInitial: Boo
     }
 }
 
+/** The relaxed mouth with every part named: the map for all the instructions. */
 @Composable
-private fun Legend(color: Color, label: String) {
-    if (label.isEmpty()) return
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(14.dp).clip(CircleShape).background(color))
-        Text(label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 4.dp))
+fun MouthMap(mouth: Mouth, modifier: Modifier = Modifier) {
+    Card(modifier.fillMaxWidth()) {
+        Column(Modifier.padding(10.dp)) {
+            MouthCanvas(mouth, Mouth.SIDE, mouth.frame(Mouth.REST), Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)),
+                labels = true)
+            Text("The parts of the mouth named in the instructions.", style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+        }
     }
 }
 
@@ -296,8 +423,3 @@ fun SoundChip(app: AppState, letters: String, hanzi: String, isInitial: Boolean)
         }
     }
 }
-
-private fun Path.quadTo(control: Offset, end: Offset) = quadraticTo(control.x, control.y, end.x, end.y)
-
-@Suppress("unused")
-private fun DrawScope.unused() = Unit

@@ -2,6 +2,7 @@ package com.hskpath.app
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -130,16 +131,56 @@ class ScreensTest {
 
     @Test fun mouthGuideForAFinal() = show("19-mouth-u") { SoundScreen(app, content, "ü", false) }
 
-    @Test fun everyMouthShapeDraws() {
+    @Test fun mouthGuideForAnAspiratedSound() = show("26-mouth-p") { SoundScreen(app, content, "p", true) }
+
+    @Test fun mouthGuideForANasalFinal() = show("27-mouth-ang") { SoundScreen(app, content, "ang", false) }
+
+    @Test fun everySoundGuideRenders() {
         var index by mutableStateOf(0)
-        val names = com.hskpath.core.Sounds.shapes.toList()
-        show("20-mouth-shapes") { com.hskpath.app.ui.MouthDiagram(com.hskpath.app.ui.MouthPoses.getValue(names[index])) }
-        for (i in names.indices) {
+        val sounds = com.hskpath.core.Sounds.all
+        show("28-mouth-first") { SoundScreen(app, content, sounds[index].letters, sounds[index].isInitial) }
+        for (i in sounds.indices) {
             rule.runOnUiThread { index = i }
             rule.waitForIdle()
-            if (System.getProperty("screenshots") == "true") rule.onRoot().captureRoboImage("build/screens/mouth-${names[i]}.png")
         }
     }
+
+    /** Every pose drawn by the app, for comparing with tools/mouth/preview.cjs. */
+    @Test fun everyMouthPoseDraws() {
+        val mouth = app.mouth!!
+        val pages = com.hskpath.core.Sounds.shapes.toList().chunked(6)
+        var page by mutableStateOf(0)
+        show("mouth-poses-1") { PoseGrid(mouth, pages[page]) }
+        for (i in 1 until pages.size) {
+            rule.runOnUiThread { page = i }
+            rule.waitForIdle()
+            if (System.getProperty("screenshots") == "true") {
+                rule.onRoot().captureRoboImage("build/screens/mouth-poses-${i + 1}.png")
+            }
+        }
+    }
+
+    @Composable
+    private fun PoseGrid(mouth: com.hskpath.core.Mouth, names: List<String>) {
+        androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
+            for (row in names.chunked(2)) {
+                androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth()) {
+                    for (name in row) {
+                        val typical = com.hskpath.core.Sounds.all.flatMap { it.steps }.firstOrNull { it.shape == name }
+                        androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+                            com.hskpath.app.ui.MouthCanvas(mouth, com.hskpath.core.Mouth.SIDE, mouth.frame(name),
+                                overlay = typical?.let { com.hskpath.app.ui.MouthOverlay(name, it.air, it.voiced) })
+                            com.hskpath.app.ui.MouthCanvas(mouth, com.hskpath.core.Mouth.FRONT, mouth.frame(name),
+                                Modifier.fillMaxWidth(0.5f))
+                            androidx.compose.material3.Text(name)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test fun mouthMap() = show("29-mouth-map") { com.hskpath.app.ui.MouthMap(app.mouth!!) }
 
     @Test fun everyLevelRendersItsPathAndGrammar() {
         var showGrammar by mutableStateOf(false)

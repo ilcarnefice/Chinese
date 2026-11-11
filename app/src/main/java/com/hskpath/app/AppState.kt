@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import com.hskpath.core.Content
 import com.hskpath.core.GrammarPoint
 import com.hskpath.core.Lesson
+import com.hskpath.core.Mouth
 import com.hskpath.core.Progress
 import com.hskpath.core.StrokeBook
 import com.hskpath.core.Word
@@ -56,6 +57,9 @@ class AppState(private val context: Context) {
         private set
     var strokes by mutableStateOf<StrokeBook?>(null)
         private set
+    /** The mouth-position diagrams for the sound guides. */
+    var mouth by mutableStateOf<Mouth?>(null)
+        private set
     /** Selected bottom tab on the home screen. */
     var tab by mutableIntStateOf(0)
     var progress by mutableStateOf(Progress.fromJson(prefs.getString(KEY_PROGRESS, null)))
@@ -77,6 +81,7 @@ class AppState(private val context: Context) {
         val read = { path: String -> context.assets.open(path).bufferedReader().use { it.readText() } }
         content = withContext(Dispatchers.IO) { Content.load(read) }
         strokes = withContext(Dispatchers.IO) { StrokeBook(read("strokes.tsv")) }
+        mouth = withContext(Dispatchers.IO) { Mouth.parse(read("mouth.json")) }
     }
 
     fun save(updated: Progress) {
