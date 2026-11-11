@@ -7,8 +7,8 @@ in short game-like lessons.
 
 | Part | What you get |
 | --- | --- |
-| Learning path | All 5,001 words of HSK 1-6 in units of 20 words and lessons of 5, each unit ending in a review. Lessons unlock one after another; a level test lets you jump ahead |
-| Lessons | Each new word is introduced with audio, meaning, its characters and examples, then drilled: meaning, characters, pinyin and tones, listening, pair matching, fill-the-gap and sentence building. Missed questions come back at the end |
+| Learning path | All 5,001 words of HSK 1-6 in units. Each unit mixes vocabulary lessons of five words with grammar lessons and ends in a review; a level test lets you jump ahead. HSK 1 is arranged in themed units (Hello, People, Family, Numbers, ...) with each grammar formula placed after the words it uses; levels without an outline file follow word frequency |
+| Lessons | A new word is introduced with audio, meaning, its characters and examples, then drilled: meaning, characters, pinyin and tones, listening, pair matching, fill-the-gap and sentence building. A grammar lesson shows the formula as blocks with examples, then has you pick its key word and read and build sentences. Missed questions come back at the end. Pinyin above the characters can be switched on or off |
 | Word Map | 11,001 words (HSK plus 6,000 common everyday words) linked by their characters: a character sits in the middle and the words built from it branch out |
 | Sentence Map | About 24,300 sentences with pinyin and English, grouped by key word and graded by HSK level |
 | Grammar Map | 100 formulas drawn as colour-coded building blocks, each with an explanation, examples pulled from the corpus and a sentence-building drill |
@@ -45,7 +45,10 @@ Every push also builds the APK on GitHub Actions; download it from the run's
   runs them without the Android SDK.
 - `app/` — the Jetpack Compose interface, text-to-speech and saved progress.
 - `app/src/main/assets/` — the lesson data as plain text: word lists, sentences,
-  grammar, dialogues and strokes. Edit `content/` by hand to add or correct material.
+  grammar, dialogues, phrase books, course outlines, strokes and mouth diagrams.
+  Edit `content/` by hand to add or correct material; `content/outline_hsk<N>.txt`
+  sets the units, their themes and where grammar lessons go
+  (`python3 tools/check_outline.py <N> <file>` checks one).
 - `tools/` — scripts that regenerate the word lists, sentence corpus and stroke data
   from the open sources below.
 

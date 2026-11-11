@@ -1,0 +1,76 @@
+# Course outline for HSK 1.
+# "## Title" starts a unit. Each line of words is one vocabulary lesson.
+# "> Title" places the grammar formula with that title (from grammar.txt) as a lesson.
+# A review of the unit's words is added after each unit automatically.
+
+## Hello
+你 好 我 是 不
+他 她 学生 老师 的
+> Saying what something is: 是
+> Possession: 的
+吗 人 中国 谢谢 再见
+> Yes/no questions: 吗
+
+## People
+我们 朋友 同学 医生 先生
+> Saying no: 不
+小姐 叫 名字 什么 谁
+> Question words stay in place
+认识 高兴 很 对不起 没关系
+> Describing with 很
+
+## Family
+家 爸爸 妈妈 儿子 女儿
+有 没有 个 和 都
+> Having and not having: 有 / 没有
+> Joining nouns: 和
+这 那 些 狗 猫
+> All and both: 都
+
+## Numbers
+一 二 三 四 五
+六 七 八 九 十
+> Measure words
+几 多少 岁 本 书
+> Asking how many: 几 and 多少
+> This one and that one: 这 / 那
+
+## Days and time
+今天 明天 昨天 现在 时候
+年 月 号 星期 点
+> Time comes before the verb
+分钟 上午 中午 下午 呢
+> "And you?": 呢
+
+## Food and drink
+吃 喝 茶 水 菜
+米饭 水果 苹果 杯子 饭店
+想 喜欢 爱 请 不客气
+> Liking to do things: 喜欢
+> Polite requests: 请
+
+## Places
+在 哪儿 哪 里 上
+> Where something is: 在
+下 前面 后面 北京 学校
+医院 商店 住 去 来
+> Going somewhere to do something: 去
+
+## Study and work
+学习 汉语 字 读 写
+说 听 看 会 能
+> Wanting and being able: 想 / 会 / 能
+工作 做 怎么 怎么样 看见
+> Asking how: 怎么
+
+## Shopping
+买 钱 块 东西 衣服
+大 小 多 少 漂亮
+太 了 一点儿 桌子 椅子
+> "Too ...": 太 ... 了
+
+## Daily life
+电视 电影 电脑 打电话 喂
+> Also: 也
+天气 热 冷 下雨 睡觉
+回 开 坐 飞机 出租车
