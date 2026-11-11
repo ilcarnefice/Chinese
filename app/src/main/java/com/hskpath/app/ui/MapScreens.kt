@@ -154,6 +154,15 @@ fun WriteListScreen(app: AppState, content: Content, level: Int) {
 /** Watch a character being written, then trace it stroke by stroke. */
 @Composable
 fun WriteScreen(app: AppState, content: Content, character: String) {
+    Column(Modifier.fillMaxSize()) {
+        TopBar(app, "Write $character")
+        WritePad(app, content, character, Modifier.weight(1f))
+    }
+}
+
+/** The writing practice itself (stroke-order demo, then tracing), for the Write screen and the character pop-up. */
+@Composable
+fun WritePad(app: AppState, content: Content, character: String, modifier: Modifier = Modifier) {
     val strokes = remember(character) { app.strokes?.strokes(character) }
     val word = content.lookup(character)
     // Strokes finished so far, the stroke being animated (0..1), and misses on the current stroke.
@@ -165,8 +174,7 @@ fun WriteScreen(app: AppState, content: Content, character: String) {
     val trail = remember { mutableStateListOf<Offset>() }
     var flash by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize()) {
-        TopBar(app, "Write $character")
+    Column(modifier) {
         if (strokes == null) {
             PandaSays(Mood.SAD, "Stroke order is not available for this character.", Modifier.padding(16.dp))
             return@Column

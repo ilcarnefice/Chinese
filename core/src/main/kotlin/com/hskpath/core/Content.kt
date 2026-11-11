@@ -16,7 +16,16 @@ class Content(
     val outlines: Map<Int, List<UnitOutline>> = emptyMap(),
     /** Common radicals with a picture, for the radical chart. */
     val radicals: List<Radical> = emptyList(),
+    /** How each character is built and how to remember it, by character. */
+    val tips: Map<String, CharTip> = emptyMap(),
 ) {
+    /** The memory tip for one character, if there is one. */
+    fun tip(character: String): CharTip? = tips[character]
+
+    /** The distinct Chinese characters of a word, in order. */
+    fun charactersOf(text: String): List<String> =
+        text.map { it.toString() }.filter { it[0] in '\u4e00'..'\u9fff' }.distinct()
+
     val levels: List<Int> = words.keys.sorted()
 
     private val hskWords: List<Word> = levels.flatMap { words.getValue(it) }
@@ -218,8 +227,19 @@ class Content(
                     runCatching { read("content/outline_hsk$level.txt") }.getOrNull()?.let { level to parseOutline(it) }
                 }.toMap(),
                 radicals = runCatching { read("content/radicals.tsv") }.getOrNull()?.let(::parseRadicals).orEmpty(),
+                tips = runCatching { read("tips.tsv") }.getOrNull()?.let(::parseTips).orEmpty(),
             )
         }
+
+        /** Lines of: character, meaning, parts as "part:role ...", note. */
+        fun parseTips(text: String): Map<String, CharTip> =
+            text.lineSequence().filter { it.isNotBlank() && !it.startsWith("#") }.mapNotNull { line ->
+                val p = line.split("\t")
+                if (p.size < 4) null
+                else p[0] to CharTip(p[0], p[1], p[2].split(" ").filter { ":" in it }.map {
+                    TipPart(it.substringBefore(":"), it.substringAfter(":"))
+                }, p[3])
+            }.toMap()
 
         /** Lines of: radical, sound-alike character, pinyin, meaning, picture, example characters. */
         fun parseRadicals(text: String): List<Radical> =

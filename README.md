@@ -17,6 +17,7 @@ in short game-like lessons.
 | Training plans | A day-by-day schedule through each level (HSK 1-3 in 30 days each, HSK 4 in 60, HSK 5 in 100, HSK 6 in 150): lessons, a grammar formula, a sentence workout and optional handwriting each day, ending with the level test |
 | Dialogues | 17 short conversations covering every level, with line-by-line audio and "play all" |
 | Sounds and mouth positions | For all 21 initials and 35 finals: a close-up of a real textbook picture of the mouth, seen from the side, that moves — jaw, lips, tongue and soft palate — step by step (closure, release, vowel). A dot shows where two parts touch, one short arrow shows where the breath comes out (mouth or nose), and one sentence under the picture says what to do; a button names the parts. Plus the nearest English sound and practice words, and the tones with pitch contours and tone-change rules |
+| Memory tips | For 2,473 characters (every character of HSK 1-3 and most of HSK 4-6): how the character is built — which part gives the meaning, which gives the sound, what it once pictured — and a one-line way to remember it (好: a woman 女 with her child 子). Shown when a word is taught, in the dictionary, and in a pop-up on any character answer, where the character can also be traced without leaving the question |
 | Radicals | A picture chart of 55 common radicals (亻 person, 氵 water, 艹 grass, ...): each with a picture, its pinyin and meaning; tap one to hear it and see characters built with it |
 | Practice | Spaced-repetition word review, sentence workouts (translate, listen, build), grammar drills, and a 30-question test per level |
 | Dictionary | Search all 11,001 words by characters, pinyin (tones optional) or English |
@@ -68,6 +69,9 @@ Every push also builds the APK on GitHub Actions; download it from the run's
 - Stroke order (`app/src/main/assets/strokes.tsv`): derived from
   [Hanzi Writer data](https://github.com/chanind/hanzi-writer-data), built on Make Me
   a Hanzi and the Arphic fonts; see `licenses/ARPHICPL.TXT`.
+- Memory tips (`app/src/main/assets/tips.tsv`): from the character-origin notes of the
+  [chinese-lexicon](https://www.npmjs.com/package/chinese-lexicon) package by Peter Olson
+  (ISC licence), reworded slightly by `tools/build_tips.py`.
 - Mouth diagrams (`app/src/main/assets/mouth/`, `mouth.json`): adapted from the figure
   "Anatomy of Nose-Pharynx-Mouth-Larynx" by OpenStax College, *Anatomy & Physiology*
   (Connexions, http://cnx.org/content/col11496/1.6/), licensed

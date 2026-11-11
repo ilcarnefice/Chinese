@@ -215,4 +215,19 @@ class ContentTest {
         assertEquals("shuǐ", water.pinyin)
         assertTrue("洗" in water.examples)
     }
+
+    @Test fun everyBeginnerCharacterHasAMemoryTip() {
+        val good = content.tip("好")!!
+        assertEquals(listOf(TipPart("女", "meaning"), TipPart("子", "meaning")), good.parts)
+        assertTrue(good.note.contains("woman"))
+        val mother = content.tip("妈")!!
+        assertEquals(listOf("meaning", "sound"), mother.parts.map { it.role })
+        assertEquals(listOf("朋", "友"), content.charactersOf("朋友"))
+        assertEquals(listOf("好"), content.charactersOf("好好"))
+        // Every character taught in HSK 1 can be explained.
+        for (word in content.wordsOf(1)) for (character in content.charactersOf(word.hanzi)) {
+            assertTrue("no tip for $character", content.tip(character) != null)
+        }
+        assertTrue(content.tips.size > 2000)
+    }
 }

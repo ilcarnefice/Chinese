@@ -227,6 +227,9 @@ private fun TeachView(app: AppState, content: Content, teach: Teach, onNext: () 
             Pill("✨ NEW WORD", Gold, Color(0xFF4A3500))
             Spacer(Modifier.height(8.dp))
             WordCard(app, content, word, teach.examples, teach.breakdown)
+            // How each character of the new word is built: the trick for remembering it.
+            for (character in content.charactersOf(word.hanzi)) TipBlock(app, content, character, Modifier.padding(top = 14.dp))
+            Spacer(Modifier.height(12.dp))
         }
         BigButton("Got it", Modifier.padding(16.dp), onClick = onNext)
     }
@@ -321,6 +324,8 @@ fun WordCard(
 private fun ChoiceView(app: AppState, content: Content, choice: Choice, onJudged: (Boolean) -> Unit, onDone: (Boolean) -> Unit) {
     var selected by remember { mutableIntStateOf(-1) }
     var verdict by remember { mutableStateOf<Boolean?>(null) }
+    // The character whose pop-up (memory tip, writing practice) is open.
+    var about by remember { mutableStateOf<String?>(null) }
     if (choice.kind == ChoiceKind.LISTEN) LaunchedEffect(choice) { app.speaker.speak(choice.word.hanzi) }
     val word = choice.word
     ExerciseFrame(
@@ -361,11 +366,14 @@ private fun ChoiceView(app: AppState, content: Content, choice: Choice, onJudged
             val showPinyin = characters && app.showPinyin && (!listening || i == selected || verdict != null)
             val sub = if (!showPinyin) null else if (i == choice.correctIndex) word.pinyin else content.pinyinFor(option).replace(" ", "")
             OptionTile(option, if (characters) 28 else 18, selected = i == selected, sub = sub, subBelow = listening,
-                state = optionState(verdict, i == choice.correctIndex, i == selected), enabled = verdict == null) {
+                state = optionState(verdict, i == choice.correctIndex, i == selected), enabled = verdict == null,
+                onInfo = if (characters) ({ about = option }) else null) {
                 selected = i
-                if (listening) app.speaker.speak(option)
+                // Picking a character says it, so its sound is learned along with its shape.
+                if (characters) app.speaker.speak(option)
             }
         }
+        about?.let { CharacterPopup(app, content, it) { about = null } }
     }
 }
 
@@ -380,7 +388,7 @@ private fun optionState(verdict: Boolean?, isAnswer: Boolean, isSelected: Boolea
 /** One answer option: a raised tile that turns green or red once judged. [sub] is pinyin shown above it, or under it with [subBelow]. */
 @Composable
 private fun OptionTile(text: String, size: Int, selected: Boolean, state: Boolean?, enabled: Boolean, sub: String? = null,
-                       subBelow: Boolean = false, onClick: () -> Unit) {
+                       subBelow: Boolean = false, onInfo: (() -> Unit)? = null, onClick: () -> Unit) {
     val accent = when (state) {
         true -> Good
         false -> Bad
@@ -393,6 +401,15 @@ private fun OptionTile(text: String, size: Int, selected: Boolean, state: Boolea
             if (!sub.isNullOrEmpty() && !subBelow) Text(sub, fontSize = 13.sp, lineHeight = 15.sp, color = MaterialTheme.colorScheme.secondary)
             Text(text, fontSize = size.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
             if (!sub.isNullOrEmpty() && subBelow) Text(sub, fontSize = 15.sp, lineHeight = 18.sp, color = MaterialTheme.colorScheme.secondary)
+        }
+        // A small button that opens the character's pop-up: how to remember it, and writing practice.
+        if (onInfo != null) {
+            Box(Modifier.fillMaxWidth().padding(end = 10.dp), contentAlignment = Alignment.CenterEnd) {
+                Text("?", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 12.dp).size(32.dp).clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant).clickable(onClick = onInfo).padding(top = 5.dp))
+            }
         }
     }
 }

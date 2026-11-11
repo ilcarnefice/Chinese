@@ -198,6 +198,8 @@ fun WordInfoScreen(app: AppState, content: Content, word: Word) {
         TopBar(app, word.levelLabel)
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
             WordCard(app, content, word)
+            for (character in content.charactersOf(word.hanzi)) TipBlock(app, content, character, Modifier.padding(top = 14.dp))
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -228,7 +230,8 @@ fun AboutScreen(app: AppState) {
                 "License). The mouth diagrams are adapted from the figure \"Anatomy of Nose-Pharynx-Mouth-Larynx\" by " +
                 "OpenStax College, Anatomy & Physiology (cnx.org/content/col11496/1.6), used under the Creative " +
                 "Commons Attribution 3.0 licence: its labels were removed and its tongue, jaw and soft palate are " +
-                "moved to show each sound. Beginner glosses, the hand-written examples, grammar notes, phrase " +
+                "moved to show each sound. The notes on how characters are built come from the chinese-lexicon project by Peter Olson (ISC " +
+                "licence). Beginner glosses, the hand-written examples, grammar notes, phrase " +
                 "books and dialogues were written for " +
                 "this app. Audio is produced by your device's text-to-speech voice.")
             Text("This app is independent and is not affiliated with Hanban, Chinese Testing International, " +

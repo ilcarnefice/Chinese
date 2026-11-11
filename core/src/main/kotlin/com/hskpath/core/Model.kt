@@ -92,6 +92,15 @@ data class Dialogue(val level: Int, val title: String, val lines: List<DialogueL
 /** A themed group of phrases inside a phrase book. */
 data class PhraseTopic(val title: String, val phrases: List<Sentence>)
 
+/** One part of a character and what it does there: meaning, sound, picture, simplified or unknown. */
+data class TipPart(val char: String, val role: String)
+
+/**
+ * How a character is built and a short note that helps to remember it:
+ * 好 is a woman 女 with her child 子.
+ */
+data class CharTip(val character: String, val meaning: String, val parts: List<TipPart>, val note: String)
+
 /**
  * A radical: a building block of characters that often hints at their meaning.
  * [say] is a character read the same way (many radicals cannot be spoken on

@@ -258,6 +258,19 @@ class ScreensTest {
 
     @Test fun mouthMap() = show("29-mouth-map") { com.hskpath.app.ui.MouthMap(app.mouth!!) }
 
+    /** The pop-up on an answer option: how to remember the character, then writing practice in place. */
+    @Test fun characterPopupShowsTheTrickAndWritingPractice() {
+        show("39-character-popup") { com.hskpath.app.ui.CharacterPopup(app, content, "好") {} }
+        rule.onNodeWithText("💡 How to remember 好").assertExists()
+        rule.onNodeWithText("It is good (好) for a woman (女) and her child (子) to be together.").assertExists()
+        if (System.getProperty("screenshots") == "true") {
+            rule.onNode(androidx.compose.ui.test.isDialog()).captureRoboImage("build/screens/39-character-popup.png")
+        }
+        rule.onNodeWithText("✍ PRACTISE WRITING 好").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("← Back to the tip").assertExists()
+    }
+
     /** The picture chart of radicals: tapping one shows it large with characters built from it. */
     @Test fun radicalChart() {
         show("38-radicals") { com.hskpath.app.ui.RadicalsScreen(app, content) }
