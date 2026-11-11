@@ -91,6 +91,10 @@ organisations that run the HSK exam, and it contains no material from commercial
 | --- | --- | --- | --- |
 | ![Grammar map](docs/screens/12-grammar-map.png) | ![Sentence map](docs/screens/11-sentence-map.png) | ![Writing](docs/screens/13-writing.png) | ![Profile](docs/screens/4-me.png) |
 
-| Mouth position (zh) | Mouth position (ü) |
+| Mouth position (zh), step 1 | Naming the parts |
 | --- | --- |
-| ![Mouth position for zh](docs/screens/18-mouth-zh.png) | ![Mouth position for ü](docs/screens/19-mouth-u.png) |
+| ![Mouth position for zh](docs/screens/34-mouth-zh-step-1.png) | ![The parts of the mouth named](docs/screens/36-mouth-names.png) |
+
+Every mouth position, as the real picture is moved for it (`docs/mouth/all-positions.jpg`):
+
+![All 25 mouth positions](docs/mouth/all-positions.jpg)

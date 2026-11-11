@@ -52,47 +52,66 @@ def remove_lines(im):
     """Paints out the black pointer lines. Each line pixel becomes a blend of two
     clean pixels on opposite sides of the line. Of the directions that cross the
     line, the one whose two ends look most alike is used, so an edge or a stripe
-    that the line cut through is joined up again instead of being smeared."""
+    that the line cut through is joined up again instead of being smeared. The
+    choice is made for a small neighbourhood at a time, so that the joined-up
+    stripes run straight."""
     h, w = im.shape[:2]
     b, g, r = [im[:, :, i].astype(np.int32) for i in range(3)]
     mx = np.maximum(np.maximum(r, g), b)
     mn = np.minimum(np.minimum(r, g), b)
-    core = ((mx < 120) & (mx - mn < 50)).astype(np.uint8)
-    mask = cv2.dilate(core, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))) > 0
+    core = ((mx < 150) & (mx - mn < 60)).astype(np.uint8)
+    mask = cv2.dilate(core, np.ones((3, 3), np.uint8)) > 0
     dirs = [(1, 0), (0, 1), (1, 1), (1, -1), (2, 1), (1, 2), (2, -1), (1, -2), (3, 1), (1, 3), (3, -1), (1, -3),
-            (3, 2), (2, 3), (3, -2), (2, -3)]
+            (3, 2), (2, 3), (3, -2), (2, -3), (4, 1), (4, -1), (1, 4), (1, -4), (5, 1), (5, -1), (5, 2), (5, -2),
+            (6, 1), (6, -1), (1, 5), (1, -5)]
     src = im.astype(np.float32)
+    look = cv2.GaussianBlur(src, (0, 0), 1.0)          # compare slightly blurred colours: less fooled by noise
+    ys, xs = np.nonzero(mask)
+    n = len(ys)
+    reach = 46.0
+    ends = []                                          # per direction: steps and end points on both sides
+    cost = np.full((n, len(dirs)), 1e9, np.float32)
+    for d, (dx, dy) in enumerate(dirs):
+        step = math.hypot(dx, dy)
+        sides = []
+        for sign in (1, -1):
+            k_found = np.zeros(n, np.int32)
+            ex = np.zeros(n, np.int32)
+            ey = np.zeros(n, np.int32)
+            for k in range(1, int(reach / step) + 1):
+                xx = xs + sign * dx * k
+                yy = ys + sign * dy * k
+                inside = (xx >= 0) & (xx < w) & (yy >= 0) & (yy < h)
+                clear = np.zeros(n, bool)
+                clear[inside] = ~mask[yy[inside], xx[inside]]
+                new = clear & (k_found == 0)
+                k_found[new] = k
+                ex[new] = xx[new]
+                ey[new] = yy[new]
+            sides.append((k_found, ex, ey))
+        (k1, x1, y1), (k2, x2, y2) = sides
+        ok = (k1 > 0) & (k2 > 0)
+        diff = np.abs(look[y1, x1] - look[y2, x2]).sum(axis=1)
+        cost[ok, d] = diff[ok] + 1.2 * (k1[ok] + k2[ok]) * step
+        ends.append((k1, x1, y1, k2, x2, y2, ok))
+    # agree on a direction with the neighbours
+    weight = cv2.blur(mask.astype(np.float32), (9, 9))[ys, xs]
+    smooth = np.empty_like(cost)
+    for d in range(len(dirs)):
+        dense = np.zeros((h, w), np.float32)
+        dense[ys, xs] = np.minimum(cost[:, d], 2000.0)
+        smooth[:, d] = cv2.blur(dense, (9, 9))[ys, xs] / np.maximum(weight, 1e-6)
+    smooth[cost >= 1e9] = 1e9
+    best = np.argmin(smooth, axis=1)
     out = src.copy()
-    for y, x in zip(*np.nonzero(mask)):
-        best = None
-        for dx, dy in dirs:
-            step = math.hypot(dx, dy)
-            ends = []
-            for sign in (1, -1):
-                k = 1
-                while k * step <= 22:
-                    xx, yy = x + sign * dx * k, y + sign * dy * k
-                    if not (0 <= xx < w and 0 <= yy < h):
-                        k = 999
-                        break
-                    if not mask[yy, xx]:
-                        break
-                    k += 1
-                if k * step > 22:
-                    ends = None
-                    break
-                ends.append((k, xx, yy))
-            if ends is None:
-                continue
-            (k1, x1, y1), (k2, x2, y2) = ends
-            cost = float(np.abs(src[y1, x1] - src[y2, x2]).sum()) + 5.0 * (k1 + k2) * step
-            if best is None or cost < best[0]:
-                best = (cost, ends)
-        if best is None:
-            continue
-        (k1, x1, y1), (k2, x2, y2) = best[1]
-        t = k1 / (k1 + k2)
-        out[y, x] = src[y1, x1] * (1 - t) + src[y2, x2] * t
+    for d in range(len(dirs)):
+        k1, x1, y1, k2, x2, y2, ok = ends[d]
+        pick = (best == d) & ok
+        t = (k1[pick] / np.maximum(k1[pick] + k2[pick], 1)).astype(np.float32)[:, None]
+        out[ys[pick], xs[pick]] = src[y1[pick], x1[pick]] * (1 - t) + src[y2[pick], x2[pick]] * t
+    # soften the repaired strip a little, so that small kinks in it do not catch the eye
+    strip = cv2.GaussianBlur(cv2.dilate(mask.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(np.float32), (0, 0), 0.8)
+    out = out * (1 - strip[:, :, None]) + cv2.GaussianBlur(out, (0, 0), 1.1) * strip[:, :, None]
     return np.clip(out, 0, 255).astype(np.uint8)
 
 
@@ -253,8 +272,9 @@ def sample(field, p):
 HINGE = np.array([65.0, 232.0])     # the jaw swings about this point (just in front of the ear)
 JAW_BACK, JAW_FRONT = 330.0, 540.0  # the jaw's pull fades out between these x positions
 
-CUT = [(330, 494), (603, 494), (603, 490), (660, 475), (679, 472), (900, 472)]   # top edge of the jaw piece
-LIP_LINE = np.array([664.0, 476.0])  # where the red inside of the mouth ends between the lips
+# Top edge of the jaw piece: over the tip of the lower front tooth, then between the lips where they touch.
+CUT = [(330, 486), (612, 486), (660, 475), (679, 472), (900, 472)]
+LIP_LINE = np.array([677.0, 474.0])  # where the lips touch: the red inside of the mouth ends here
 
 UPPER_LIP = np.array([688.0, 461.0])     # the middle of each lip's free edge: the lip handles pull here
 LOWER_LIP = np.array([686.0, 485.0])
@@ -281,9 +301,21 @@ def upper_lip_weight(p):
     return np.exp(-d2 / (2 * 28.0 ** 2)) * smoothstep(634, 654, p[:, 0])
 
 
-def lower_lip_weight(p):
-    d2 = ((p - LOWER_LIP) ** 2).sum(axis=1)
-    return np.exp(-d2 / (2 * 30.0 ** 2)) * smoothstep(626, 650, p[:, 0])
+def lower_lip_weight(p, centre=LOWER_LIP, spread=(37.0, 37.0)):
+    d = p - np.asarray(centre, dtype=np.float64)
+    return np.exp(-(d[:, 0] / spread[0]) ** 2 / 2 - (d[:, 1] / spread[1]) ** 2 / 2) * smoothstep(604, 636, p[:, 0])
+
+
+# The edge of the dark mouth opening between the lips: it runs down from where the lips touch, along the
+# path the lower lip takes as the jaw opens.
+MOUTH_EDGE = np.array([swing(LIP_LINE[None], a)[0] for a in np.linspace(0, 14, 60)])
+
+
+def mouth_edge_weight(p):
+    """How much of the lower lip's sideways movement the edge of the mouth opening follows."""
+    edge_x = np.interp(p[:, 1], MOUTH_EDGE[:, 1], MOUTH_EDGE[:, 0], left=LIP_LINE[0])
+    return (np.exp(-((p[:, 0] - edge_x) / 30.0) ** 2 / 2) * smoothstep(468, 482, p[:, 1])
+            * (1 - smoothstep(560, 610, p[:, 1])))
 
 
 def cut_y(x):
@@ -391,16 +423,19 @@ class Tongue:
 # ------------------------------------------------------------------ the poses
 
 def pose(jaw=0.0, velum=1.0, ulip=(0, 0), llip=(0, 0), tongue=None, to=None, turn=None, contact=(), gap=(),
-         air="auto", via=None):
+         air="auto", via=None, llip_at=None, llip_spread=(37.0, 37.0)):
     """One mouth position.
     jaw: degrees open (+) or closed (-) from the picture. velum: 1 lifted (nose shut), 0 hanging (nose open).
     ulip, llip: movement of the upper and lower lip (the lower lip on top of the jaw's movement).
     tongue: per handle, movement on top of the jaw's. to: per handle, the exact place it must reach.
     turn: (degrees, pivot, where the tip ends up): swings the whole tip of the tongue as one block.
     contact / gap: marker positions. air: "auto" for a breath route through the mouth, None for none.
-    via: extra points the breath route must pass, replacing the automatic ones in front of them."""
+    via: extra points the breath route must pass, replacing the automatic ones in front of them.
+    llip_at: the point of the lower lip that llip pulls on, when it is not the middle of the lip's edge.
+    llip_spread: how far around that point the pull reaches, across and down."""
     return dict(jaw=jaw, velum=velum, ulip=ulip, llip=llip, tongue=tongue or {}, to=to or {}, turn=turn,
-                contact=list(contact), gap=list(gap), air=air, via=via)
+                contact=list(contact), gap=list(gap), air=air, via=via, llip_at=llip_at or tuple(LOWER_LIP),
+                llip_spread=llip_spread)
 
 
 RIDGE_TONGUE = dict(turn=(-42, (530, 468), (590, 397)), to={"blade": (506, 393), "under2": (549, 492)},
@@ -431,7 +466,8 @@ POSES = {
     "rest": pose(velum=0, air="auto"),
     "lips": pose(contact=[(679, 472)], air=None),
     "lipsNasal": pose(velum=0, contact=[(679, 472)], air=None),
-    "lipTeeth": pose(jaw=-0.6, ulip=(2, -12), llip=(-38, -17), gap=[(622, 451)]),
+    "lipTeeth": pose(jaw=-0.6, ulip=(2, -12), llip=(-35, -15), llip_at=(660, 478), llip_spread=(34.0, 22.0),
+                     gap=[(621, 451)]),
     "ridge": pose(jaw=-1.0, **OPEN_LIPS, **RIDGE_TONGUE, contact=[(591, 392)], air=None),
     "ridgeNasal": pose(jaw=-1.0, velum=0, **OPEN_LIPS, **RIDGE_TONGUE, contact=[(591, 392)], air=None),
     "ridgeLateral": pose(jaw=-0.6, **OPEN_LIPS, turn=RIDGE_TONGUE["turn"], to=RIDGE_TONGUE["to"],
@@ -596,20 +632,18 @@ def build(out_dir, debug_dir=None):
     wide = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
     head[cv2.dilate(erased_tongue.astype(np.uint8), wide) > 0] = CAVITY
     # under the cut the lower jaw can drop away: behind it is the dark mouth, and open air in front of the lips
-    angles = np.linspace(0, 14, 60)
-    arc = np.array([swing(LIP_LINE[None], a)[0] for a in angles])
-    arc_x = np.interp(ys, arc[:, 1], arc[:, 0], left=LIP_LINE[0])
+    arc_x = np.interp(ys, MOUTH_EDGE[:, 1], MOUTH_EDGE[:, 0], left=LIP_LINE[0])
     band = under_cut & (ys < 665) & (xs > 500) & ~((tongue.mask > 0) & (tongue.depth >= ERASE_TO))
     head[band & (xs <= arc_x)] = CAVITY
     head[band & (xs > arc_x)] = WHITE
 
-    lip_crop = (626, 330, 120, 162)
+    lip_crop = (616, 330, 130, 290)       # the upper lip, and under it the edge of the mouth opening
 
     layers = [
         dict(id="head", src="mouth/head.png", rect=(0, 0, SIZE, SIZE), cols=0, rows=0),
-        dict(id="upperLip", src="mouth/head.png", crop=lip_crop, rect=lip_crop, cols=8, rows=10),
+        dict(id="upperLip", src="mouth/head.png", crop=lip_crop, rect=lip_crop, cols=9, rows=20),
         dict(id="softPalate", src="mouth/velum.png", rect=velum_rect, cols=14, rows=13),
-        dict(id="jaw", src="mouth/jaw.png", rect=jaw_rect, cols=22, rows=23),
+        dict(id="jaw", src="mouth/jaw.png", rect=jaw_rect, cols=28, rows=30),
         dict(id="tongue", src="mouth/tongue.png", rect=tongue_rect, cols=32, rows=29),
     ]
     os.makedirs(os.path.join(out_dir, "mouth"), exist_ok=True)
@@ -658,10 +692,12 @@ def build(out_dir, debug_dir=None):
         llip = np.array(spec["llip"], float)
 
         def lower(p):
-            return jaw_shift(p, spec["jaw"]) + lower_lip_weight(p)[:, None] * llip
+            return (jaw_shift(p, spec["jaw"])
+                    + lower_lip_weight(p, spec["llip_at"], spec["llip_spread"])[:, None] * llip)
 
         moves = {
-            "upperLip": upper_lip_weight(grids["upperLip"])[:, None] * ulip,
+            "upperLip": (upper_lip_weight(grids["upperLip"])[:, None] * ulip
+                         + mouth_edge_weight(grids["upperLip"])[:, None] * np.array([llip[0], 0.0])),
             "softPalate": velum_shift(grids["softPalate"], spec["velum"]),
             "jaw": lower(grids["jaw"]),
             "tongue": tongue.shift(grids["tongue"], spec["jaw"], local),

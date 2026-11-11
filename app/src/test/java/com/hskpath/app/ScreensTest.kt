@@ -182,6 +182,26 @@ class ScreensTest {
 
     @Test fun mouthGuideForANasalFinal() = show("27-mouth-ang") { SoundScreen(app, content, "ang", false) }
 
+    /** The picture moves through the steps of a sound, and says in words what it is showing. */
+    @Test fun mouthGuidePlaysItsSteps() {
+        rule.mainClock.autoAdvance = false
+        rule.setContent {
+            HskTheme { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { SoundScreen(app, content, "zh", true) } }
+        }
+        rule.mainClock.advanceTimeBy(200)
+        rule.onNodeWithText("Relaxed: lips together, breathing through the nose").assertExists()
+        rule.mainClock.advanceTimeBy(1300)      // past the opening pause and the first movement
+        rule.onNodeWithText("1. Tongue tip curled up, touching just behind the ridge").assertExists()
+        if (System.getProperty("screenshots") == "true") rule.onRoot().captureRoboImage("build/screens/34-mouth-zh-step-1.png")
+        rule.mainClock.advanceTimeBy(1700)
+        if (System.getProperty("screenshots") == "true") rule.onRoot().captureRoboImage("build/screens/35-mouth-zh-step-2.png")
+        // Naming the parts swaps in the relaxed, labelled picture.
+        rule.onNodeWithText("Name the parts").performClick()
+        rule.mainClock.advanceTimeBy(100)
+        rule.onNodeWithText("Hide names").assertExists()
+        if (System.getProperty("screenshots") == "true") rule.onRoot().captureRoboImage("build/screens/36-mouth-names.png")
+    }
+
     @Test fun everySoundGuideRenders() {
         var index by mutableStateOf(0)
         val sounds = com.hskpath.core.Sounds.all

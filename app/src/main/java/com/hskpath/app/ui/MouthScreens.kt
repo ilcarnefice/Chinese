@@ -320,10 +320,16 @@ fun MouthPicture(
     overlay: MouthOverlay? = null,
     flow: Float = 0f,
     names: Boolean = false,
+    caption: String? = null,
 ) {
     Column(modifier) {
         MouthCanvas(mouth, if (names) mouth.frame(Mouth.REST) else frame,
             Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)), if (names) null else overlay, labels = names, flow = flow)
+        // What the picture is showing right now, in words, right under it.
+        if (caption != null && !names) {
+            Text(caption, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 10.dp))
+        }
         Text("A head seen from the side, cut down the middle. Nose and lips are on the right.",
             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp))
@@ -337,8 +343,6 @@ fun MouthPicture(
             Key(air, filled = true, "path of the breath")
             Key(voice, filled = true, "voice switched on")
         }
-        Text(PICTURE_CREDIT, style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
     }
 }
 
@@ -397,7 +401,8 @@ fun SoundScreen(app: AppState, content: Content, letters: String, isInitial: Boo
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Card(Modifier.fillMaxWidth()) {
                 Box {
-                    MouthPicture(mouth, frame, Modifier.padding(10.dp), overlay, flow, names)
+                    MouthPicture(mouth, frame, Modifier.padding(10.dp), overlay, flow, names,
+                        caption = step?.let { "${at + 1}. ${it.caption}" } ?: "Relaxed: lips together, breathing through the nose")
                     Box(Modifier.align(Alignment.TopStart).padding(18.dp)) {
                         Pill(if (names) "Hide names" else "Name the parts", if (names) Sky else Color.White.copy(alpha = 0.92f),
                             if (names) Color.White else Sky.darker(0.15f)) { names = !names }
@@ -464,6 +469,8 @@ fun SoundScreen(app: AppState, content: Content, letters: String, isInitial: Boo
                     }
                 }
             }
+            Text(PICTURE_CREDIT, style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 18.dp))
             Spacer(Modifier.height(16.dp))
         }
         BigButton("▶ Watch again", Modifier.padding(16.dp), color = Sky, enabled = !playing) { replay++ }
