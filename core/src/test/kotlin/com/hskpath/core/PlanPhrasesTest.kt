@@ -15,15 +15,14 @@ class PlanPhrasesTest {
             val days = TrainingPlan.days(level, content)
             assertEquals(TrainingPlan.lengths.getValue(level), days.size)
             assertEquals((1..days.size).toList(), days.map { it.number })
-            val lessons = Curriculum.units(level, content.wordsOf(level)).flatMap { it.lessons }
+            val lessons = Curriculum.units(level, content).flatMap { it.lessons }
             assertEquals(lessons, days.flatMap { d -> d.tasks.filterIsInstance<PlanTask.Learn>().map { it.lesson } })
-            assertEquals(content.grammarOf(level), days.flatMap { d -> d.tasks.filterIsInstance<PlanTask.Grammar>().map { it.point } })
+            assertEquals(content.grammarOf(level).size, days.sumOf { it.grammarLessons })
             assertEquals(content.wordsOf(level).size, days.sumOf { it.newWords })
             // Every study day has something to learn and sentence practice; the last day is the test.
             for (d in days.dropLast(1)) {
                 assertTrue("HSK $level day ${d.number}", d.tasks.any { it is PlanTask.Learn })
                 assertEquals(1, d.tasks.count { it is PlanTask.Sentences })
-                assertTrue(d.tasks.count { it is PlanTask.Grammar } <= 1)
             }
             assertEquals(listOf(PlanTask.Test(level)), days.last().tasks)
             // The load is even: no day has more than twice the lightest day's lessons, plus one.
@@ -32,7 +31,6 @@ class PlanPhrasesTest {
             val keys = days.flatMap { d -> d.tasks.mapNotNull { it.key } }
             assertEquals(keys.size, keys.distinct().size)
         }
-        assertEquals(1, TrainingPlan.days(1, content).first().tasks.count { it is PlanTask.Grammar })
     }
 
     @Test fun planDaysCompleteAsTasksAreDone() {

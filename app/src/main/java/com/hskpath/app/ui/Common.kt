@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -57,6 +59,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hskpath.app.AppState
+import com.hskpath.core.Content
 import com.hskpath.core.Sentence
 import kotlin.random.Random
 
@@ -334,6 +337,60 @@ fun Confetti(modifier: Modifier = Modifier) {
             val color = Rainbow[p[4].toInt()].copy(alpha = (1f - t).coerceIn(0f, 1f) * 0.9f + 0.1f)
             rotate(p[3] + t * 720f * p[2], Offset(x, y)) {
                 drawRect(color, Offset(x - 7.dp.toPx(), y - 4.dp.toPx()), Size(14.dp.toPx(), 8.dp.toPx()))
+            }
+        }
+    }
+}
+
+/** Characters with their pinyin above them, the way learners' texts are printed. */
+@Composable
+fun Ruby(
+    hanzi: String,
+    pinyin: String?,
+    size: Int,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    weight: FontWeight? = null,
+    pinyinColor: Color = MaterialTheme.colorScheme.secondary,
+) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        if (!pinyin.isNullOrEmpty()) {
+            val small = (size * 0.45f).coerceIn(11f, 20f)
+            Text(pinyin, fontSize = small.sp, lineHeight = (small * 1.15f).sp, color = pinyinColor, maxLines = 1,
+                fontWeight = FontWeight.Medium)
+        }
+        Text(hanzi, fontSize = size.sp, lineHeight = (size * 1.25f).sp, color = color, fontWeight = weight)
+    }
+}
+
+/**
+ * A sentence set word by word, each word with its pinyin above while pinyin is
+ * switched on. [blank] hides one word: it shows [blankText] if given, else a gap.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun RubySentence(
+    app: AppState,
+    content: Content,
+    sentence: Sentence,
+    size: Int = 26,
+    modifier: Modifier = Modifier,
+    blank: Int = -1,
+    blankText: String? = null,
+    accent: Color = Sky,
+    highlight: (String) -> Boolean = { false },
+) {
+    val pinyin = remember(sentence) { content.tokenPinyin(sentence) }
+    FlowRow(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        sentence.tokens.forEachIndexed { i, token ->
+            val bottom = Modifier.align(Alignment.Bottom)
+            when {
+                i == blank -> Ruby(blankText ?: "＿＿",
+                    if (blankText != null && app.showPinyin) content.pinyinFor(blankText).replace(" ", "") else null,
+                    size, bottom.padding(horizontal = 4.dp), accent, FontWeight.ExtraBold)
+                Sentence.isPunctuation(token) -> Text(token, fontSize = size.sp, lineHeight = (size * 1.25f).sp, modifier = bottom)
+                else -> Ruby(token, pinyin[i].takeIf { app.showPinyin }, size, bottom.padding(horizontal = 1.dp),
+                    if (highlight(token)) accent else Color.Unspecified, if (highlight(token)) FontWeight.Bold else null)
             }
         }
     }

@@ -125,6 +125,47 @@ class ContentTest {
         assertEquals("Beyond HSK", content.extraWords.first().levelLabel)
     }
 
+    @Test fun pinyinIsFoundForAnyChineseText() {
+        assertEquals("le", content.pinyinFor("了"))
+        assertEquals("yīnwèi", content.pinyinFor("因为"))
+        assertEquals("shì de", content.pinyinFor("是 … 的"))
+        assertEquals("yīnwèi suǒyǐ", content.pinyinFor("因为 ... 所以 ..."))
+        // An unknown compound falls back to its pieces.
+        assertEquals("wǒ péngyou", content.pinyinFor("我朋友"))
+        assertEquals("", content.pinyinFor("verb"))
+        assertEquals("Completed actions: 了 (le)", content.annotate("Completed actions: 了"))
+        assertEquals("Because ... so ...: 因为 (yīnwèi) ... 所以 (suǒyǐ) ...", content.annotate("Because ... so ...: 因为 ... 所以 ..."))
+        assertEquals("no Chinese here", content.annotate("no Chinese here"))
+        // Every grammar formula's fixed words can be given a reading.
+        for (g in content.grammar) for (block in g.structure.flatten().filter { it.isKeyword }) {
+            assertTrue("${g.title}: ${block.text}", content.pinyinFor(block.text).isNotBlank())
+        }
+    }
+
+    @Test fun sentencesGiveAPinyinForEachWord() {
+        val s = content.sentences.first { it.text == "我是学生。" }
+        assertEquals(listOf("wǒ", "shì", "xuésheng", ""), content.tokenPinyin(s))
+        // A name keeps its capital letter.
+        val named = content.sentences.first { it.text == "我叫大卫。" }
+        assertEquals(listOf("wǒ", "jiào", "Dàwèi", ""), content.tokenPinyin(named))
+        // When the written pinyin joins words differently, dictionary readings are used.
+        val joined = content.sentences.first { it.text == "这个多少钱？" }
+        assertEquals(listOf("zhè", "gè", "duōshao", "qián", ""), content.tokenPinyin(joined))
+        var missing = 0
+        var total = 0
+        val sample = content.sentences.filter { it.curated } + content.sentences.filter { !it.curated }.take(3000) +
+            content.phraseBooks.flatMap { b -> b.topics.flatMap { it.phrases } }
+        for (sentence in sample) {
+            val py = content.tokenPinyin(sentence)
+            assertEquals(sentence.tokens.size, py.size)
+            sentence.tokens.forEachIndexed { i, token ->
+                if (Sentence.isPunctuation(token)) assertEquals("", py[i])
+                else { total++; if (py[i].isBlank()) missing++ }
+            }
+        }
+        assertTrue("$missing of $total words have no pinyin", missing * 200 < total)
+    }
+
     @Test fun dialoguesParse() {
         assertTrue(content.dialogues.size >= 8)
         assertTrue(content.dialogues.all { it.lines.size >= 4 && it.title.isNotBlank() })

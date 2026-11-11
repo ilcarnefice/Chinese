@@ -7,6 +7,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.hskpath.core.Content
+import com.hskpath.core.Exercise
+import com.hskpath.core.Session
+import com.hskpath.core.SessionResult
 import com.hskpath.core.GrammarPoint
 import com.hskpath.core.Lesson
 import com.hskpath.core.Mouth
@@ -48,6 +51,14 @@ sealed interface Screen {
     data object About : Screen
 }
 
+/** A lesson or drill that is under way: the exercises and how far the learner has got. */
+class LiveSession(val exercises: List<Exercise>, retryMistakes: Boolean) {
+    val session = Session(exercises, retryMistakes)
+    var step by mutableIntStateOf(0)
+    var combo by mutableIntStateOf(0)
+    var result by mutableStateOf<SessionResult?>(null)
+}
+
 /** App-wide state: loaded lessons, saved progress, navigation and speech. */
 class AppState(private val context: Context) {
     val speaker = Speaker(context)
@@ -67,9 +78,28 @@ class AppState(private val context: Context) {
     var level by mutableIntStateOf(prefs.getInt(KEY_LEVEL, 1))
         private set
 
-    private val stack = mutableStateListOf<Screen>(Screen.Home)
-    val screen: Screen get() = stack.last()
+    /** One screen on the back stack. Its id keys the state the screen keeps while covered. */
+    class Entry(val screen: Screen, val id: Int) {
+        /** A lesson in progress on this screen, so it survives a visit to another screen. */
+        var live: LiveSession? = null
+    }
+
+    private var nextId = 1
+    private val stack = mutableStateListOf(Entry(Screen.Home, 0))
+    /** Ids of entries that were closed; their saved state can be dropped. */
+    val closed = mutableStateListOf<Int>()
+    val entry: Entry get() = stack.last()
+    val screen: Screen get() = entry.screen
     val canGoBack: Boolean get() = stack.size > 1
+
+    /** Whether pinyin is shown above characters in lessons. */
+    var showPinyin by mutableStateOf(prefs.getBoolean(KEY_PINYIN, true))
+        private set
+
+    fun togglePinyin() {
+        showPinyin = !showPinyin
+        prefs.edit().putBoolean(KEY_PINYIN, showPinyin).apply()
+    }
 
     /** Today as a day number in the user's time zone. */
     fun today(): Long {
@@ -95,16 +125,17 @@ class AppState(private val context: Context) {
     }
 
     fun open(screen: Screen) {
-        stack.add(screen)
+        stack.add(Entry(screen, nextId++))
     }
 
     fun back() {
         speaker.stop()
-        if (stack.size > 1) stack.removeAt(stack.lastIndex)
+        if (stack.size > 1) closed.add(stack.removeAt(stack.lastIndex).id)
     }
 
     private companion object {
         const val KEY_PROGRESS = "progress"
         const val KEY_LEVEL = "level"
+        const val KEY_PINYIN = "pinyin"
     }
 }

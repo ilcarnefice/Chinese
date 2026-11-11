@@ -9,7 +9,7 @@ import kotlin.random.Random
 
 class SessionProgressTest {
     private val content = TestData.content
-    private val units = Curriculum.units(1, content.wordsOf(1))
+    private val units = Curriculum.units(1, content)
     private val lesson = units[0].lessons[0]
     private fun exercises() = ExerciseBuilder(content, Random(11)).lesson(lesson)
 
@@ -91,7 +91,7 @@ class SessionProgressTest {
         assertTrue(p.isCompleted(lesson))
         assertTrue(p.isUnlocked(second, units))
         assertFalse(p.isUnlocked(units[0].lessons[2], units))
-        assertEquals(5, p.learnedCount(1))
+        assertEquals(lesson.words.size, p.learnedCount(1))
         assertEquals(0, p.learnedCount(2))
         assertEquals(15, p.xp)
         assertEquals(15, p.xpToday(50))

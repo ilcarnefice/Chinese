@@ -22,7 +22,7 @@ class Session(exercises: List<Exercise>, private val retryMistakes: Boolean = tr
     private val total = exercises.size
     private var done = 0
 
-    val graded: Int = exercises.count { it !is Teach }
+    val graded: Int = exercises.count { !isIntro(it) }
     var correctFirstTry = 0
         private set
 
@@ -34,11 +34,11 @@ class Session(exercises: List<Exercise>, private val retryMistakes: Boolean = tr
     fun submit(correct: Boolean) {
         val exercise = queue.removeFirstOrNull() ?: return
         val firstTry = exercise !in retried
-        if (exercise !is Teach && firstTry) {
+        if (!isIntro(exercise) && firstTry) {
             if (correct) correctFirstTry++
             for (id in exercise.wordIds) wordResults[id] = (wordResults[id] ?: true) && correct
         }
-        if (!correct && retryMistakes && exercise !is Teach) {
+        if (!correct && retryMistakes && !isIntro(exercise)) {
             retried += exercise
             queue.addLast(exercise)
         } else {
@@ -52,6 +52,9 @@ class Session(exercises: List<Exercise>, private val retryMistakes: Boolean = tr
     }
 
     companion object {
+        /** Teaching cards are shown, not graded. */
+        fun isIntro(exercise: Exercise) = exercise is Teach || exercise is TeachGrammar
+
         const val BASE_XP = 10
         const val PERFECT_BONUS = 5
     }

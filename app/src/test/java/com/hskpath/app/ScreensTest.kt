@@ -85,12 +85,59 @@ class ScreensTest {
     }
 
     @Test fun lessonTeachesThenAsks() {
-        val lesson = Curriculum.units(1, content.wordsOf(1)).first().lessons.first()
+        val lesson = Curriculum.units(1, content).first().lessons.first()
         show("5-lesson-teach") { SessionScreen(app, content, SessionKind.LessonRun(lesson)) }
         rule.onNodeWithText("GOT IT").performClick()
         rule.waitForIdle()
         rule.onNodeWithText("What does this mean?").assertExists()
         if (System.getProperty("screenshots") == "true") rule.onRoot().captureRoboImage("build/screens/6-lesson-question.png")
+    }
+
+    @Test fun grammarLesson() {
+        val lesson = Curriculum.units(1, content).flatMap { it.lessons }.first { it.isGrammar }
+        show("30-grammar-lesson") { SessionScreen(app, content, SessionKind.LessonRun(lesson)) }
+        rule.onNodeWithText("GOT IT").performClick()
+        rule.waitForIdle()
+        if (System.getProperty("screenshots") == "true") rule.onRoot().captureRoboImage("build/screens/31-grammar-practice.png")
+    }
+
+    /** Leaving a lesson for another screen and coming back must not restart it. */
+    @Test fun lessonKeepsItsPlaceWhenAnotherScreenIsOpenedFromIt() {
+        val lesson = Curriculum.units(1, content).first().lessons.first()
+        val word = lesson.words.first()
+        rule.runOnUiThread { app.open(Screen.Run(SessionKind.LessonRun(lesson))) }
+        show("32-lesson-resume") { com.hskpath.app.ui.HostedScreen(app, content) }
+        rule.onNodeWithText("GOT IT").performClick()          // past the first teaching card
+        rule.waitForIdle()
+        rule.onNodeWithText("What does this mean?").assertExists()
+        val live = app.entry.live!!
+        val stepBefore = live.step
+        org.junit.Assert.assertEquals(1, stepBefore)
+        rule.runOnUiThread { app.open(Screen.Web(word.hanzi.take(1))) }   // look something up
+        rule.waitForIdle()
+        rule.onNodeWithText("What does this mean?").assertDoesNotExist()
+        rule.runOnUiThread { app.back() }
+        rule.waitForIdle()
+        rule.onNodeWithText("What does this mean?").assertExists()   // same question, not the first card again
+        org.junit.Assert.assertSame(live, app.entry.live)
+        org.junit.Assert.assertEquals(stepBefore, app.entry.live!!.step)
+        rule.runOnUiThread { app.back() }
+        rule.waitForIdle()
+    }
+
+    @Test fun pinyinCanBeSwitchedOff() {
+        val lesson = Curriculum.units(1, content).first().lessons.first()
+        val word = lesson.words.first()
+        show("33-pinyin-off") { SessionScreen(app, content, SessionKind.LessonRun(lesson)) }
+        rule.onNodeWithText("GOT IT").performClick()
+        rule.waitForIdle()
+        if (!app.showPinyin) rule.runOnUiThread { app.togglePinyin() }
+        rule.waitForIdle()
+        rule.onNodeWithText(word.pinyin).assertExists()
+        rule.runOnUiThread { app.togglePinyin() }
+        rule.waitForIdle()
+        rule.onNodeWithText(word.pinyin).assertDoesNotExist()
+        rule.runOnUiThread { app.togglePinyin() }
     }
 
     @Test fun sentenceDrill() = show("7-sentence-drill") { SessionScreen(app, content, SessionKind.SentenceDrill(1)) }

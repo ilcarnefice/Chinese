@@ -12,6 +12,11 @@ data class Teach(val word: Word, val examples: List<Sentence>, val breakdown: Li
     override val wordIds get() = emptyList<String>()
 }
 
+/** Introduces a grammar formula before it is practised. Not graded. */
+data class TeachGrammar(val point: GrammarPoint, val examples: List<Sentence>) : Exercise {
+    override val wordIds get() = emptyList<String>()
+}
+
 enum class ChoiceKind { MEANING, HANZI, PINYIN, LISTEN }
 
 /** Multiple choice about one word. */
@@ -48,9 +53,11 @@ data class Cloze(
     val blank: Int,
     val options: List<String>,
     val correctIndex: Int,
-    val word: Word,
+    /** The vocabulary word being practised, or null when the gap is a grammar word. */
+    val word: Word?,
 ) : Exercise {
-    override val wordIds get() = listOf(word.id)
+    override val wordIds get() = listOfNotNull(word?.id)
+    val answer: String get() = options[correctIndex]
 }
 
 enum class SentenceKind { TRANSLATE, LISTEN }
@@ -70,6 +77,7 @@ class ExerciseBuilder(private val content: Content, private val random: Random =
 
     /** New words are taught one by one, then mixed practice follows. */
     fun lesson(lesson: Lesson): List<Exercise> {
+        lesson.grammar?.let { return grammarLesson(it) }
         if (lesson.isReview) return practice(lesson.words.shuffled(random).take(REVIEW_SIZE))
         val out = mutableListOf<Exercise>()
         for (w in lesson.words) {
@@ -131,6 +139,45 @@ class ExerciseBuilder(private val content: Content, private val random: Random =
             .toMutableList()
         out += sentenceDrill(level, size / 2)
         return out
+    }
+
+    /**
+     * A grammar lesson: the formula is shown with examples, then practised by
+     * choosing its key word, understanding sentences that use it and building them.
+     */
+    fun grammarLesson(point: GrammarPoint): List<Exercise> {
+        val examples = content.grammarExamples(point, 30).filter { it.words.size in 2..12 }
+        val own = examples.filter { it.curated }
+        val more = examples.filter { !it.curated }.shuffled(random)
+        val pool = (own + more).take(GRAMMAR_LESSON_SENTENCES)
+        val out = mutableListOf<Exercise>(TeachGrammar(point, own.ifEmpty { pool.take(2) }))
+        val practice = mutableListOf<Exercise>()
+        pool.forEachIndexed { i, s ->
+            val gap = grammarCloze(point, s)
+            practice += when {
+                i % 3 == 0 && gap != null -> gap
+                i % 3 == 1 && pool.size >= SENTENCE_OPTIONS -> sentenceChoice(SentenceKind.TRANSLATE, s, pool)
+                else -> arrange(s, emptyList())
+            }
+        }
+        // Always finish by building the formula's own examples.
+        practice += own.filter { s -> practice.none { it is Arrange && it.sentence == s } }.map { arrange(it, emptyList()) }
+        return out + practice
+    }
+
+    /** Blanks out a key word of the formula in [sentence], with other grammar words as wrong answers. */
+    fun grammarCloze(point: GrammarPoint, sentence: Sentence): Cloze? {
+        val blank = sentence.tokens.indexOfFirst { point.isKeyword(it) }
+        if (blank < 0) return null
+        val answer = sentence.tokens[blank]
+        val wrong = content.grammar.asSequence().filter { it.level <= point.level + 1 && it !== point }
+            .flatMap { it.keywords.asSequence() }
+            .filter { it != answer && it !in sentence.words && !point.isKeyword(it) }
+            .distinct().toList().shuffled(random)
+            .sortedBy { if (it.length == answer.length) 0 else 1 }.take(OPTIONS - 1)
+        if (wrong.size < OPTIONS - 1) return null
+        val options = (wrong + answer).shuffled(random)
+        return Cloze(sentence, blank, options, options.indexOf(answer), word = null)
     }
 
     /** Sentence practice for one grammar structure, using its examples from the corpus too. */
@@ -235,5 +282,6 @@ class ExerciseBuilder(private val content: Content, private val random: Random =
         const val TEST_SIZE = 20
         const val DRILL_SIZE = 12
         const val GRAMMAR_DRILL_SIZE = 6
+        const val GRAMMAR_LESSON_SENTENCES = 6
     }
 }

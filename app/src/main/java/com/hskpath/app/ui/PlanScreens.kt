@@ -43,7 +43,7 @@ import com.hskpath.core.TrainingPlan
 @Composable
 fun PlanScreen(app: AppState, content: Content, level: Int) {
     val days = remember(level) { TrainingPlan.days(level, content) }
-    val units = remember(level) { Curriculum.units(level, content.wordsOf(level)) }
+    val units = remember(level) { Curriculum.units(level, content) }
     val progress = app.progress
     val current = TrainingPlan.today(days, progress)
     val doneDays = days.count { TrainingPlan.isDone(it, progress) }
@@ -55,7 +55,7 @@ fun PlanScreen(app: AppState, content: Content, level: Int) {
                 if (current == null) Mood.CHEER else Mood.HAPPY,
                 when {
                     current == null -> "You finished the whole plan. 恭喜!"
-                    doneDays == 0 -> "One day at a time: about ${days.first().newWords} new words a day gets you through HSK $level."
+                    doneDays == 0 -> "One day at a time: about ${content.wordsOf(level).size / (days.size - 1).coerceAtLeast(1) + 1} new words a day, plus grammar and reviews, gets you through HSK $level."
                     else -> "$doneDays of ${days.size} days done. Day ${current.number} is waiting."
                 },
             )
@@ -66,7 +66,6 @@ fun PlanScreen(app: AppState, content: Content, level: Int) {
                 DayCard(app, day, isToday = day.number == current?.number, done = TrainingPlan.isDone(day, progress)) { task ->
                     when (task) {
                         is PlanTask.Learn -> if (progress.isUnlocked(task.lesson, units)) app.open(Screen.Run(SessionKind.LessonRun(task.lesson)))
-                        is PlanTask.Grammar -> app.open(Screen.Run(SessionKind.GrammarRun(task.point), task.key))
                         is PlanTask.Sentences -> app.open(Screen.Run(SessionKind.SentenceDrill(task.level), task.key))
                         is PlanTask.Write -> app.open(Screen.Write(task.characters.first()))
                         is PlanTask.Test -> app.open(Screen.Run(SessionKind.LevelTest(task.level)))
@@ -92,16 +91,25 @@ private fun DayCard(app: AppState, day: PlanDay, isToday: Boolean, done: Boolean
                 Column(Modifier.padding(start = 10.dp).weight(1f)) {
                     Text("Day ${day.number}" + if (isToday) "  ·  TODAY" else "", fontWeight = FontWeight.ExtraBold,
                         color = if (isToday) Tangerine else MaterialTheme.colorScheme.onSurface)
-                    Text(if (day.newWords > 0) "${day.newWords} new words" else "Final test",
+                    Text(
+                        when {
+                            day.tasks.any { it is PlanTask.Test } -> "Final test"
+                            day.grammarLessons > 0 && day.newWords > 0 -> "${day.newWords} new words · ${day.grammarLessons} grammar"
+                            day.grammarLessons > 0 -> "${day.grammarLessons} grammar ${if (day.grammarLessons == 1) "lesson" else "lessons"}"
+                            day.newWords > 0 -> "${day.newWords} new words"
+                            else -> "Review"
+                        },
                         style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             for (task in day.tasks) {
                 val taskDone = task !is PlanTask.Write && TrainingPlan.isDone(task, app.progress)
                 val (icon, label) = when (task) {
-                    is PlanTask.Learn -> if (task.lesson.isReview) "⭐" to "Unit ${task.lesson.unit} review"
-                        else "📘" to "Learn: " + task.lesson.words.joinToString(", ") { it.shortGloss }
-                    is PlanTask.Grammar -> "🧩" to "Grammar: ${task.point.title}"
+                    is PlanTask.Learn -> when {
+                        task.lesson.isReview -> "⭐" to "Unit ${task.lesson.unit} review"
+                        task.lesson.isGrammar -> "🧩" to "Grammar: ${task.lesson.grammar?.title}"
+                        else -> "📘" to "Learn: " + task.lesson.words.joinToString(", ") { it.shortGloss }
+                    }
                     is PlanTask.Sentences -> "🧱" to "Sentence workout"
                     is PlanTask.Write -> "✍" to "Write: ${task.characters.joinToString(" ")} (optional)"
                     is PlanTask.Test -> "🏁" to "HSK ${task.level} test"

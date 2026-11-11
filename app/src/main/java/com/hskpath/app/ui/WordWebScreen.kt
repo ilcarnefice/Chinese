@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,8 +59,10 @@ private val BranchColors = Rainbow
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun WordWebScreen(app: AppState, content: Content, start: String) {
-    var character by remember { mutableStateOf(start) }
-    var picked by remember { mutableStateOf<Word?>(null) }
+    var character by rememberSaveable { mutableStateOf(start) }
+    // The picked word is kept by its characters so it survives leaving and returning.
+    var pickedHanzi by rememberSaveable { mutableStateOf<String?>(null) }
+    val picked: Word? = pickedHanzi?.let { content.lookup(it) }
     val web = remember(character) { content.wordWeb(character) }
     val all = remember(character) { content.wordWeb(character, 999) }
     val center = content.lookup(character)
@@ -93,8 +96,8 @@ fun WordWebScreen(app: AppState, content: Content, start: String) {
                             x = (mid + radius * cos(a)).dp - nodeWidth / 2,
                             y = (mid + radius * sin(a)).dp - nodeHeight / 2,
                         )) {
-                            WebNode(word, character, color, nodeWidth, nodeHeight, selected = picked == word) {
-                                picked = word
+                            WebNode(word, character, color, nodeWidth, nodeHeight, selected = pickedHanzi == word.hanzi) {
+                                pickedHanzi = word.hanzi
                                 app.speaker.speak(word.hanzi)
                             }
                         }
@@ -103,7 +106,7 @@ fun WordWebScreen(app: AppState, content: Content, start: String) {
                     Surface(
                         color = MaterialTheme.colorScheme.primary, shape = CircleShape, shadowElevation = 6.dp,
                         modifier = Modifier.size(hub).align(Alignment.Center).clip(CircleShape)
-                            .clickable { picked = center; app.speaker.speak(character) },
+                            .clickable { pickedHanzi = center?.hanzi; app.speaker.speak(character) },
                     ) {
                         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
@@ -144,7 +147,7 @@ fun WordWebScreen(app: AppState, content: Content, start: String) {
                                     Pill("🕸 $c", MaterialTheme.colorScheme.secondaryContainer,
                                         MaterialTheme.colorScheme.onSecondaryContainer) {
                                         character = c
-                                        picked = null
+                                        pickedHanzi = null
                                     }
                                 }
                                 Pill("Full entry", MaterialTheme.colorScheme.primaryContainer,
@@ -156,7 +159,7 @@ fun WordWebScreen(app: AppState, content: Content, start: String) {
                 if (all.size > web.size) {
                     SectionTitle("More words with $character")
                     for (w in all.drop(web.size).take(60)) {
-                        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { picked = w; app.speaker.speak(w.hanzi) }
+                        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { pickedHanzi = w.hanzi; app.speaker.speak(w.hanzi) }
                             .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(w.hanzi, fontSize = 20.sp, modifier = Modifier.width(96.dp))
                             Column(Modifier.weight(1f)) {

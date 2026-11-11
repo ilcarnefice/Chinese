@@ -139,7 +139,7 @@ private fun LearnTab(app: AppState, content: Content) {
     val level = app.level
     val progress = app.progress
     val today = app.today()
-    val units = remember(level) { Curriculum.units(level, content.wordsOf(level)) }
+    val units = remember(level) { Curriculum.units(level, content) }
     val next = units.flatMap { it.lessons }.firstOrNull { !progress.isCompleted(it) && progress.isUnlocked(it, units) }
     // Open the path at the unit the learner is working on.
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = ((next?.unit ?: 1) - 1).coerceAtLeast(0))
@@ -217,10 +217,11 @@ private fun UnitBlock(app: AppState, unit: CourseUnit, units: List<CourseUnit>, 
                     Text("$done/${unit.lessons.size} lessons", color = Color.White, fontWeight = FontWeight.ExtraBold,
                         style = MaterialTheme.typography.labelLarge)
                 }
-                Text(unit.words.take(6).joinToString(", ") { it.shortGloss }, color = Color.White, fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(unit.words.take(8).joinToString(" ") { it.hanzi }, color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(unit.title, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1,
+                    overflow = TextOverflow.Ellipsis)
+                val grammar = unit.grammar.size
+                Text("${unit.words.size} words" + if (grammar > 0) " · $grammar grammar ${if (grammar == 1) "lesson" else "lessons"}" else "",
+                    color = Color.White.copy(alpha = 0.9f), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
             }
         }
         val sway = listOf(0, 52, 76, 52, 0, -52, -76, -52)
@@ -238,8 +239,9 @@ private fun UnitBlock(app: AppState, unit: CourseUnit, units: List<CourseUnit>, 
 private fun LessonStone(app: AppState, lesson: Lesson, unitColor: Color, completed: Boolean, unlocked: Boolean, isNext: Boolean) {
     val color = when {
         completed -> Gold
-        unlocked -> unitColor
-        else -> MaterialTheme.colorScheme.surfaceVariant
+        !unlocked -> MaterialTheme.colorScheme.surfaceVariant
+        lesson.isGrammar -> Grape
+        else -> unitColor
     }
     val bounce by rememberInfiniteTransition(label = "start").animateFloat(
         0f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "start")
@@ -247,7 +249,7 @@ private fun LessonStone(app: AppState, lesson: Lesson, unitColor: Color, complet
         if (isNext) {
             Surface(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(12.dp), shadowElevation = 4.dp,
                 modifier = Modifier.offset(y = (-6 * bounce).dp).padding(bottom = 6.dp)) {
-                Text("START", color = unitColor, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp,
+                Text("START", color = color, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp))
             }
         }
@@ -258,24 +260,38 @@ private fun LessonStone(app: AppState, lesson: Lesson, unitColor: Color, complet
                     !unlocked -> "🔒"
                     lesson.isReview -> if (completed) "🏆" else "⭐"
                     completed -> "✓"
+                    lesson.isGrammar -> "🧩"
                     else -> lesson.words.first().hanzi.take(1)
                 },
-                fontSize = 30.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontSize = 30.sp, fontWeight = FontWeight.ExtraBold,
                 color = if (unlocked) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        val point = lesson.grammar
+        // What the lesson is about: meanings, then characters, then how to say them.
         Text(
-            if (lesson.isReview) "Unit review" else lesson.words.joinToString(", ") { it.shortGloss },
+            when {
+                lesson.isReview -> "Unit review"
+                point != null -> "Grammar: " + point.title.substringBefore(":")
+                else -> lesson.words.joinToString(", ") { it.shortGloss }
+            },
             style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
-            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp).width(210.dp),
+            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp).width(230.dp),
         )
-        Text(
-            if (lesson.isReview) "All ${lesson.words.size} words" else lesson.words.joinToString(" ") { it.hanzi },
-            style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(210.dp),
-        )
+        val characters = when {
+            lesson.isReview -> "All ${lesson.words.size} words"
+            point != null -> point.keywords.joinToString(" ").ifEmpty { point.pattern }
+            else -> lesson.words.joinToString(" ") { it.hanzi }
+        }
+        Text(characters, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.width(230.dp))
+        if (app.showPinyin && !lesson.isReview) {
+            val pinyin = if (point != null) point.keywords.joinToString(" ") { app.content?.pinyinFor(it).orEmpty() }
+            else lesson.words.joinToString(" ") { it.pinyin }
+            if (pinyin.isNotBlank()) Text(pinyin, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center,
+                maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.width(230.dp))
+        }
     }
 }
 
@@ -325,7 +341,7 @@ private fun ExploreTab(app: AppState, content: Content) {
                 Modifier.weight(1f)) { app.open(Screen.SentenceMap(level)) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            FeatureCard("🧩", "Grammar Map", "${content.grammar.size} formulas as building blocks", Grape,
+            FeatureCard("🧩", "Grammar Map", "${content.grammar.size} formulas with pinyin, as building blocks", Grape,
                 Modifier.weight(1f)) { app.open(Screen.Grammar(level)) }
             FeatureCard("✍", "Writing", "Stroke order for ${app.strokes?.size ?: 0} characters", Coral,
                 Modifier.weight(1f)) { app.open(Screen.WriteList(level)) }
@@ -445,6 +461,17 @@ private fun MeTab(app: AppState) {
                         fontWeight = FontWeight.ExtraBold, color = if (a.done) Good else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 8.dp))
                 }
+            }
+        }
+        Text("Settings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+        Card(Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Pinyin above characters", fontWeight = FontWeight.Bold)
+                    Text("Shown on lesson tiles, answer options and the path. Switch it off to test your character reading.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                PinyinSwitch(app)
             }
         }
         Pill("About and licences", MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant) {

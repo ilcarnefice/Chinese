@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,7 +66,7 @@ fun SentenceMapScreen(app: AppState, content: Content, level: Int, start: String
         content.wordsOf(level).map { it to content.sentencesWith(it.hanzi).size }
             .filter { it.second >= 3 }.sortedByDescending { it.second }.take(80).map { it.first }
     }
-    var selected by remember { mutableStateOf(start ?: keyWords.firstOrNull()?.hanzi ?: "") }
+    var selected by rememberSaveable { mutableStateOf(start ?: keyWords.firstOrNull()?.hanzi ?: "") }
     val word = content.lookup(selected)
     val sentences = remember(selected) {
         content.sentencesWith(selected).sortedBy { (if (it.curated) 0 else 1000) + it.level * 100 + it.words.size }.take(60)
@@ -139,9 +140,9 @@ fun WriteListScreen(app: AppState, content: Content, level: Int) {
             FlowRow(horizontalArrangement = SpacedSmall, verticalArrangement = SpacedSmall) {
                 characters.forEachIndexed { i, c ->
                     val color = Rainbow[i % Rainbow.size]
-                    Raised(MaterialTheme.colorScheme.surface, Modifier.size(width = 60.dp, height = 62.dp), edge = 4.dp,
+                    Raised(MaterialTheme.colorScheme.surface, Modifier.size(width = 64.dp, height = 76.dp), edge = 4.dp,
                         edgeColor = color, onClick = { app.open(Screen.Write(c)) }) {
-                        Text(c, fontSize = 30.sp)
+                        Ruby(c, content.pinyinFor(c).takeIf { app.showPinyin }, 30)
                     }
                 }
             }

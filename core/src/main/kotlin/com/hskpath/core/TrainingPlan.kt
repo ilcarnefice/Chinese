@@ -13,10 +13,6 @@ sealed interface PlanTask {
         override val key get() = "$level:$day:sentences"
     }
 
-    data class Grammar(val level: Int, val day: Int, val point: GrammarPoint) : PlanTask {
-        override val key get() = "$level:$day:grammar"
-    }
-
     /** Optional handwriting practice; it never blocks a day. */
     data class Write(val characters: List<String>) : PlanTask {
         override val key: String? get() = null
@@ -29,11 +25,12 @@ sealed interface PlanTask {
 
 data class PlanDay(val level: Int, val number: Int, val tasks: List<PlanTask>) {
     val newWords: Int get() = tasks.filterIsInstance<PlanTask.Learn>().filter { !it.lesson.isReview }.sumOf { it.lesson.words.size }
+    val grammarLessons: Int get() = tasks.count { it is PlanTask.Learn && it.lesson.isGrammar }
 }
 
 /**
- * A day-by-day schedule through one HSK level: every lesson of the path, the
- * level's grammar formulas, daily sentence practice, and the level test last.
+ * A day-by-day schedule through one HSK level: every lesson of the path
+ * (vocabulary, grammar and reviews), daily sentence practice, and the level test last.
  */
 object TrainingPlan {
     /** Days allowed for each level. */
@@ -42,17 +39,12 @@ object TrainingPlan {
     fun days(level: Int, content: Content): List<PlanDay> {
         val total = lengths.getValue(level)
         val studyDays = total - 1
-        val lessons = Curriculum.units(level, content.wordsOf(level)).flatMap { it.lessons }
-        val grammar = content.grammarOf(level)
+        // Vocabulary, grammar and review lessons of the path, in order.
+        val lessons = Curriculum.units(level, content).flatMap { it.lessons }
         val days = (0 until studyDays).map { i ->
             val todays = lessons.subList(i * lessons.size / studyDays, (i + 1) * lessons.size / studyDays)
             val tasks = mutableListOf<PlanTask>()
             todays.forEach { tasks += PlanTask.Learn(it) }
-            // Spread the grammar evenly: a new formula each time the running share moves on.
-            val g = i * grammar.size / studyDays
-            if (grammar.isNotEmpty() && (i == 0 || g != (i - 1) * grammar.size / studyDays)) {
-                tasks += PlanTask.Grammar(level, i + 1, grammar[g])
-            }
             tasks += PlanTask.Sentences(level, i + 1)
             val characters = todays.filter { !it.isReview }.flatMap { l -> l.words.flatMap { w -> w.hanzi.map { it.toString() } } }
                 .distinct().take(WRITE_PER_DAY)

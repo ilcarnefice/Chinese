@@ -2,35 +2,117 @@ package com.hskpath.core
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.random.Random
 
 class CurriculumTest {
     private val content = TestData.content
-    private val units = Curriculum.units(1, content.wordsOf(1))
+    private val units = Curriculum.units(1, content)
 
     @Test fun everyWordIsTaughtExactlyOnce() {
         for (level in content.levels) {
             val words = content.wordsOf(level)
-            val taught = Curriculum.units(level, words).flatMap { u -> u.lessons.filter { !it.isReview } }.flatMap { it.words }
-            assertEquals(words, taught)
+            val taught = Curriculum.units(level, content).flatMap { u -> u.lessons.filter { !it.isReview } }.flatMap { it.words }
+            assertEquals("HSK $level", words.size, taught.size)
+            assertEquals("HSK $level", words.toSet(), taught.toSet())
         }
     }
 
-    @Test fun unitsEndWithAReview() {
-        assertEquals(8, units.size)
-        for (u in units) {
-            assertTrue(u.lessons.last().isReview)
-            assertEquals(u.words, u.lessons.last().words)
-            assertTrue(u.lessons.dropLast(1).none { it.isReview })
-            assertTrue(u.lessons.dropLast(1).all { it.words.size in 1..Curriculum.WORDS_PER_LESSON })
+    @Test fun unitsAreThemedAndEndWithAReview() {
+        for (level in content.levels) {
+            val all = Curriculum.units(level, content)
+            assertEquals((1..all.size).toList(), all.map { it.number })
+            for (u in all) {
+                assertTrue("HSK $level unit ${u.number} has no title", u.title.isNotBlank())
+                assertTrue(u.lessons.last().isReview)
+                assertEquals(u.words, u.lessons.last().words)
+                val steps = u.lessons.dropLast(1)
+                assertTrue(steps.none { it.isReview })
+                // A unit opens with vocabulary, never with grammar.
+                assertFalse("HSK $level unit ${u.number}", steps.first().isGrammar)
+                for (l in steps) {
+                    if (l.isGrammar) assertTrue(l.words.isEmpty())
+                    else assertTrue("HSK $level ${l.id}: ${l.words.size} words", l.words.size in 1..6)
+                }
+                assertTrue("HSK $level unit ${u.number}", u.words.size in 3..24)
+            }
+            val ids = all.flatMap { it.lessons }.map { it.id }
+            assertEquals(ids.size, ids.distinct().size)
         }
-        assertEquals(units.flatMap { it.lessons }.size, units.flatMap { it.lessons }.map { it.id }.distinct().size)
+    }
+
+    @Test fun everyGrammarFormulaIsALessonOnThePath() {
+        for (level in content.levels) {
+            val all = Curriculum.units(level, content)
+            val taught = all.flatMap { it.grammar }
+            assertEquals("HSK $level", content.grammarOf(level).size, taught.size)
+            assertEquals("HSK $level", content.grammarOf(level).toSet(), taught.toSet())
+            assertTrue("HSK $level", all.all { it.grammar.size <= 4 })
+        }
+        // Beginners meet grammar from the first units on, mixed in with vocabulary.
+        assertTrue(units.take(2).any { it.grammar.isNotEmpty() })
+        val kinds = units.flatMap { it.lessons }.filter { !it.isReview }.map { it.isGrammar }
+        assertTrue("grammar lessons are bunched together", kinds.windowed(4).none { w -> w.all { it } })
+    }
+
+    @Test fun grammarLessonShowsTheFormulaThenPractisesIt() {
+        for (level in content.levels) {
+            val lesson = Curriculum.units(level, content).flatMap { it.lessons }.first { it.isGrammar }
+            val point = lesson.grammar!!
+            val exercises = ExerciseBuilder(content, Random(level)).lesson(lesson)
+            assertEquals(point, (exercises.first() as TeachGrammar).point)
+            assertEquals(1, exercises.count { it is TeachGrammar })
+            assertTrue((exercises.first() as TeachGrammar).examples.isNotEmpty())
+            val practice = exercises.drop(1)
+            assertTrue("HSK $level ${point.title}: ${practice.size} exercises", practice.size >= point.examples.size)
+            assertTrue(practice.any { it is Arrange })
+            val allowed = content.grammarExamples(point, 30)
+            for (e in practice) when (e) {
+                is Arrange -> assertTrue(e.sentence in allowed)
+                is SentenceChoice -> assertTrue(e.sentence in allowed)
+                is Cloze -> {
+                    assertNull(e.word)
+                    assertTrue(e.sentence in allowed)
+                    assertEquals(e.sentence.tokens[e.blank], e.answer)
+                    assertTrue(point.isKeyword(e.answer))
+                    assertEquals(ExerciseBuilder.OPTIONS, e.options.distinct().size)
+                    assertTrue(e.options.filter { it != e.answer }.none { point.isKeyword(it) || it in e.sentence.words })
+                }
+                else -> error("unexpected exercise in a grammar lesson: $e")
+            }
+            // The formula's own examples are always built at least once.
+            for (s in point.examples.filter { it.words.size in 2..12 }) {
+                assertTrue(practice.any { it is Arrange && it.sentence == s } || practice.any { it is Cloze && it.sentence == s } ||
+                    practice.any { it is SentenceChoice && it.sentence == s })
+            }
+            // A grammar lesson is finished like any other and teaches no vocabulary.
+            val session = Session(exercises)
+            while (!session.isFinished) session.submit(true)
+            assertEquals(100, session.result().percent)
+            assertTrue(session.result().wordResults.isEmpty())
+        }
+    }
+
+    @Test fun outlinesAreParsed() {
+        val units = Content.parseOutline("""
+            # a comment
+            ## Saying hello
+            你 好 我 是 不
+            > Saying no: 不
+            他 她 我们
+            ## Numbers
+            一 二 三
+        """.trimIndent())
+        assertEquals(listOf("Saying hello", "Numbers"), units.map { it.title })
+        assertEquals(listOf(OutlineItem.Words(listOf("你", "好", "我", "是", "不")), OutlineItem.Grammar("Saying no: 不"),
+            OutlineItem.Words(listOf("他", "她", "我们"))), units[0].items)
+        assertEquals(1, units[1].items.size)
     }
 
     @Test fun lessonTeachesEachWordThenPractisesIt() {
-        val lesson = units[0].lessons[0]
+        val lesson = units[0].lessons.first { !it.isGrammar && !it.isReview }
         val exercises = ExerciseBuilder(content, Random(7)).lesson(lesson)
         assertEquals(lesson.words, exercises.filterIsInstance<Teach>().map { it.word })
         // Each word is introduced before any question about it.

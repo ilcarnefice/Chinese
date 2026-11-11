@@ -12,6 +12,8 @@ class Content(
     val grammar: List<GrammarPoint>,
     val dialogues: List<Dialogue>,
     val phraseBooks: List<PhraseBook> = emptyList(),
+    /** Themed course outline per level, where one has been written. */
+    val outlines: Map<Int, List<UnitOutline>> = emptyMap(),
 ) {
     val levels: List<Int> = words.keys.sorted()
 
@@ -94,6 +96,61 @@ class Content(
         return all.take(max)
     }
 
+    fun outline(level: Int): List<UnitOutline>? = outlines[level]
+
+    /**
+     * Pinyin for a piece of Chinese text: the dictionary reading when the text is
+     * a known word, otherwise the readings of its known pieces. Anything that is
+     * not Chinese is dropped. "因为" gives "yīnwèi"; "是 … 的" gives "shì de".
+     */
+    fun pinyinFor(text: String): String {
+        val out = mutableListOf<String>()
+        for (run in HANZI_RUN.findAll(text).map { it.value }) {
+            var i = 0
+            while (i < run.length) {
+                // Longest known word starting here.
+                var end = run.length
+                var word: Word? = null
+                while (end > i) {
+                    word = byHanzi[run.substring(i, end)]
+                    if (word != null) break
+                    end--
+                }
+                if (word == null) { i++; continue }
+                out += word.pinyin
+                i = end
+            }
+        }
+        return out.joinToString(" ")
+    }
+
+    /** The same text with the pinyin of each Chinese run added in brackets after it. */
+    fun annotate(text: String): String = HANZI_RUN.replace(text) { m ->
+        val py = pinyinFor(m.value)
+        if (py.isEmpty()) m.value else "${m.value} ($py)"
+    }
+
+    /**
+     * Pinyin for each token of a sentence, in step with [Sentence.tokens];
+     * punctuation gets an empty string. The sentence's own pinyin is used when
+     * it is written one word per token, otherwise dictionary readings.
+     */
+    fun tokenPinyin(sentence: Sentence): List<String> {
+        val written = sentence.pinyin.split(' ').map { it.trim { c -> c in PINYIN_PUNCTUATION } }.filter { it.isNotEmpty() }
+        val aligned = written.size == sentence.words.size
+        var next = 0
+        return sentence.tokens.map { token ->
+            if (Sentence.isPunctuation(token)) return@map ""
+            val own = if (aligned) written[next++] else null
+            val known = byHanzi[token]
+            when {
+                // Keep the capital of names; other words start in lower case.
+                own != null -> if (known != null) own.replaceFirstChar { it.lowercase() } else own
+                else -> pinyinFor(token).replace(" ", "")
+            }
+        }
+    }
+
     fun phraseBook(id: String): PhraseBook? = phraseBooks.firstOrNull { it.id == id }
 
     fun dialoguesOf(level: Int) = dialogues.filter { it.level == level }
@@ -131,6 +188,8 @@ class Content(
         const val EXTRA_LEVEL = 7
         /** Phrase-book sentences are not graded; this level picks the spare tiles in drills. */
         const val PHRASE_LEVEL = 2
+        private val HANZI_RUN = Regex("[\\u4e00-\\u9fff]+")
+        private const val PINYIN_PUNCTUATION = ".,?!;:\u2026\"()"
         private const val CORPUS_EXAMPLES = 40
 
         /** Loads everything through [read], which returns the text of an asset path. */
@@ -152,6 +211,10 @@ class Content(
                     PhraseBook("business", "💼", "Business phrases", "From first meetings to contracts",
                         parsePhrases(read("content/phrases_business.txt"))),
                 ),
+                outlines = (1..LEVEL_COUNT).mapNotNull { level ->
+                    // Outlines are optional: a level without one is taught in list order.
+                    runCatching { read("content/outline_hsk$level.txt") }.getOrNull()?.let { level to parseOutline(it) }
+                }.toMap(),
             )
         }
 
@@ -178,6 +241,29 @@ class Content(
         /** Corpus sentences of one level: "words|pinyin|English". */
         fun parseCorpus(level: Int, text: String): List<Sentence> =
             text.lineSequence().filter { it.isNotBlank() }.map { sentence(level, it.split('|'), curated = false) }.toList()
+
+        /** Course outline: "## unit title", lines of words (one lesson each), "> grammar title". */
+        fun parseOutline(text: String): List<UnitOutline> {
+            val units = mutableListOf<UnitOutline>()
+            var title: String? = null
+            val items = mutableListOf<OutlineItem>()
+            fun flush() {
+                val t = title ?: return
+                units += UnitOutline(t, items.toList())
+                items.clear()
+            }
+            for (raw in text.lines()) {
+                val line = raw.trim()
+                when {
+                    line.startsWith("## ") -> { flush(); title = line.removePrefix("## ").trim() }
+                    line.startsWith("#") || line.isEmpty() || title == null -> Unit
+                    line.startsWith(">") -> items += OutlineItem.Grammar(line.removePrefix(">").trim())
+                    else -> items += OutlineItem.Words(line.split(' ', '\t').filter { it.isNotEmpty() })
+                }
+            }
+            flush()
+            return units
+        }
 
         /** Phrase books: "## topic" lines followed by "words | pinyin | English" lines. */
         fun parsePhrases(text: String): List<PhraseTopic> {

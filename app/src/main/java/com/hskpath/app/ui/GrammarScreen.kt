@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +41,7 @@ fun GrammarScreen(app: AppState, content: Content, level: Int) {
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
             item {
                 Text(
-                    "${points.size} formulas in this level. Red blocks are fixed Chinese words; the other blocks are slots you fill with your own words.",
+                    "${points.size} formulas in this level. Red blocks are fixed Chinese words with their pinyin; the other blocks are slots you fill with your own words. Each formula is also a lesson on the path.",
                     style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 8.dp),
                 )
             }
@@ -49,30 +50,42 @@ fun GrammarScreen(app: AppState, content: Content, level: Int) {
     }
 }
 
+/** A formula drawn as building blocks: fixed Chinese words in red with their pinyin, slots in colour. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
+fun FormulaBlocks(app: AppState, content: Content, point: GrammarPoint) {
+    for (row in point.structure) {
+        var slot = 0
+        FlowRow(Modifier.padding(top = 10.dp), horizontalArrangement = SpacedSmall, verticalArrangement = SpacedSmall) {
+            row.forEachIndexed { i, block ->
+                if (i > 0) Text("+", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.CenterVertically))
+                val color = if (block.isKeyword) Coral else SlotColors[slot++ % SlotColors.size]
+                Surface(color = if (block.isKeyword) color else color.copy(alpha = 0.16f), shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.align(Alignment.CenterVertically)) {
+                    if (block.isKeyword) {
+                        // The pinyin is part of the formula, so it shows even when lesson pinyin is off.
+                        Ruby(block.text, content.pinyinFor(block.text), 22, Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            color = Color.White, weight = FontWeight.Bold, pinyinColor = Color.White.copy(alpha = 0.92f))
+                    } else {
+                        Text(block.text, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = color,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun GrammarCard(app: AppState, content: Content, point: GrammarPoint, number: Int) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by rememberSaveable(point.title) { mutableStateOf(false) }
     val examples = remember(point, expanded) { content.grammarExamples(point, if (expanded) 12 else 3) }
     Card(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Column(Modifier.padding(16.dp)) {
             Text("FORMULA $number", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.ExtraBold, color = Grape)
-            Text(point.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
-            for (row in point.structure) {
-                var slot = 0
-                FlowRow(Modifier.padding(top = 10.dp), horizontalArrangement = SpacedSmall, verticalArrangement = SpacedSmall) {
-                    row.forEachIndexed { i, block ->
-                        if (i > 0) Text("+", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.align(Alignment.CenterVertically))
-                        val color = if (block.isKeyword) Coral else SlotColors[slot++ % SlotColors.size]
-                        Surface(color = if (block.isKeyword) color else color.copy(alpha = 0.16f), shape = RoundedCornerShape(10.dp)) {
-                            Text(block.text, fontSize = if (block.isKeyword) 22.sp else 16.sp, fontWeight = FontWeight.Bold,
-                                color = if (block.isKeyword) Color.White else color,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
-                        }
-                    }
-                }
-            }
+            Text(content.annotate(point.title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+            FormulaBlocks(app, content, point)
             Text(point.explanation, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
             for (example in examples) SentenceRow(app, example) { point.isKeyword(it) }
             if (!expanded && content.grammarExamples(point, 4).size > 3) {
