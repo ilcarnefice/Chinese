@@ -468,8 +468,11 @@ RIDGE_TONGUE = dict(turn=(-46, (530, 468), (586, 383)), to={"blade": (504, 373),
                     tongue={"front": (0, -4)})
 PALATAL_TONGUE = {"dorsum": (292, 335), "mid": (372, 315), "front": (450, 311), "blade": (512, 337),
                   "pretip": (562, 408)}
-RETROFLEX_TONGUE = dict(turn=(-92, (530, 468), (548, 359)),
-                        to={"blade": (470, 404), "front": (422, 398), "mid": (360, 372), "under2": (556, 470)})
+# zh ch sh r: the tip turns up to the roof a little way behind the ridge, where plain dark mouth shows around it
+RETROFLEX_TONGUE = dict(turn=(-96, (530, 468), (528, 338)),
+                        to={"blade": (452, 398), "front": (408, 398), "mid": (356, 374), "under2": (546, 466)})
+RETROFLEX_BREATH = [(215, 340), (300, 332), (375, 338), (440, 350), (490, 346), (526, 346), (556, 362), (580, 400),
+                    (598, 442), (608, 470)]
 DENTAL_TONGUE = dict(turn=(-22, (530, 468), (602, 424)), to={"blade": (512, 390), "front": (450, 367),
                                                              "under2": (549, 502)})
 VELAR_TONGUE = {"back": (158, 400), "backtop": (208, 305), "dorsum": (285, 316), "mid": (370, 356),
@@ -513,12 +516,12 @@ POSES = {
     "palatal": pose(jaw=-1.2, **SPREAD_LIPS, to=PALATAL_TONGUE, contact=[(478, 322)], air=None),
     "palatalFric": pose(jaw=-1.2, **SPREAD_LIPS, to=shifted(PALATAL_TONGUE, 0, 10, ["mid", "front", "blade"]),
                         gap=[(478, 326)]),
-    "retroflex": pose(jaw=0.5, ulip=(5, -5), llip=(6, 10), **RETROFLEX_TONGUE, contact=[(549, 354)], air=None),
-    "retroflexFric": pose(jaw=0.5, ulip=(5, -5), llip=(6, 10), turn=(-92, (530, 468), (546, 370)),
-                          to=RETROFLEX_TONGUE["to"], gap=[(548, 359)]),
+    "retroflex": pose(jaw=0.5, ulip=(5, -5), llip=(6, 10), **RETROFLEX_TONGUE, contact=[(527, 341)], air=None),
+    "retroflexFric": pose(jaw=0.5, ulip=(5, -5), llip=(6, 10), turn=(-96, (530, 468), (527, 351)),
+                          to=RETROFLEX_TONGUE["to"], gap=[(526, 346)], via=RETROFLEX_BREATH),
     "dental": pose(jaw=-1.5, **SPREAD_LIPS, **DENTAL_TONGUE, contact=[(604, 419)], air=None),
-    "dentalFric": pose(jaw=-1.5, **SPREAD_LIPS, turn=(-22, (530, 468), (592, 432)), to=DENTAL_TONGUE["to"],
-                       gap=[(603, 427)]),
+    "dentalFric": pose(jaw=-1.5, **SPREAD_LIPS, turn=(-22, (530, 468), (588, 434)), to=DENTAL_TONGUE["to"],
+                       gap=[(601, 428)]),
     "a": pose(jaw=7.0, ulip=(0, -5),
               tongue={"back": (-10, 8), "backtop": (-8, 16), "dorsum": (0, 18), "mid": (0, 14), "front": (0, 6),
                       "blade": (0, 2)}),
@@ -536,7 +539,9 @@ POSES = {
     "u": pose(jaw=-0.3, **ROUND_LIPS, to=HIGH_BACK),
     "yu": pose(jaw=-1.0, ulip=(25, -3), llip=(27, 22), to=HIGH_FRONT, tongue={"back": (8, 4)}),
     "er": pose(jaw=3.0, ulip=(0, -4), turn=(-80, (530, 468), (546, 404)),
-               to={"blade": (474, 432), "front": (426, 412), "mid": (362, 376), "under2": (556, 505)}),
+               to={"blade": (474, 432), "front": (426, 412), "mid": (362, 376), "under2": (556, 505)},
+               via=[(215, 346), (300, 340), (375, 348), (430, 362), (480, 378), (522, 386), (560, 394), (586, 438),
+                    (603, 482)]),
 }
 
 LARYNX = (192, 830)
@@ -771,6 +776,11 @@ def build(out_dir, debug_dir=None):
             between = (top + bottom) / 2
             route.append((between[0] + 4, between[1]))
             route.append((between[0] + 66, between[1] + 2))
+            spaced = [route[0]]
+            for point in route[1:-2]:
+                if math.hypot(point[0] - spaced[-1][0], point[1] - spaced[-1][1]) >= 30:
+                    spaced.append(point)
+            route = spaced + route[-2:]
             entry["airPath"] = [[round(x * K, 1), round(y * K, 1)] for x, y in route]
         poses[name] = entry
 
