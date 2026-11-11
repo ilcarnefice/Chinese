@@ -187,15 +187,19 @@ private fun UnitBlock(app: AppState, unit: CourseUnit, units: List<CourseUnit>, 
     val color = Rainbow[(unit.number - 1) % Rainbow.size]
     Column(Modifier.fillMaxWidth().padding(top = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Raised(color, Modifier.fillMaxWidth().padding(horizontal = 16.dp), shape = RoundedCornerShape(20.dp)) {
-            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("HSK ${unit.level} · UNIT ${unit.number}", color = Color.White.copy(alpha = 0.85f),
-                        style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold)
-                    Text(unit.words.take(7).joinToString("  ") { it.hanzi }, color = Color.White, fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
+            Column(Modifier.fillMaxWidth().padding(16.dp)) {
                 val done = unit.lessons.count { progress.isCompleted(it) }
-                Text("$done/${unit.lessons.size}", color = Color.White, fontWeight = FontWeight.ExtraBold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("HSK ${unit.level} · UNIT ${unit.number}", color = Color.White.copy(alpha = 0.85f),
+                        style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.weight(1f))
+                    Text("$done/${unit.lessons.size} lessons", color = Color.White, fontWeight = FontWeight.ExtraBold,
+                        style = MaterialTheme.typography.labelLarge)
+                }
+                Text(unit.words.take(6).joinToString(", ") { it.shortGloss }, color = Color.White, fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(unit.words.take(8).joinToString(" ") { it.hanzi }, color = Color.White.copy(alpha = 0.9f),
+                    fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         val sway = listOf(0, 52, 76, 52, 0, -52, -76, -52)
@@ -233,18 +237,23 @@ private fun LessonStone(app: AppState, lesson: Lesson, unitColor: Color, complet
                     !unlocked -> "🔒"
                     lesson.isReview -> if (completed) "🏆" else "⭐"
                     completed -> "✓"
-                    else -> lesson.words.first().hanzi.take(2)
+                    else -> lesson.words.first().hanzi.take(1)
                 },
-                fontSize = if (lesson.words.first().hanzi.length > 1 && unlocked && !completed && !lesson.isReview) 22.sp else 30.sp,
+                fontSize = 30.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = if (unlocked) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Text(
-            if (lesson.isReview) "Unit review" else lesson.words.joinToString(" ") { it.hanzi },
+            if (lesson.isReview) "Unit review" else lesson.words.joinToString(", ") { it.shortGloss },
+            style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp).width(210.dp),
+        )
+        Text(
+            if (lesson.isReview) "All ${lesson.words.size} words" else lesson.words.joinToString(" ") { it.hanzi },
             style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center, maxLines = 1,
             overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp).width(190.dp),
+            modifier = Modifier.width(210.dp),
         )
     }
 }
@@ -303,7 +312,7 @@ private fun ExploreTab(app: AppState, content: Content) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             FeatureCard("💬", "Dialogues", "Short conversations with audio", Tangerine,
                 Modifier.weight(1f)) { app.open(Screen.Stories(level)) }
-            FeatureCard("🗣", "Pinyin & Tones", "Every sound of Mandarin", Pink,
+            FeatureCard("👄", "Sounds & Mouth", "Lips, teeth and tongue for every sound", Pink,
                 Modifier.weight(1f)) { app.open(Screen.PinyinGuide) }
         }
         FeatureCard("🔍", "Dictionary", "Search by characters, pinyin or English", Color(0xFF5C7CFA),

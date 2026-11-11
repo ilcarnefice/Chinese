@@ -41,6 +41,7 @@ import com.hskpath.app.AppState
 import com.hskpath.app.Screen
 import com.hskpath.core.Content
 import com.hskpath.core.Pinyin
+import com.hskpath.core.Sounds
 import com.hskpath.core.Word
 
 /** Short dialogues of a level, shown as a chat with audio for every line. */
@@ -88,21 +89,6 @@ private val ToneExamples = listOf(
     ToneExample(5, "吗", "(question particle)", listOf(0.4f to 0.5f, 0.6f to 0.5f)),
 )
 
-private val Initials = listOf(
-    "b" to "八", "p" to "怕", "m" to "妈", "f" to "发", "d" to "大", "t" to "他", "n" to "你", "l" to "来",
-    "g" to "哥", "k" to "看", "h" to "好", "j" to "鸡", "q" to "七", "x" to "西",
-    "zh" to "知", "ch" to "吃", "sh" to "是", "r" to "日", "z" to "字", "c" to "次", "s" to "四",
-)
-
-private val Finals = listOf(
-    "a" to "啊", "o" to "哦", "e" to "饿", "i" to "一", "u" to "五", "ü" to "鱼",
-    "ai" to "爱", "ei" to "黑", "ao" to "好", "ou" to "狗", "an" to "安", "en" to "很",
-    "ang" to "忙", "eng" to "冷", "ong" to "红", "er" to "二",
-    "ia" to "家", "ie" to "写", "iao" to "小", "iu" to "六", "ian" to "天", "in" to "新", "iang" to "想", "ing" to "听",
-    "ua" to "花", "uo" to "多", "uai" to "快", "ui" to "对", "uan" to "晚", "un" to "问", "uang" to "黄",
-    "üe" to "月", "üan" to "远", "ün" to "云",
-)
-
 /** Sounds of Mandarin: the tones, then every initial and final with a sample to hear. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -112,7 +98,8 @@ fun PinyinScreen(app: AppState) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             VoiceNotice(app)
             Text("Pinyin spells the sound of each character with Latin letters. Every syllable has an initial " +
-                "(the opening consonant), a final (the rest) and a tone. Tap anything below to hear it.")
+                "(the opening consonant), a final (the rest) and a tone. Tap any sound to see where your lips, " +
+                "teeth and tongue go, and to hear it.")
             SectionTitle("The tones")
             Text("The same syllable means different things in different tones.", style = MaterialTheme.typography.bodyMedium)
             val lineColor = MaterialTheme.colorScheme.primary
@@ -141,15 +128,19 @@ fun PinyinScreen(app: AppState) {
                 "• 不 (bù) becomes bú before a 4th tone: 不是 bú shì.\n" +
                 "• 一 (yī) becomes yí before a 4th tone and yì before other tones: 一个 yí ge, 一起 yìqǐ.")
             Row(Modifier.padding(top = 8.dp), horizontalArrangement = SpacedSmall) {
-                for (sample in listOf("你好", "不是", "一个", "一起")) SoundChip(app, sample, "")
+                for (sample in listOf("你好", "不是", "一个", "一起")) {
+                    Pill("🔊 $sample", MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurface) {
+                        app.speaker.speak(sample, slow = true)
+                    }
+                }
             }
-            SectionTitle("Initials")
+            SectionTitle("Initials: tap for mouth position")
             FlowRow(horizontalArrangement = SpacedSmall, verticalArrangement = SpacedSmall) {
-                for ((letters, hanzi) in Initials) SoundChip(app, hanzi, letters)
+                for (sound in Sounds.initials) SoundChip(app, sound.letters, sound.example, true)
             }
-            SectionTitle("Finals")
+            SectionTitle("Finals: tap for mouth position")
             FlowRow(horizontalArrangement = SpacedSmall, verticalArrangement = SpacedSmall) {
-                for ((letters, hanzi) in Finals) SoundChip(app, hanzi, letters)
+                for (sound in Sounds.finals) SoundChip(app, sound.letters, sound.example, false)
             }
             SectionTitle("Tricky sounds")
             Text("• j, q, x are made with the tongue flat behind the lower teeth; zh, ch, sh, r with the tongue curled back.\n" +
@@ -157,17 +148,6 @@ fun PinyinScreen(app: AppState) {
                 "• The i in zi, ci, si, zhi, chi, shi, ri is a buzz, not an \"ee\" sound.\n" +
                 "• c sounds like \"ts\" in cats, z like \"ds\" in kids, q like \"ch\" in cheese.")
             Spacer(Modifier.height(24.dp))
-        }
-    }
-}
-
-@Composable
-private fun SoundChip(app: AppState, hanzi: String, letters: String) {
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { app.speaker.speak(hanzi, slow = true) }) {
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            if (letters.isNotEmpty()) Text(letters, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            Text(hanzi, fontSize = 20.sp)
         }
     }
 }

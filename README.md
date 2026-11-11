@@ -14,7 +14,7 @@ in short game-like lessons.
 | Grammar Map | 100 formulas drawn as colour-coded building blocks, each with an explanation, examples pulled from the corpus and a sentence-building drill |
 | Writing | Stroke-order animation and stroke-by-stroke tracing for all 2,663 characters in HSK 1-6 |
 | Dialogues | 9 short conversations (HSK 1-4) with line-by-line audio and "play all" |
-| Pinyin guide | The tones with pitch contours, tone-change rules, and every initial and final with a sample to hear |
+| Sounds and mouth positions | An animated side-view diagram of lips, teeth and tongue for all 21 initials and 35 finals, with instructions, the nearest English sound and practice words; plus the tones with pitch contours and the tone-change rules |
 | Practice | Spaced-repetition word review, sentence workouts (translate, listen, build), grammar drills, and a 30-question test per level |
 | Dictionary | Search all 11,001 words by characters, pinyin (tones optional) or English |
 | Motivation | XP, ranks, a daily goal, day streaks, a weekly chart, 13 achievements, and a panda that cheers you on |
@@ -76,3 +76,7 @@ organisations that run the HSK exam, and it contains no material from commercial
 | Grammar Map | Sentence Map | Writing | Profile |
 | --- | --- | --- | --- |
 | ![Grammar map](docs/screens/12-grammar-map.png) | ![Sentence map](docs/screens/11-sentence-map.png) | ![Writing](docs/screens/13-writing.png) | ![Profile](docs/screens/4-me.png) |
+
+| Mouth position (zh) | Mouth position (ü) |
+| --- | --- |
+| ![Mouth position for zh](docs/screens/18-mouth-zh.png) | ![Mouth position for ü](docs/screens/19-mouth-u.png) |

@@ -25,6 +25,7 @@ import com.hskpath.app.ui.HomeScreen
 import com.hskpath.app.ui.HskTheme
 import com.hskpath.app.ui.PinyinScreen
 import com.hskpath.app.ui.SearchScreen
+import com.hskpath.app.ui.SoundScreen
 import com.hskpath.app.ui.SentenceMapScreen
 import com.hskpath.app.ui.WriteListScreen
 import com.hskpath.app.ui.WriteScreen
@@ -68,6 +69,7 @@ class MainActivity : ComponentActivity() {
                                 is Screen.Write -> WriteScreen(app, content, screen.character)
                                 is Screen.WordInfo -> WordInfoScreen(app, content, screen.word)
                                 Screen.PinyinGuide -> PinyinScreen(app)
+                                is Screen.SoundGuide -> SoundScreen(app, content, screen.letters, screen.isInitial)
                                 Screen.Search -> SearchScreen(app, content)
                                 Screen.About -> AboutScreen(app)
                             }

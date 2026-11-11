@@ -15,6 +15,12 @@ data class Word(
     val pinyin: String by lazy { Pinyin.toMarked(pinyinNumbered) }
     /** Short meaning shown in exercises. */
     val gloss: String get() = definitions.take(2).joinToString("; ")
+    /** The first meaning without notes in brackets: "(particle) of" becomes "of". */
+    val shortGloss: String get() {
+        val first = definitions.firstOrNull().orEmpty()
+        val bare = first.replace(Regex("\\([^)]*\\)"), "").trim().trim(',', ';').trim()
+        return bare.ifEmpty { first.trim('(', ')') }
+    }
     val levelLabel: String get() = when (level) {
         0 -> "Character"
         in 1..6 -> "HSK $level"

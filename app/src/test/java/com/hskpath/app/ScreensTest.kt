@@ -20,6 +20,7 @@ import com.hskpath.app.ui.HskTheme
 import com.hskpath.app.ui.PinyinScreen
 import com.hskpath.app.ui.SentenceMapScreen
 import com.hskpath.app.ui.SessionScreen
+import com.hskpath.app.ui.SoundScreen
 import com.hskpath.app.ui.StoriesScreen
 import com.hskpath.app.ui.WordInfoScreen
 import com.hskpath.app.ui.WordWebScreen
@@ -114,6 +115,21 @@ class ScreensTest {
     @Test fun dialogues() = show("16-dialogues") { StoriesScreen(app, content, 1) }
 
     @Test fun pinyin() = show("17-pinyin") { PinyinScreen(app) }
+
+    @Test fun mouthGuideForAnInitial() = show("18-mouth-zh") { SoundScreen(app, content, "zh", true) }
+
+    @Test fun mouthGuideForAFinal() = show("19-mouth-u") { SoundScreen(app, content, "ü", false) }
+
+    @Test fun everyMouthShapeDraws() {
+        var index by mutableStateOf(0)
+        val names = com.hskpath.core.Sounds.shapes.toList()
+        show("20-mouth-shapes") { com.hskpath.app.ui.MouthDiagram(com.hskpath.app.ui.MouthPoses.getValue(names[index])) }
+        for (i in names.indices) {
+            rule.runOnUiThread { index = i }
+            rule.waitForIdle()
+            if (System.getProperty("screenshots") == "true") rule.onRoot().captureRoboImage("build/screens/mouth-${names[i]}.png")
+        }
+    }
 
     @Test fun everyLevelRendersItsPathAndGrammar() {
         var showGrammar by mutableStateOf(false)
