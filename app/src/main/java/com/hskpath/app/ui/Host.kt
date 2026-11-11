@@ -37,6 +37,7 @@ fun HostedScreen(app: AppState, content: Content) {
             is Screen.Write -> WriteScreen(app, content, screen.character)
             is Screen.WordInfo -> WordInfoScreen(app, content, screen.word)
             Screen.PinyinGuide -> PinyinScreen(app)
+            Screen.Radicals -> RadicalsScreen(app, content)
             is Screen.SoundGuide -> SoundScreen(app, content, screen.letters, screen.isInitial)
             Screen.Search -> SearchScreen(app, content)
             Screen.About -> AboutScreen(app)

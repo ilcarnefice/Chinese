@@ -17,6 +17,7 @@ in short game-like lessons.
 | Training plans | A day-by-day schedule through each level (HSK 1-3 in 30 days each, HSK 4 in 60, HSK 5 in 100, HSK 6 in 150): lessons, a grammar formula, a sentence workout and optional handwriting each day, ending with the level test |
 | Dialogues | 17 short conversations covering every level, with line-by-line audio and "play all" |
 | Sounds and mouth positions | For all 21 initials and 35 finals: a close-up of a real textbook picture of the mouth, seen from the side, that moves — jaw, lips, tongue and soft palate — step by step (closure, release, vowel). A dot shows where two parts touch, one short arrow shows where the breath comes out (mouth or nose), and one sentence under the picture says what to do; a button names the parts. Plus the nearest English sound and practice words, and the tones with pitch contours and tone-change rules |
+| Radicals | A picture chart of 55 common radicals (亻 person, 氵 water, 艹 grass, ...): each with a picture, its pinyin and meaning; tap one to hear it and see characters built with it |
 | Practice | Spaced-repetition word review, sentence workouts (translate, listen, build), grammar drills, and a 30-question test per level |
 | Dictionary | Search all 11,001 words by characters, pinyin (tones optional) or English |
 | Motivation | XP, ranks, a daily goal, day streaks, a weekly chart, 13 achievements, and a panda that cheers you on |

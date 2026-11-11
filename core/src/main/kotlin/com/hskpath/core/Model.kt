@@ -92,6 +92,14 @@ data class Dialogue(val level: Int, val title: String, val lines: List<DialogueL
 /** A themed group of phrases inside a phrase book. */
 data class PhraseTopic(val title: String, val phrases: List<Sentence>)
 
+/**
+ * A radical: a building block of characters that often hints at their meaning.
+ * [say] is a character read the same way (many radicals cannot be spoken on
+ * their own), [picture] an emoji that shows the meaning.
+ */
+data class Radical(val form: String, val say: String, val pinyin: String, val meaning: String, val picture: String,
+                   val examples: List<String>)
+
 data class PhraseBook(val id: String, val icon: String, val title: String, val blurb: String, val topics: List<PhraseTopic>) {
     val size: Int get() = topics.sumOf { it.phrases.size }
 }

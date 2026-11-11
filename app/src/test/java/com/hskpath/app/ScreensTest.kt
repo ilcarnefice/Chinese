@@ -258,6 +258,14 @@ class ScreensTest {
 
     @Test fun mouthMap() = show("29-mouth-map") { com.hskpath.app.ui.MouthMap(app.mouth!!) }
 
+    /** The picture chart of radicals: tapping one shows it large with characters built from it. */
+    @Test fun radicalChart() {
+        show("38-radicals") { com.hskpath.app.ui.RadicalsScreen(app, content) }
+        rule.onNodeWithText("water").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("洗").assertExists()
+    }
+
     @Test fun everyLevelRendersItsPathAndGrammar() {
         var showGrammar by mutableStateOf(false)
         show("level-1") {

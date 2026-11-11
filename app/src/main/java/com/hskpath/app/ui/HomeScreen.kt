@@ -358,8 +358,12 @@ private fun ExploreTab(app: AppState, content: Content) {
             FeatureCard("📅", "Training Plan", "HSK $level in ${TrainingPlan.lengths.getValue(level)} days, day by day", Gold.darker(0.12f),
                 Modifier.weight(1f)) { app.open(Screen.Plan(level)) }
         }
-        FeatureCard("🔍", "Dictionary", "Search by characters, pinyin or English", Color(0xFF5C7CFA),
-            Modifier.fillMaxWidth()) { app.open(Screen.Search) }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            FeatureCard("🧱", "Radicals", "${content.radicals.size} building blocks of characters, in pictures", Coral.darker(0.1f),
+                Modifier.weight(1f)) { app.open(Screen.Radicals) }
+            FeatureCard("🔍", "Dictionary", "Search by characters, pinyin or English", Color(0xFF5C7CFA),
+                Modifier.weight(1f)) { app.open(Screen.Search) }
+        }
         Spacer(Modifier.height(8.dp))
     }
 }

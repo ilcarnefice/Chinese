@@ -46,6 +46,7 @@ sealed interface Screen {
     data class Write(val character: String) : Screen
     data class WordInfo(val word: Word) : Screen
     data object PinyinGuide : Screen
+    data object Radicals : Screen
     data class SoundGuide(val letters: String, val isInitial: Boolean) : Screen
     data object Search : Screen
     data object About : Screen

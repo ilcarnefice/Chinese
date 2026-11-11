@@ -14,6 +14,8 @@ class Content(
     val phraseBooks: List<PhraseBook> = emptyList(),
     /** Themed course outline per level, where one has been written. */
     val outlines: Map<Int, List<UnitOutline>> = emptyMap(),
+    /** Common radicals with a picture, for the radical chart. */
+    val radicals: List<Radical> = emptyList(),
 ) {
     val levels: List<Int> = words.keys.sorted()
 
@@ -215,8 +217,17 @@ class Content(
                     // Outlines are optional: a level without one is taught in list order.
                     runCatching { read("content/outline_hsk$level.txt") }.getOrNull()?.let { level to parseOutline(it) }
                 }.toMap(),
+                radicals = runCatching { read("content/radicals.tsv") }.getOrNull()?.let(::parseRadicals).orEmpty(),
             )
         }
+
+        /** Lines of: radical, sound-alike character, pinyin, meaning, picture, example characters. */
+        fun parseRadicals(text: String): List<Radical> =
+            text.lineSequence().filter { it.isNotBlank() && !it.startsWith("#") }.mapNotNull { line ->
+                val p = line.split("\t")
+                if (p.size < 6) null
+                else Radical(p[0], p[1], p[2], p[3], p[4], p[5].split(" ").filter { it.isNotBlank() })
+            }.toList()
 
         fun parseWords(level: Int, text: String): List<Word> =
             text.lineSequence().filter { it.isNotBlank() && !it.startsWith("#") }.map { line ->

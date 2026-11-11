@@ -199,4 +199,20 @@ class ContentTest {
         assertTrue(content.search("  ").isEmpty())
         assertTrue(content.search("zzzzqq").isEmpty())
     }
+
+    @Test fun radicalChartIsComplete() {
+        val radicals = content.radicals
+        assertTrue(radicals.size >= 40)
+        assertEquals(radicals.size, radicals.map { it.form }.distinct().size)
+        for (r in radicals) {
+            assertTrue(r.form, r.form.isNotBlank() && r.say.length == 1 && r.meaning.isNotBlank() && r.picture.isNotBlank())
+            // Pinyin is written with tone marks, not numbers.
+            assertTrue(r.form, r.pinyin.isNotBlank() && r.pinyin.none { it.isDigit() })
+            assertTrue(r.form, r.examples.size in 3..6 && r.examples.all { it.length == 1 })
+        }
+        val water = radicals.first { it.meaning == "water" }
+        assertEquals("氵", water.form)
+        assertEquals("shuǐ", water.pinyin)
+        assertTrue("洗" in water.examples)
+    }
 }
