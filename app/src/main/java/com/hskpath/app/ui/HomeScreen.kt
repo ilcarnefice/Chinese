@@ -389,7 +389,9 @@ private fun PracticeTab(app: AppState, content: Content) {
         PracticeCard("🧩", "Grammar drills", "Build sentences for each HSK $level formula", Grape) {
             app.open(Screen.Grammar(level))
         }
-        PracticeCard("✍", "Handwriting", "Trace characters stroke by stroke", Coral) { app.open(Screen.WriteList(level)) }
+        if (app.showWriting) {
+            PracticeCard("✍", "Handwriting", "Trace characters stroke by stroke", Coral) { app.open(Screen.WriteList(level)) }
+        }
         PracticeCard("🏁", "HSK $level test", progress.testBest[level]?.let { "Best score $it%" } ?: "30 mixed questions", Tangerine) {
             app.open(Screen.Run(SessionKind.LevelTest(level)))
         }
@@ -472,6 +474,19 @@ private fun MeTab(app: AppState) {
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 PinyinSwitch(app)
+            }
+        }
+        Card(Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Character writing", fontWeight = FontWeight.Bold)
+                    Text("Writing characters by hand in the daily plan and in Practice. Switch it off to skip it; " +
+                        "you still learn to read every character.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                val on = app.showWriting
+                Pill(if (on) "On ✓" else "Off", if (on) Sky else MaterialTheme.colorScheme.surfaceVariant,
+                    if (on) Color.White else MaterialTheme.colorScheme.onSurfaceVariant) { app.toggleWriting() }
             }
         }
         Pill("About and licences", MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant) {

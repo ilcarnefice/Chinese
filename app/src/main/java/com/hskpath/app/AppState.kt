@@ -101,6 +101,15 @@ class AppState(private val context: Context) {
         prefs.edit().putBoolean(KEY_PINYIN, showPinyin).apply()
     }
 
+    /** Whether writing characters by hand is offered (daily plan tasks, practice card). */
+    var showWriting by mutableStateOf(prefs.getBoolean(KEY_WRITING, true))
+        private set
+
+    fun toggleWriting() {
+        showWriting = !showWriting
+        prefs.edit().putBoolean(KEY_WRITING, showWriting).apply()
+    }
+
     /** Today as a day number in the user's time zone. */
     fun today(): Long {
         val now = System.currentTimeMillis()
@@ -139,5 +148,6 @@ class AppState(private val context: Context) {
         const val KEY_PROGRESS = "progress"
         const val KEY_LEVEL = "level"
         const val KEY_PINYIN = "pinyin"
+        const val KEY_WRITING = "writing"
     }
 }

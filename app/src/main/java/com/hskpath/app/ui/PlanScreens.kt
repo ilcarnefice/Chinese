@@ -103,6 +103,8 @@ private fun DayCard(app: AppState, day: PlanDay, isToday: Boolean, done: Boolean
                 }
             }
             for (task in day.tasks) {
+                // Writing by hand can be switched off in the settings; the plan then leaves it out.
+                if (task is PlanTask.Write && !app.showWriting) continue
                 val taskDone = task !is PlanTask.Write && TrainingPlan.isDone(task, app.progress)
                 val (icon, label) = when (task) {
                     is PlanTask.Learn -> when {

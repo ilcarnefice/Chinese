@@ -168,6 +168,17 @@ class ScreensTest {
 
     @Test fun longestTrainingPlan() = show("22-plan-hsk6") { com.hskpath.app.ui.PlanScreen(app, content, 6) }
 
+    /** Writing characters by hand can be switched off; the plan then leaves the writing tasks out. */
+    @Test fun characterWritingCanBeSkipped() {
+        if (!app.showWriting) rule.runOnUiThread { app.toggleWriting() }
+        show("37-plan-writing") { com.hskpath.app.ui.PlanScreen(app, content, 1) }
+        assert(rule.onAllNodes(androidx.compose.ui.test.hasText("Write:", substring = true)).fetchSemanticsNodes().isNotEmpty())
+        rule.runOnUiThread { app.toggleWriting() }
+        rule.waitForIdle()
+        assert(rule.onAllNodes(androidx.compose.ui.test.hasText("Write:", substring = true)).fetchSemanticsNodes().isEmpty())
+        rule.runOnUiThread { app.toggleWriting() }
+    }
+
     @Test fun phraseBooks() = show("23-phrase-books") { com.hskpath.app.ui.PhraseBooksScreen(app, content) }
 
     @Test fun phraseTopic() = show("24-phrases") { com.hskpath.app.ui.PhrasesScreen(app, content, "travel", 0) }
