@@ -159,20 +159,31 @@ def velum_mask(pic):
     m = (labels == 1 + int(np.argmax(stats[1:, 4]))).astype(np.uint8)
     m = fill_holes(m)
     # the tonsil below the tip is yellow: keep its fringe out of the piece
-    m[cv2.dilate(tonsil_mask(pic), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))) > 0] = 0
+    yellow = ((r - g < 58) & (r > 225) & (b < 185)).astype(np.uint8)
+    yellow[:392] = 0
+    yellow[:, 160:] = 0
+    m[cv2.dilate(yellow, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))) > 0] = 0
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(m, connectivity=8)
+    m = (labels == 1 + int(np.argmax(stats[1:, 4]))).astype(np.uint8)
     return fill_holes(m)
 
 
 def tonsil_mask(pic):
     b, g, r = [pic[:, :, i].astype(np.int32) for i in range(3)]
     yellow = ((r - g < 58) & (r > 225) & (b < 185)).astype(np.uint8)
-    yellow[:415] = 0
+    yellow[:392] = 0
     yellow[:, 160:] = 0
-    return yellow
+    yellow[:, :96] = 0
+    yellow = cv2.morphologyEx(yellow, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    count, labels, stats, _ = cv2.connectedComponentsWithStats(yellow, connectivity=8)
+    if count < 2:
+        return yellow
+    return (labels == 1 + int(np.argmax(stats[1:, 4]))).astype(np.uint8)
 
 
-THROAT_EDGE_Y = [286, 300, 318, 340, 470]     # behind the soft palate: where the throat wall (left) meets
-THROAT_EDGE_X = [175, 135, 112, 101, 101]     # the dark inside of the mouth (right)
+THROAT_EDGE_Y = [286, 300, 318, 340, 365, 395, 425, 470]     # behind the soft palate: where the throat wall
+THROAT_EDGE_X = [175, 135, 114, 104, 99, 98, 100, 103]       # (left) meets the dark inside of the mouth (right)
 
 
 def paint_behind_velum(pic, hole):
@@ -201,6 +212,21 @@ def paint_behind_velum(pic, hole):
                 out[y, x] = CAVITY
     soft = cv2.GaussianBlur(out, (0, 0), 0.8)
     out[hole > 0] = soft[hole > 0]
+    # The tip of the soft palate hid the top of the tonsil: round the tonsil off where it was hidden.
+    tonsil = tonsil_mask(pic)
+    points = np.stack(np.nonzero(tonsil)[::-1], axis=1).astype(np.int32)
+    whole = np.zeros_like(tonsil)
+    cv2.fillConvexPoly(whole, cv2.convexHull(points), 1)
+    added = (whole > 0) & (hole > 0) & (tonsil == 0)
+    body = np.median(pic[tonsil > 0], axis=0)
+    rim = pic[(cv2.dilate(tonsil, np.ones((5, 5), np.uint8)) > 0) & (tonsil == 0) & (hole == 0)]
+    out[added] = body
+    edge = added & (cv2.erode(whole, np.ones((5, 5), np.uint8)) == 0)
+    if len(rim):
+        out[edge] = (0.5 * np.median(rim, axis=0) + 0.5 * body).astype(np.uint8)
+    smooth = cv2.GaussianBlur(out, (0, 0), 0.7)
+    near = cv2.dilate(added.astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
+    out[near] = smooth[near]
     return out
 
 
@@ -430,7 +456,7 @@ def pose(jaw=0.0, velum=1.0, ulip=(0, 0), llip=(0, 0), tongue=None, to=None, tur
     tongue: per handle, movement on top of the jaw's. to: per handle, the exact place it must reach.
     turn: (degrees, pivot, where the tip ends up): swings the whole tip of the tongue as one block.
     contact / gap: marker positions. air: "auto" for a breath route through the mouth, None for none.
-    via: extra points the breath route must pass, replacing the automatic ones in front of them.
+    via: the breath route over the tongue and out between the teeth, in place of the automatic one.
     llip_at: the point of the lower lip that llip pulls on, when it is not the middle of the lip's edge.
     llip_spread: how far around that point the pull reaches, across and down."""
     return dict(jaw=jaw, velum=velum, ulip=ulip, llip=llip, tongue=tongue or {}, to=to or {}, turn=turn,
@@ -438,7 +464,7 @@ def pose(jaw=0.0, velum=1.0, ulip=(0, 0), llip=(0, 0), tongue=None, to=None, tur
                 llip_spread=llip_spread)
 
 
-RIDGE_TONGUE = dict(turn=(-42, (530, 468), (590, 397)), to={"blade": (506, 393), "under2": (549, 492)},
+RIDGE_TONGUE = dict(turn=(-46, (530, 468), (586, 383)), to={"blade": (504, 373), "under2": (549, 486)},
                     tongue={"front": (0, -4)})
 PALATAL_TONGUE = {"dorsum": (292, 335), "mid": (372, 319), "front": (450, 318), "blade": (512, 343),
                   "pretip": (562, 408)}
@@ -446,7 +472,7 @@ RETROFLEX_TONGUE = dict(turn=(-92, (530, 468), (548, 359)),
                         to={"blade": (470, 404), "front": (422, 398), "mid": (360, 372), "under2": (556, 470)})
 DENTAL_TONGUE = dict(turn=(-22, (530, 468), (602, 424)), to={"blade": (512, 390), "front": (450, 367),
                                                              "under2": (549, 502)})
-VELAR_TONGUE = {"back": (158, 402), "backtop": (208, 313), "dorsum": (285, 323), "mid": (370, 356),
+VELAR_TONGUE = {"back": (158, 400), "backtop": (208, 305), "dorsum": (285, 316), "mid": (370, 356),
                 "front": (450, 388), "blade": (514, 424), "pretip": (557, 458), "tip": (584, 498)}
 HIGH_FRONT = {"dorsum": (292, 337), "mid": (372, 320), "front": (452, 329), "blade": (514, 362),
               "pretip": (562, 416)}
@@ -459,6 +485,7 @@ def shifted(points, dx, dy, names=None):
 
 
 OPEN_LIPS = dict(ulip=(0, -5), llip=(0, 10))
+RIDGE_LIPS = dict(ulip=(0, -6), llip=(0, 14))
 SPREAD_LIPS = dict(ulip=(-3, -7), llip=(-4, 25))
 ROUND_LIPS = dict(ulip=(19, -4), llip=(21, 13))
 
@@ -468,17 +495,21 @@ POSES = {
     "lipsNasal": pose(velum=0, contact=[(679, 472)], air=None),
     "lipTeeth": pose(jaw=-0.6, ulip=(2, -12), llip=(-35, -15), llip_at=(660, 478), llip_spread=(34.0, 22.0),
                      gap=[(621, 451)]),
-    "ridge": pose(jaw=-1.0, **OPEN_LIPS, **RIDGE_TONGUE, contact=[(591, 392)], air=None),
-    "ridgeNasal": pose(jaw=-1.0, velum=0, **OPEN_LIPS, **RIDGE_TONGUE, contact=[(591, 392)], air=None),
-    "ridgeLateral": pose(jaw=-0.6, **OPEN_LIPS, turn=RIDGE_TONGUE["turn"], to=RIDGE_TONGUE["to"],
-                         tongue={"front": (0, 10), "mid": (0, 12), "dorsum": (0, 8)}, contact=[(591, 392)]),
+    "ridge": pose(jaw=-0.3, **RIDGE_LIPS, **RIDGE_TONGUE, contact=[(587, 380)], air=None),
+    "ridgeNasal": pose(jaw=-0.3, velum=0, **RIDGE_LIPS, **RIDGE_TONGUE, contact=[(587, 380)], air=None),
+    # l: the tip is on the ridge but the body of the tongue is low, and the breath passes beside the tongue
+    "ridgeLateral": pose(jaw=0.0, **RIDGE_LIPS, turn=RIDGE_TONGUE["turn"],
+                         to={"blade": (503, 398), "under2": (549, 486)},
+                         tongue={"front": (0, 24), "mid": (0, 24), "dorsum": (0, 14), "backtop": (0, 6)},
+                         contact=[(587, 380)],
+                         via=[(215, 340), (300, 338), (385, 350), (450, 384), (505, 428), (560, 458), (604, 470)]),
     "velar": pose(jaw=0.5, **OPEN_LIPS, to=VELAR_TONGUE, contact=[(222, 309)], air=None),
     "velarFric": pose(jaw=0.5, **OPEN_LIPS, to=shifted(VELAR_TONGUE, 0, 12, ["backtop", "dorsum"]),
                       gap=[(222, 313)]),
     "velarNasal": pose(jaw=0.5, velum=0, **OPEN_LIPS,
-                       to={"back": (160, 404), "backtop": (204, 338), "dorsum": (288, 340), "mid": (370, 358),
+                       to={"back": (156, 392), "backtop": (200, 322), "dorsum": (286, 332), "mid": (370, 358),
                            "front": (450, 386), "blade": (514, 420), "pretip": (558, 454)},
-                       contact=[(196, 336)], air=None),
+                       contact=[(197, 330)], air=None),
     "palatal": pose(jaw=-1.2, **SPREAD_LIPS, to=PALATAL_TONGUE, contact=[(478, 322)], air=None),
     "palatalFric": pose(jaw=-1.2, **SPREAD_LIPS, to=shifted(PALATAL_TONGUE, 0, 10, ["mid", "front", "blade"]),
                         gap=[(478, 326)]),
@@ -617,7 +648,7 @@ def build(out_dir, debug_dir=None):
     under_cut = ys > cut_y(xs)
     jaw_rect = (int(JAW_BACK), 440, 760 - int(JAW_BACK), SIZE - 440)
     erased_tongue = (tongue.mask > 0) & (tongue.depth < ERASE_TO)
-    jaw_mask = under_cut & ~cv2.dilate(erased_tongue.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool)
+    jaw_mask = under_cut & ~erased_tongue
     jaw_mask &= ~(paper & (ys < 530))
     jaw_alpha = soften(jaw_mask)
     # the tongue's own outline is hidden by the tongue piece, so keep that edge hard and fully covered
@@ -629,8 +660,10 @@ def build(out_dir, debug_dir=None):
     hole = cv2.dilate(hole, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9)))
     hole[(s_map <= 40) & (velum > 0)] = 0
     head = paint_behind_velum(head, hole)
+    # along its free surface the tongue's soft edge is painted out too, so that no outline is left behind
     wide = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
-    head[cv2.dilate(erased_tongue.astype(np.uint8), wide) > 0] = CAVITY
+    free_part = (erased_tongue & (ys < FREE_BELOW - 4)).astype(np.uint8)
+    head[erased_tongue | ((cv2.dilate(free_part, wide) > 0) & (ys < FREE_BELOW))] = CAVITY
     # under the cut the lower jaw can drop away: behind it is the dark mouth, and open air in front of the lips
     arc_x = np.interp(ys, MOUTH_EDGE[:, 1], MOUTH_EDGE[:, 0], left=LIP_LINE[0])
     band = under_cut & (ys < 665) & (xs > 500) & ~((tongue.mask > 0) & (tongue.depth >= ERASE_TO))
@@ -725,16 +758,17 @@ def build(out_dir, debug_dir=None):
             route = list(THROAT)
             back = where["back"]
             route.append(((back[0] + 42) / 2, back[1] + 10))
-            for n in SURFACE[1:-1]:
-                x, y = where[n]
-                route.append((x, (y + roof(x, spec["velum"])) / 2))
-            lower_tooth = LOWER_TOOTH + jaw_shift(LOWER_TOOTH[None], spec["jaw"])[0]
-            route.append(tuple((UPPER_TOOTH + lower_tooth) / 2 + (0, 2)))
+            if spec["via"]:
+                route += list(spec["via"])
+            else:
+                for n in SURFACE[1:-1]:
+                    x, y = where[n]
+                    route.append((x, (y + roof(x, spec["velum"])) / 2))
+                lower_tooth = LOWER_TOOTH + jaw_shift(LOWER_TOOTH[None], spec["jaw"])[0]
+                route.append(tuple((UPPER_TOOTH + lower_tooth) / 2 + (0, 2)))
             top = UPPER_LIP_EDGE + upper_lip_weight(UPPER_LIP_EDGE[None])[0] * ulip
             bottom = LOWER_LIP_EDGE + lower(LOWER_LIP_EDGE[None])[0]
             between = (top + bottom) / 2
-            if spec["via"]:
-                route = route[:-1] + list(spec["via"])
             route.append((between[0] + 4, between[1]))
             route.append((between[0] + 66, between[1] + 2))
             entry["airPath"] = [[round(x * K, 1), round(y * K, 1)] for x, y in route]
