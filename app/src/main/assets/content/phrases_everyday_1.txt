@@ -1,0 +1,261 @@
+# Everyday phrases, part 1. Written for this app.
+## Greetings and goodbyes
+你 好 ！ | Nǐ hǎo! | Hello!
+早上 好 ！ | Zǎoshang hǎo! | Good morning!
+晚上 好 ！ | Wǎnshang hǎo! | Good evening!
+再见 ！ | Zàijiàn! | Goodbye!
+晚安 ！ | Wǎn'ān! | Good night!
+您 好 ！ | Nín hǎo! | Hello! (polite)
+大家 好 ！ | Dàjiā hǎo! | Hello, everyone!
+你 好 吗 ？ | Nǐ hǎo ma? | How are you?
+我 很 好 ， 谢谢 。 | Wǒ hěn hǎo, xièxie. | I'm fine, thanks.
+你 呢 ？ | Nǐ ne? | And you?
+明天 见 ！ | Míngtiān jiàn! | See you tomorrow!
+一会儿 见 ！ | Yíhuìr jiàn! | See you in a bit!
+好久 不 见 ！ | Hǎojiǔ bú jiàn! | Long time no see!
+最近 怎么样 ？ | Zuìjìn zěnmeyàng? | How have you been lately?
+还 不错 。 | Hái búcuò. | Pretty good.
+你 吃饭 了 吗 ？ | Nǐ chīfàn le ma? | Have you eaten?
+欢迎 ！ 请 进 。 | Huānyíng! Qǐng jìn. | Welcome! Please come in.
+很 高兴 见到 你 。 | Hěn gāoxìng jiàndào nǐ. | It's good to see you.
+你 今天 忙 吗 ？ | Nǐ jīntiān máng ma? | Are you busy today?
+我 先 走 了 。 | Wǒ xiān zǒu le. | I'll be off now.
+路上 小心 ！ | Lùshang xiǎoxīn! | Take care on the way!
+周末 愉快 ！ | Zhōumò yúkuài! | Have a nice weekend!
+下 次 见 ！ | Xià cì jiàn! | See you next time!
+有 空 再 聊 。 | Yǒu kòng zài liáo. | Let's chat again when you're free.
+替 我 向 你 家人 问好 。 | Tì wǒ xiàng nǐ jiārén wènhǎo. | Say hello to your family for me.
+## Introducing yourself
+我 叫 李 明 。 | Wǒ jiào Lǐ Míng. | My name is Li Ming.
+你 叫 什么 名字 ？ | Nǐ jiào shénme míngzi? | What's your name?
+我 姓 王 。 | Wǒ xìng Wáng. | My surname is Wang.
+您 贵姓 ？ | Nín guìxìng? | May I ask your surname?
+我 是 学生 。 | Wǒ shì xuésheng. | I'm a student.
+我 是 英国 人 。 | Wǒ shì Yīngguó rén. | I'm British.
+你 是 哪 国 人 ？ | Nǐ shì nǎ guó rén? | Which country are you from?
+我 从 美国 来 。 | Wǒ cóng Měiguó lái. | I come from the United States.
+认识 你 很 高兴 。 | Rènshi nǐ hěn gāoxìng. | Nice to meet you.
+你 多 大 了 ？ | Nǐ duō dà le? | How old are you?
+我 今年 二十五 岁 。 | Wǒ jīnnián èrshíwǔ suì. | I'm twenty-five this year.
+我 住 在 北京 。 | Wǒ zhù zài Běijīng. | I live in Beijing.
+你 做 什么 工作 ？ | Nǐ zuò shénme gōngzuò? | What do you do for work?
+我 在 一 家 公司 工作 。 | Wǒ zài yì jiā gōngsī gōngzuò. | I work at a company.
+我 在 学 中文 。 | Wǒ zài xué Zhōngwén. | I'm learning Chinese.
+我 会 说 一点儿 中文 。 | Wǒ huì shuō yìdiǎnr Zhōngwén. | I can speak a little Chinese.
+我 的 中文 不 太 好 。 | Wǒ de Zhōngwén bú tài hǎo. | My Chinese isn't very good.
+这 是 我 的 名片 。 | Zhè shì wǒ de míngpiàn. | Here's my business card.
+我 喜欢 听 音乐 。 | Wǒ xǐhuan tīng yīnyuè. | I like listening to music.
+我 的 爱好 是 旅游 。 | Wǒ de àihào shì lǚyóu. | My hobby is travelling.
+我 第一 次 来 中国 。 | Wǒ dìyī cì lái Zhōngguó. | This is my first time in China.
+我 来 这儿 学习 。 | Wǒ lái zhèr xuéxí. | I've come here to study.
+我 学 了 两 年 中文 。 | Wǒ xué le liǎng nián Zhōngwén. | I've studied Chinese for two years.
+请 多 关照 。 | Qǐng duō guānzhào. | I'd appreciate your help and guidance.
+我 给 你 介绍 一下 我 的 同事 。 | Wǒ gěi nǐ jièshào yíxià wǒ de tóngshì. | Let me introduce you to my colleague.
+## Polite words and thanks
+谢谢 ！ | Xièxie! | Thank you!
+不 客气 。 | Bú kèqi. | You're welcome.
+对不起 ！ | Duìbuqǐ! | I'm sorry!
+没关系 。 | Méiguānxi. | It's all right.
+请 坐 。 | Qǐng zuò. | Please have a seat.
+不好意思 。 | Bùhǎoyìsi. | Excuse me. / Sorry about that.
+没 问题 。 | Méi wèntí. | No problem.
+不用 谢 。 | Búyòng xiè. | Don't mention it.
+非常 感谢 ！ | Fēicháng gǎnxiè! | Thank you very much!
+麻烦 你 了 。 | Máfan nǐ le. | Sorry to trouble you.
+辛苦 了 ！ | Xīnkǔ le! | Thanks for your hard work!
+打扰 一下 。 | Dǎrǎo yíxià. | Sorry to bother you.
+请 等 一下 。 | Qǐng děng yíxià. | Please wait a moment.
+请 慢 用 。 | Qǐng màn yòng. | Enjoy your meal.
+请 再 说 一 遍 。 | Qǐng zài shuō yí biàn. | Please say that again.
+请 说 慢 一点儿 。 | Qǐng shuō màn yìdiǎnr. | Please speak a little more slowly.
+让 你 久 等 了 。 | Ràng nǐ jiǔ děng le. | Sorry to keep you waiting.
+谢谢 你 的 帮助 。 | Xièxie nǐ de bāngzhù. | Thank you for your help.
+你 太 客气 了 。 | Nǐ tài kèqi le. | You're too kind.
+我 可以 进来 吗 ？ | Wǒ kěyǐ jìnlái ma? | May I come in?
+请 帮 我 一 个 忙 。 | Qǐng bāng wǒ yí ge máng. | Please do me a favour.
+对不起 ， 我 来 晚 了 。 | Duìbuqǐ, wǒ lái wǎn le. | Sorry I'm late.
+不好意思 ， 借过 一下 。 | Bùhǎoyìsi, jièguò yíxià. | Excuse me, could I get past?
+祝 你 生日 快乐 ！ | Zhù nǐ shēngrì kuàilè! | Happy birthday!
+这 是 我 应该 做 的 。 | Zhè shì wǒ yīnggāi zuò de. | It's the least I could do.
+## Asking questions
+这 是 什么 ？ | Zhè shì shénme? | What is this?
+他 是 谁 ？ | Tā shì shéi? | Who is he?
+为什么 ？ | Wèishénme? | Why?
+怎么 了 ？ | Zěnme le? | What's wrong?
+对 吗 ？ | Duì ma? | Is that right?
+可以 吗 ？ | Kěyǐ ma? | Is that OK?
+你 去 哪儿 ？ | Nǐ qù nǎr? | Where are you going?
+这 是 谁 的 ？ | Zhè shì shéi de? | Whose is this?
+你 懂 了 吗 ？ | Nǐ dǒng le ma? | Do you understand?
+你 在 做 什么 ？ | Nǐ zài zuò shénme? | What are you doing?
+你 有 时间 吗 ？ | Nǐ yǒu shíjiān ma? | Do you have time?
+你 会 说 英语 吗 ？ | Nǐ huì shuō Yīngyǔ ma? | Do you speak English?
+这个 用 中文 怎么 说 ？ | Zhège yòng Zhōngwén zěnme shuō? | How do you say this in Chinese?
+这个 字 怎么 读 ？ | Zhège zì zěnme dú? | How do you read this character?
+这个 词 是 什么 意思 ？ | Zhège cí shì shénme yìsi? | What does this word mean?
+你 觉得 怎么样 ？ | Nǐ juéde zěnmeyàng? | What do you think?
+你 喜欢 哪 一 个 ？ | Nǐ xǐhuan nǎ yí ge? | Which one do you like?
+你 什么 时候 回来 ？ | Nǐ shénme shíhou huílái? | When are you coming back?
+发生 什么 事 了 ？ | Fāshēng shénme shì le? | What happened?
+你 怎么 知道 的 ？ | Nǐ zěnme zhīdào de? | How did you know?
+这里 可以 拍照 吗 ？ | Zhèlǐ kěyǐ pāizhào ma? | Can I take photos here?
+你 为什么 不 高兴 ？ | Nǐ wèishénme bù gāoxìng? | Why are you unhappy?
+你 知道 他 在 哪儿 吗 ？ | Nǐ zhīdào tā zài nǎr ma? | Do you know where he is?
+我 可以 问 你 一 个 问题 吗 ？ | Wǒ kěyǐ wèn nǐ yí ge wèntí ma? | May I ask you a question?
+还 有 别的 问题 吗 ？ | Hái yǒu biéde wèntí ma? | Are there any other questions?
+## Numbers, dates and time
+一 、 二 、 三 ！ | Yī, èr, sān! | One, two, three!
+现在 几 点 ？ | Xiànzài jǐ diǎn? | What time is it now?
+现在 三 点 半 。 | Xiànzài sān diǎn bàn. | It's half past three.
+今天 星期 几 ？ | Jīntiān xīngqī jǐ? | What day of the week is it today?
+今天 星期一 。 | Jīntiān xīngqīyī. | Today is Monday.
+今天 几 月 几 号 ？ | Jīntiān jǐ yuè jǐ hào? | What's the date today?
+明天 是 五月 一 号 。 | Míngtiān shì wǔyuè yī hào. | Tomorrow is the first of May.
+一共 十 个 人 。 | Yígòng shí ge rén. | There are ten people in all.
+现在 还 早 。 | Xiànzài hái zǎo. | It's still early.
+时间 不 早 了 。 | Shíjiān bù zǎo le. | It's getting late.
+你 的 生日 是 哪 天 ？ | Nǐ de shēngrì shì nǎ tiān? | When is your birthday?
+我 七 点 起床 。 | Wǒ qī diǎn qǐchuáng. | I get up at seven.
+等 我 五 分钟 。 | Děng wǒ wǔ fēnzhōng. | Give me five minutes.
+差 十 分 八 点 。 | Chà shí fēn bā diǎn. | It's ten to eight.
+昨天 我 很 忙 。 | Zuótiān wǒ hěn máng. | I was very busy yesterday.
+我们 几 点 见面 ？ | Wǒmen jǐ diǎn jiànmiàn? | What time shall we meet?
+下午 两 点 可以 吗 ？ | Xiàwǔ liǎng diǎn kěyǐ ma? | Is two in the afternoon OK?
+一 年 有 十二 个 月 。 | Yì nián yǒu shí'èr ge yuè. | There are twelve months in a year.
+我 等 了 半 个 小时 。 | Wǒ děng le bàn ge xiǎoshí. | I waited for half an hour.
+下 个 星期 我 有 空 。 | Xià ge xīngqī wǒ yǒu kòng. | I'm free next week.
+电影 几 点 开始 ？ | Diànyǐng jǐ diǎn kāishǐ? | What time does the film start?
+我 每 天 八 点 上班 。 | Wǒ měi tiān bā diǎn shàngbān. | I start work at eight every day.
+你 的 电话 号码 是 多少 ？ | Nǐ de diànhuà hàomǎ shì duōshao? | What's your phone number?
+我 来 中国 三 个 月 了 。 | Wǒ lái Zhōngguó sān ge yuè le. | I've been in China for three months.
+我们 改 到 后天 吧 。 | Wǒmen gǎi dào hòutiān ba. | Let's move it to the day after tomorrow.
+## Family and friends
+这 是 我 妈妈 。 | Zhè shì wǒ māma. | This is my mum.
+我 爸爸 是 医生 。 | Wǒ bàba shì yīshēng. | My dad is a doctor.
+我 有 一 个 哥哥 。 | Wǒ yǒu yí ge gēge. | I have an older brother.
+我 没有 妹妹 。 | Wǒ méiyǒu mèimei. | I don't have a younger sister.
+我们 是 好 朋友 。 | Wǒmen shì hǎo péngyou. | We're good friends.
+我 爱 我 的 家 。 | Wǒ ài wǒ de jiā. | I love my family.
+我 很 想 你 。 | Wǒ hěn xiǎng nǐ. | I miss you a lot.
+你 家 有 几 口 人 ？ | Nǐ jiā yǒu jǐ kǒu rén? | How many people are there in your family?
+我 家 有 四 口 人 。 | Wǒ jiā yǒu sì kǒu rén. | There are four people in my family.
+你 有 兄弟 姐妹 吗 ？ | Nǐ yǒu xiōngdì jiěmèi ma? | Do you have any brothers or sisters?
+你 结婚 了 吗 ？ | Nǐ jiéhūn le ma? | Are you married?
+我 有 两 个 孩子 。 | Wǒ yǒu liǎng ge háizi. | I have two children.
+我 女儿 今年 六 岁 。 | Wǒ nǚ'ér jīnnián liù suì. | My daughter is six this year.
+我 弟弟 比 我 高 。 | Wǒ dìdi bǐ wǒ gāo. | My younger brother is taller than me.
+我 姐姐 在 上海 工作 。 | Wǒ jiějie zài Shànghǎi gōngzuò. | My older sister works in Shanghai.
+爷爷 奶奶 身体 很 好 。 | Yéye nǎinai shēntǐ hěn hǎo. | My grandparents are in good health.
+你 父母 住 在 哪儿 ？ | Nǐ fùmǔ zhù zài nǎr? | Where do your parents live?
+她 是 我 最 好 的 朋友 。 | Tā shì wǒ zuì hǎo de péngyou. | She's my best friend.
+你 有 男朋友 吗 ？ | Nǐ yǒu nánpéngyou ma? | Do you have a boyfriend?
+我 丈夫 很 会 做饭 。 | Wǒ zhàngfu hěn huì zuòfàn. | My husband is a good cook.
+他 长 得 像 他 爸爸 。 | Tā zhǎng de xiàng tā bàba. | He looks like his dad.
+我们 认识 十 年 了 。 | Wǒmen rènshi shí nián le. | We've known each other for ten years.
+有 空 来 我 家 玩 吧 。 | Yǒu kòng lái wǒ jiā wán ba. | Come over to my place when you're free.
+我 每 个 星期 给 妈妈 打 电话 。 | Wǒ měi ge xīngqī gěi māma dǎ diànhuà. | I call my mum every week.
+周末 我 常 跟 朋友 一起 玩 。 | Zhōumò wǒ cháng gēn péngyou yìqǐ wán. | I often hang out with friends at the weekend.
+## Food and drink
+我 饿 了 。 | Wǒ è le. | I'm hungry.
+很 好吃 ！ | Hěn hǎochī! | It's delicious!
+干杯 ！ | Gānbēi! | Cheers!
+我 想 喝 水 。 | Wǒ xiǎng hē shuǐ. | I'd like some water.
+我 吃 饱 了 。 | Wǒ chī bǎo le. | I'm full.
+你 想 吃 什么 ？ | Nǐ xiǎng chī shénme? | What would you like to eat?
+我 不 吃 肉 。 | Wǒ bù chī ròu. | I don't eat meat.
+多 吃 一点儿 ！ | Duō chī yìdiǎnr! | Have some more!
+我 喜欢 吃 中国 菜 。 | Wǒ xǐhuan chī Zhōngguó cài. | I like Chinese food.
+请 给 我 菜单 。 | Qǐng gěi wǒ càidān. | The menu, please.
+服务员 ， 点 菜 ！ | Fúwùyuán, diǎn cài! | Waiter, we're ready to order!
+来 一 碗 米饭 。 | Lái yì wǎn mǐfàn. | A bowl of rice, please.
+我 要 一 杯 咖啡 。 | Wǒ yào yì bēi kāfēi. | I'd like a cup of coffee.
+你 喝 茶 还是 喝 咖啡 ？ | Nǐ hē chá háishi hē kāfēi? | Would you like tea or coffee?
+这个 菜 辣 吗 ？ | Zhège cài là ma? | Is this dish spicy?
+不要 太 辣 。 | Búyào tài là. | Not too spicy, please.
+再 来 两 瓶 啤酒 。 | Zài lái liǎng píng píjiǔ. | Two more bottles of beer, please.
+我 不 会 用 筷子 。 | Wǒ bú huì yòng kuàizi. | I can't use chopsticks.
+我 对 花生 过敏 。 | Wǒ duì huāshēng guòmǐn. | I'm allergic to peanuts.
+你们 有 什么 特色 菜 ？ | Nǐmen yǒu shénme tèsè cài? | What are your specialities?
+早饭 你 一般 吃 什么 ？ | Zǎofàn nǐ yìbān chī shénme? | What do you usually have for breakfast?
+我们 去 饭馆 吃 晚饭 吧 。 | Wǒmen qù fànguǎn chī wǎnfàn ba. | Let's go to a restaurant for dinner.
+今天 我 请客 。 | Jīntiān wǒ qǐngkè. | It's my treat today.
+买单 ， 谢谢 。 | Mǎidān, xièxie. | The bill, please.
+剩下 的 菜 可以 打包 吗 ？ | Shèngxià de cài kěyǐ dǎbāo ma? | Can I take the leftovers to go?
+## Shopping and prices
+多少 钱 ？ | Duōshao qián? | How much is it?
+太 贵 了 ！ | Tài guì le! | That's too expensive!
+很 便宜 。 | Hěn piányi. | It's very cheap.
+我 要 这个 。 | Wǒ yào zhège. | I'll take this one.
+我 只是 看看 。 | Wǒ zhǐshì kànkan. | I'm just looking.
+我 再 想想 。 | Wǒ zài xiǎngxiang. | I'll think about it.
+这个 打折 吗 ？ | Zhège dǎzhé ma? | Is this on sale?
+附近 有 超市 吗 ？ | Fùjìn yǒu chāoshì ma? | Is there a supermarket nearby?
+苹果 多少 钱 一 斤 ？ | Píngguǒ duōshao qián yì jīn? | How much are the apples per jin (half a kilo)?
+一共 一百 二十 块 。 | Yígòng yìbǎi èrshí kuài. | That's 120 yuan altogether.
+可以 便宜 一点儿 吗 ？ | Kěyǐ piányi yìdiǎnr ma? | Can you make it a bit cheaper?
+我 可以 试 一下 吗 ？ | Wǒ kěyǐ shì yíxià ma? | Can I try it on?
+有 大 一点儿 的 吗 ？ | Yǒu dà yìdiǎnr de ma? | Do you have a bigger one?
+有 别的 颜色 吗 ？ | Yǒu biéde yánsè ma? | Do you have other colours?
+这 件 衣服 很 漂亮 。 | Zhè jiàn yīfu hěn piàoliang. | This piece of clothing is really pretty.
+我 想 买 一 双 鞋 。 | Wǒ xiǎng mǎi yì shuāng xié. | I'd like to buy a pair of shoes.
+这 双 太 小 了 。 | Zhè shuāng tài xiǎo le. | This pair is too small.
+你们 几 点 关门 ？ | Nǐmen jǐ diǎn guānmén? | What time do you close?
+我 没 带 现金 。 | Wǒ méi dài xiànjīn. | I didn't bring any cash.
+可以 用 手机 支付 吗 ？ | Kěyǐ yòng shǒujī zhīfù ma? | Can I pay by phone?
+请 给 我 一 个 袋子 。 | Qǐng gěi wǒ yí ge dàizi. | A bag, please.
+找 您 二十 块 。 | Zhǎo nín èrshí kuài. | Here's twenty yuan change.
+这个 质量 怎么样 ？ | Zhège zhìliàng zěnmeyàng? | How's the quality of this?
+不 合适 可以 退货 吗 ？ | Bù héshì kěyǐ tuìhuò ma? | Can I return it if it doesn't fit?
+请 给 我 开 一 张 发票 。 | Qǐng gěi wǒ kāi yì zhāng fāpiào. | Please give me an official receipt.
+## Getting around
+洗手间 在 哪儿 ？ | Xǐshǒujiān zài nǎr? | Where's the toilet?
+我 迷路 了 。 | Wǒ mílù le. | I'm lost.
+往 前 走 。 | Wǎng qián zǒu. | Go straight ahead.
+向 左 拐 。 | Xiàng zuǒ guǎi. | Turn left.
+离 这儿 远 吗 ？ | Lí zhèr yuǎn ma? | Is it far from here?
+我 要 去 机场 。 | Wǒ yào qù jīchǎng. | I need to go to the airport.
+请 打表 。 | Qǐng dǎbiǎo. | Please use the meter.
+请 在 这儿 停 一下 。 | Qǐng zài zhèr tíng yíxià. | Please stop here.
+师傅 ， 去 火车站 。 | Shīfu, qù huǒchēzhàn. | Driver, to the train station, please.
+我 坐 地铁 上班 。 | Wǒ zuò dìtiě shàngbān. | I take the subway to work.
+火车 几 点 开 ？ | Huǒchē jǐ diǎn kāi? | What time does the train leave?
+在 哪儿 换车 ？ | Zài nǎr huànchē? | Where do I change?
+下 一 站 是 哪儿 ？ | Xià yí zhàn shì nǎr? | What's the next stop?
+路上 堵车 了 。 | Lùshang dǔchē le. | There's a traffic jam.
+到 了 请 告诉 我 。 | Dào le qǐng gàosu wǒ. | Please tell me when we get there.
+走路 十 分钟 就 到 。 | Zǒulù shí fēnzhōng jiù dào. | It's a ten-minute walk.
+到 那儿 要 多 长 时间 ？ | Dào nàr yào duō cháng shíjiān? | How long does it take to get there?
+最 近 的 地铁站 怎么 走 ？ | Zuì jìn de dìtiězhàn zěnme zǒu? | How do I get to the nearest subway station?
+这 路 车 到 市中心 吗 ？ | Zhè lù chē dào shìzhōngxīn ma? | Does this bus go to the city centre?
+银行 在 邮局 旁边 。 | Yínháng zài yóujú pángbiān. | The bank is next to the post office.
+过 马路 要 小心 。 | Guò mǎlù yào xiǎoxīn. | Be careful crossing the road.
+我 想 租 一 辆 自行车 。 | Wǒ xiǎng zū yí liàng zìxíngchē. | I'd like to rent a bike.
+我 想 买 一 张 去 上海 的 票 。 | Wǒ xiǎng mǎi yì zhāng qù Shànghǎi de piào. | I'd like a ticket to Shanghai.
+请 在 地图 上 指 给 我 看 。 | Qǐng zài dìtú shang zhǐ gěi wǒ kàn. | Please show me on the map.
+飞机 晚点 了 一 个 小时 。 | Fēijī wǎndiǎn le yí ge xiǎoshí. | The flight was delayed by an hour.
+## At home
+我 回来 了 ！ | Wǒ huílái le! | I'm home!
+吃饭 了 ！ | Chīfàn le! | Dinner's ready!
+我 有点儿 累 。 | Wǒ yǒudiǎnr lèi. | I'm a bit tired.
+我 去 洗澡 。 | Wǒ qù xǐzǎo. | I'm going to take a shower.
+该 睡觉 了 。 | Gāi shuìjiào le. | Time for bed.
+我 在 看 电视 。 | Wǒ zài kàn diànshì. | I'm watching TV.
+厨房 在 那边 。 | Chúfáng zài nàbiān. | The kitchen is over there.
+房间 很 干净 。 | Fángjiān hěn gānjìng. | The room is very clean.
+今天 谁 做饭 ？ | Jīntiān shéi zuòfàn? | Who's cooking today?
+我 来 洗碗 。 | Wǒ lái xǐwǎn. | I'll do the dishes.
+空调 坏 了 。 | Kōngtiáo huài le. | The air conditioner is broken.
+衣服 洗 好 了 。 | Yīfu xǐ hǎo le. | The laundry is done.
+请 开 一下 门 。 | Qǐng kāi yíxià mén. | Please open the door.
+把 窗户 关上 吧 。 | Bǎ chuānghu guānshang ba. | Let's close the window.
+我 的 钥匙 在 哪儿 ？ | Wǒ de yàoshi zài nǎr? | Where are my keys?
+手机 在 桌子 上 。 | Shǒujī zài zhuōzi shang. | The phone is on the table.
+我们 家 在 三 楼 。 | Wǒmen jiā zài sān lóu. | Our home is on the third floor.
+我 要 打扫 房间 。 | Wǒ yào dǎsǎo fángjiān. | I need to clean the room.
+你 的 房间 太 乱 了 。 | Nǐ de fángjiān tài luàn le. | Your room is too messy.
+冰箱 里 没有 牛奶 了 。 | Bīngxiāng li méiyǒu niúnǎi le. | There's no milk left in the fridge.
+你 去 倒 一下 垃圾 吧 。 | Nǐ qù dào yíxià lājī ba. | Could you take out the rubbish?
+客厅 的 沙发 很 舒服 。 | Kètīng de shāfā hěn shūfu. | The sofa in the living room is really comfortable.
+出门 别 忘 了 带 钥匙 。 | Chūmén bié wàng le dài yàoshi. | Don't forget your keys when you go out.
+请 把 电视 声音 关 小 一点儿 。 | Qǐng bǎ diànshì shēngyīn guān xiǎo yìdiǎnr. | Please turn the TV down a bit.
+别 客气 ， 就 像 在 自己 家 一样 。 | Bié kèqi, jiù xiàng zài zìjǐ jiā yíyàng. | Make yourself at home.

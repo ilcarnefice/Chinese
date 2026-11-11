@@ -1,0 +1,111 @@
+# Travel phrases. Written for this app.
+## At the airport
+请 问 ， 登机口 在 哪儿 ？ | Qǐng wèn, dēngjīkǒu zài nǎr? | Excuse me, where is the boarding gate?
+我 要 办 登机 手续 。 | Wǒ yào bàn dēngjī shǒuxù. | I'd like to check in for my flight.
+我 有 一 件 行李 要 托运 。 | Wǒ yǒu yí jiàn xíngli yào tuōyùn. | I have one bag to check in.
+我 想 要 靠 窗 的 座位 。 | Wǒ xiǎng yào kào chuāng de zuòwèi. | I'd like a window seat.
+这 是 我 的 护照 。 | Zhè shì wǒ de hùzhào. | Here is my passport.
+航班 晚点 了 吗 ？ | Hángbān wǎndiǎn le ma? | Is the flight delayed?
+在 哪儿 取 行李 ？ | Zài nǎr qǔ xíngli? | Where do I collect my luggage?
+我 的 行李 没 到 。 | Wǒ de xíngli méi dào. | My luggage hasn't arrived.
+我 来 中国 旅游 。 | Wǒ lái Zhōngguó lǚyóu. | I've come to China as a tourist.
+机场 大巴 在 哪儿 坐 ？ | Jīchǎng dàbā zài nǎr zuò? | Where do I catch the airport bus?
+## Taxi and ride-hailing
+师傅 ， 去 这个 地址 。 | Shīfu, qù zhège dìzhǐ. | Driver, please take me to this address.
+我 要 去 火车站 。 | Wǒ yào qù huǒchēzhàn. | I want to go to the train station.
+请 打 表 。 | Qǐng dǎ biǎo. | Please use the meter.
+到 机场 要 多 长 时间 ？ | Dào jīchǎng yào duō cháng shíjiān? | How long does it take to get to the airport?
+请 在 前面 停 车 。 | Qǐng zài qiánmiàn tíng chē. | Please stop up ahead.
+就 在 这儿 下 车 。 | Jiù zài zhèr xià chē. | I'll get out right here.
+麻烦 开 一下 后备箱 。 | Máfan kāi yíxià hòubèixiāng. | Could you open the trunk, please?
+我 叫 了 网约车 。 | Wǒ jiào le wǎngyuēchē. | I've ordered a ride-hailing car.
+我 赶 时间 ， 请 快 一点儿 。 | Wǒ gǎn shíjiān, qǐng kuài yìdiǎnr. | I'm in a hurry, please go a bit faster.
+请 给 我 发票 。 | Qǐng gěi wǒ fāpiào. | Please give me a receipt.
+## Subway, bus and train
+地铁站 怎么 走 ？ | Dìtiězhàn zěnme zǒu? | How do I get to the subway station?
+我 要 买 一 张 去 上海 的 票 。 | Wǒ yào mǎi yì zhāng qù Shànghǎi de piào. | I'd like to buy a ticket to Shanghai.
+去 天安门 坐 几 号 线 ？ | Qù Tiān'ānmén zuò jǐ hào xiàn? | Which line do I take to Tiananmen?
+在 哪儿 换乘 ？ | Zài nǎr huànchéng? | Where do I change lines?
+这 路 车 到 博物馆 吗 ？ | Zhè lù chē dào bówùguǎn ma? | Does this bus go to the museum?
+还 有 几 站 ？ | Hái yǒu jǐ zhàn? | How many more stops are there?
+下 一 站 是 哪儿 ？ | Xià yí zhàn shì nǎr? | What is the next stop?
+高铁 几 点 开 ？ | Gāotiě jǐ diǎn kāi? | What time does the high-speed train leave?
+在 哪个 站台 上 车 ？ | Zài nǎge zhàntái shàng chē? | Which platform do I board from?
+这个 座位 有 人 吗 ？ | Zhège zuòwèi yǒu rén ma? | Is this seat taken?
+## Hotel check-in
+我 订 了 一 个 房间 。 | Wǒ dìng le yí ge fángjiān. | I have booked a room.
+我 要 办 入住 。 | Wǒ yào bàn rùzhù. | I'd like to check in.
+还 有 空 房间 吗 ？ | Hái yǒu kōng fángjiān ma? | Do you have any rooms available?
+住 一 晚 多少 钱 ？ | Zhù yì wǎn duōshao qián? | How much is it per night?
+无线网 密码 是 多少 ？ | Wúxiànwǎng mìmǎ shì duōshao? | What is the Wi-Fi password?
+早饭 几 点 开始 ？ | Zǎofàn jǐ diǎn kāishǐ? | What time does breakfast start?
+我 住 三 个 晚上 。 | Wǒ zhù sān ge wǎnshang. | I'm staying for three nights.
+几 点 以前 要 退房 ？ | Jǐ diǎn yǐqián yào tuìfáng? | What time do I have to check out by?
+行李 可以 放 在 这儿 吗 ？ | Xíngli kěyǐ fàng zài zhèr ma? | Can I leave my luggage here?
+房间 的 空调 坏 了 。 | Fángjiān de kōngtiáo huài le. | The air conditioning in my room is broken.
+## Asking for directions
+请 问 ， 洗手间 在 哪儿 ？ | Qǐng wèn, xǐshǒujiān zài nǎr? | Excuse me, where is the restroom?
+我 迷路 了 。 | Wǒ mílù le. | I'm lost.
+离 这儿 远 不 远 ？ | Lí zhèr yuǎn bu yuǎn? | Is it far from here?
+走 路 要 几 分钟 ？ | Zǒu lù yào jǐ fēnzhōng? | How many minutes does it take on foot?
+是 往 左 拐 还是 往 右 拐 ？ | Shì wǎng zuǒ guǎi háishi wǎng yòu guǎi? | Do I turn left or right?
+一直 往 前 走 吗 ？ | Yìzhí wǎng qián zǒu ma? | Do I go straight ahead?
+附近 有 地铁站 吗 ？ | Fùjìn yǒu dìtiězhàn ma? | Is there a subway station nearby?
+请 在 地图 上 指 给 我 看 。 | Qǐng zài dìtú shang zhǐ gěi wǒ kàn. | Please show me on the map.
+这 条 路 叫 什么 名字 ？ | Zhè tiáo lù jiào shénme míngzi? | What is this street called?
+过 马路 就 到 了 吗 ？ | Guò mǎlù jiù dào le ma? | Is it just across the road?
+## Ordering in a restaurant
+服务员 ， 请 给 我 菜单 。 | Fúwùyuán, qǐng gěi wǒ càidān. | Waiter, the menu please.
+两 位 ， 有 位子 吗 ？ | Liǎng wèi, yǒu wèizi ma? | Two people. Do you have a table?
+你们 有 什么 特色菜 ？ | Nǐmen yǒu shénme tèsècài? | What are your specialities?
+我 要 这个 和 一 碗 米饭 。 | Wǒ yào zhège hé yì wǎn mǐfàn. | I'll have this and a bowl of rice.
+我 不 吃 肉 。 | Wǒ bù chī ròu. | I don't eat meat.
+请 不要 放 辣椒 。 | Qǐng búyào fàng làjiāo. | No chilli, please.
+我 对 花生 过敏 。 | Wǒ duì huāshēng guòmǐn. | I'm allergic to peanuts.
+来 一 瓶 啤酒 。 | Lái yì píng píjiǔ. | A bottle of beer, please.
+剩下 的 请 帮 我 打包 。 | Shèngxià de qǐng bāng wǒ dǎbāo. | Please pack up the leftovers for me.
+服务员 ， 买单 ！ | Fúwùyuán, mǎidān! | Waiter, the bill please!
+## Sightseeing and tickets
+门票 多少 钱 一 张 ？ | Ménpiào duōshao qián yì zhāng? | How much is one admission ticket?
+学生 票 有 优惠 吗 ？ | Xuésheng piào yǒu yōuhuì ma? | Is there a discount for students?
+我 要 两 张 成人 票 。 | Wǒ yào liǎng zhāng chéngrén piào. | Two adult tickets, please.
+几 点 关 门 ？ | Jǐ diǎn guān mén? | What time do you close?
+这儿 可以 拍照 吗 ？ | Zhèr kěyǐ pāizhào ma? | Can I take photos here?
+能 帮 我们 拍 张 照 吗 ？ | Néng bāng wǒmen pāi zhāng zhào ma? | Could you take a photo of us?
+有 英文 导游 吗 ？ | Yǒu Yīngwén dǎoyóu ma? | Is there an English-speaking guide?
+入口 在 哪边 ？ | Rùkǒu zài nǎbiān? | Which way is the entrance?
+需要 提前 预约 吗 ？ | Xūyào tíqián yùyuē ma? | Do I need to book in advance?
+长城 离 市区 有 多 远 ？ | Chángchéng lí shìqū yǒu duō yuǎn? | How far is the Great Wall from the city?
+## Shopping and bargaining
+这个 多少 钱 ？ | Zhège duōshao qián? | How much is this?
+太 贵 了 ， 便宜 一点儿 吧 。 | Tài guì le, piányi yìdiǎnr ba. | That's too expensive, make it a bit cheaper.
+我 只是 随便 看看 。 | Wǒ zhǐshì suíbiàn kànkan. | I'm just looking.
+可以 试 一下 吗 ？ | Kěyǐ shì yíxià ma? | Can I try it on?
+有 大 一 号 的 吗 ？ | Yǒu dà yí hào de ma? | Do you have one size bigger?
+有 别的 颜色 吗 ？ | Yǒu biéde yánsè ma? | Do you have other colours?
+一百 块 ， 行 不 行 ？ | Yìbǎi kuài, xíng bu xíng? | How about a hundred yuan?
+我 再 考虑 一下 。 | Wǒ zài kǎolǜ yíxià. | I'll think about it.
+我 买 两 个 ， 能 打折 吗 ？ | Wǒ mǎi liǎng ge, néng dǎzhé ma? | If I buy two, can I get a discount?
+好 ， 我 要 这个 。 | Hǎo, wǒ yào zhège. | OK, I'll take this one.
+## Money and payment
+可以 刷 卡 吗 ？ | Kěyǐ shuā kǎ ma? | Can I pay by card?
+我 用 微信 支付 。 | Wǒ yòng Wēixìn zhīfù. | I'll pay with WeChat.
+可以 用 支付宝 吗 ？ | Kěyǐ yòng Zhīfùbǎo ma? | Can I use Alipay?
+我 只 有 现金 。 | Wǒ zhǐ yǒu xiànjīn. | I only have cash.
+附近 有 取款机 吗 ？ | Fùjìn yǒu qǔkuǎnjī ma? | Is there an ATM nearby?
+我 想 换 人民币 。 | Wǒ xiǎng huàn rénmínbì. | I'd like to change money into renminbi.
+今天 的 汇率 是 多少 ？ | Jīntiān de huìlǜ shì duōshao? | What is today's exchange rate?
+我 扫 你 的 二维码 吧 。 | Wǒ sǎo nǐ de èrwéimǎ ba. | Let me scan your QR code.
+你 找 错 钱 了 。 | Nǐ zhǎo cuò qián le. | You gave me the wrong change.
+我们 分开 付 。 | Wǒmen fēnkāi fù. | We'll pay separately.
+## Trouble and emergencies
+救命 啊 ！ | Jiùmìng a! | Help!
+请 帮 我 叫 救护车 。 | Qǐng bāng wǒ jiào jiùhùchē. | Please call an ambulance for me.
+我 的 手机 丢 了 。 | Wǒ de shǒujī diū le. | I've lost my phone.
+我 的 钱包 被 偷 了 。 | Wǒ de qiánbāo bèi tōu le. | My wallet has been stolen.
+我 要 报警 。 | Wǒ yào bàojǐng. | I want to call the police.
+我 不 舒服 ， 要 去 医院 。 | Wǒ bù shūfu, yào qù yīyuàn. | I don't feel well and need to go to a hospital.
+附近 有 药店 吗 ？ | Fùjìn yǒu yàodiàn ma? | Is there a pharmacy nearby?
+我 听 不 懂 ， 请 说 慢 一点儿 。 | Wǒ tīng bu dǒng, qǐng shuō màn yìdiǎnr. | I don't understand, please speak more slowly.
+有 人 会 说 英语 吗 ？ | Yǒu rén huì shuō Yīngyǔ ma? | Does anyone speak English?
+我 的 护照 不见 了 。 | Wǒ de hùzhào bújiàn le. | My passport is missing.

@@ -65,3 +65,71 @@ A|你 为什么 想 来 我们 公司 工作 ？|Nǐ wèishénme xiǎng lái wǒ
 B|我 对 这 里 的 环境 很 熟悉 ， 也 有 经验 。|Wǒ duì zhèlǐ de huánjìng hěn shúxī, yě yǒu jīngyàn.|I know the environment here well and I also have experience.
 A|这 个 工作 很 忙 ， 你 能 坚持 吗 ？|Zhège gōngzuò hěn máng, nǐ néng jiānchí ma?|This job is very busy. Can you keep it up?
 B|只要 努力 ， 就 会 成功 。|Zhǐyào nǔlì, jiù huì chénggōng.|As long as I work hard, I will succeed.
+
+# 3 | At the library
+A|请 问 ， 我 想 借 这 本 书 ， 可以 吗 ？|Qǐng wèn, wǒ xiǎng jiè zhè běn shū, kěyǐ ma?|Excuse me, I'd like to borrow this book. Is that OK?
+B|可以 。 请 把 你 的 学生证 给 我 。|Kěyǐ. Qǐng bǎ nǐ de xuéshēngzhèng gěi wǒ.|Yes. Please give me your student card.
+A|给 你 。 我 可以 借 多 长 时间 ？|Gěi nǐ. Wǒ kěyǐ jiè duō cháng shíjiān?|Here you are. How long can I borrow it for?
+B|一 个 月 。 如果 看 不 完 ， 可以 在 网 上 再 借 一 次 。|Yí ge yuè. Rúguǒ kàn bu wán, kěyǐ zài wǎng shang zài jiè yí cì.|One month. If you can't finish it, you can renew it once online.
+A|太 好 了 。 这 本 书 比 我 上 次 借 的 难 多 了 。|Tài hǎo le. Zhè běn shū bǐ wǒ shàng cì jiè de nán duō le.|Great. This book is much harder than the one I borrowed last time.
+B|别 担心 ， 慢慢 看 。 记得 按时 还 书 。|Bié dānxīn, mànmàn kàn. Jìde ànshí huán shū.|Don't worry, take your time. Remember to return it on time.
+
+# 4 | A late delivery
+A|你 好 ， 我 上 个 星期 在 网 上 买 的 鞋 到 现在 还 没 收到 。|Nǐ hǎo, wǒ shàng ge xīngqī zài wǎng shang mǎi de xié dào xiànzài hái méi shōudào.|Hello, the shoes I bought online last week still haven't arrived.
+B|非常 抱歉 。 请 告诉 我 您 的 订单 号码 ， 我 帮 您 查 一下 。|Fēicháng bàoqiàn. Qǐng gàosu wǒ nín de dìngdān hàomǎ, wǒ bāng nín chá yíxià.|I'm very sorry. Please tell me your order number and I'll look into it for you.
+A|号码 我 已经 发 给 你们 了 。 到底 是 什么 原因 ？|Hàomǎ wǒ yǐjīng fā gěi nǐmen le. Dàodǐ shì shénme yuányīn?|I've already sent you the number. What exactly is the reason?
+B|由于 天气 原因 ， 很 多 包裹 都 推迟 了 。 估计 后天 能 到 。|Yóuyú tiānqì yuányīn, hěn duō bāoguǒ dōu tuīchí le. Gūjì hòutiān néng dào.|Because of the weather, many parcels have been delayed. I expect it will arrive the day after tomorrow.
+A|如果 后天 还 不 到 ， 我 就 只好 申请 退款 了 。|Rúguǒ hòutiān hái bú dào, wǒ jiù zhǐhǎo shēnqǐng tuìkuǎn le.|If it still hasn't come by then, I'll have no choice but to ask for a refund.
+B|没 问题 。 为了 表示 歉意 ， 我们 会 送 您 一 张 优惠券 。|Méi wèntí. Wèile biǎoshì qiànyì, wǒmen huì sòng nín yì zhāng yōuhuìquàn.|No problem. By way of apology, we will send you a discount coupon.
+
+# 5 | Renting a flat
+A|这 套 公寓 的 位置 不错 ， 不过 租金 能 不 能 再 商量 一下 ？|Zhè tào gōngyù de wèizhi búcuò, búguò zūjīn néng bu néng zài shāngliang yíxià?|This flat is in a good location, but is the rent open to negotiation?
+B|房东 说 最 少 四千 五 ， 而且 要 押 一 付 三 。|Fángdōng shuō zuì shǎo sìqiān wǔ, érqiě yào yā yī fù sān.|The landlord says 4,500 at the very least, with one month's deposit and three months' rent up front.
+A|家具 和 电器 都 包括 在内 吗 ？ 物业费 由 谁 承担 ？|Jiājù hé diànqì dōu bāokuò zàinèi ma? Wùyèfèi yóu shéi chéngdān?|Are the furniture and appliances all included? Who covers the property management fee?
+B|家具 齐全 ， 物业费 由 房东 负责 ， 水 电 费 您 自己 交 。|Jiājù qíquán, wùyèfèi yóu fángdōng fùzé, shuǐ diàn fèi nín zìjǐ jiāo.|It is fully furnished, the landlord takes care of the management fee, and you pay the water and electricity bills yourself.
+A|合同 至少 要 签 多 久 ？ 万一 我 提前 搬 走 怎么办 ？|Hétong zhìshǎo yào qiān duō jiǔ? Wànyī wǒ tíqián bān zǒu zěnmebàn?|How long is the minimum contract? What if I have to move out early?
+B|一般 签 一 年 。 提前 退租 的话 ， 押金 恐怕 退 不 了 。|Yìbān qiān yì nián. Tíqián tuìzū dehuà, yājīn kǒngpà tuì bu liǎo.|Usually one year. If you end the lease early, I'm afraid the deposit can't be refunded.
+A|那 我 再 考虑 考虑 ， 明天 给 你 答复 。|Nà wǒ zài kǎolǜ kǎolǜ, míngtiān gěi nǐ dáfù.|Then I'll think it over and give you an answer tomorrow.
+
+# 5 | Talking about the news
+A|你 看 今天 的 新闻 了 吗 ？ 据说 明年 起 ， 本 市 要 限制 私人 汽车 进入 市中心 。|Nǐ kàn jīntiān de xīnwén le ma? Jùshuō míngnián qǐ, běn shì yào xiànzhì sīrén qìchē jìnrù shìzhōngxīn.|Did you see today's news? Apparently, from next year the city is going to restrict private cars from entering the centre.
+B|看 了 。 我 觉得 这 项 措施 有利于 改善 空气 质量 。|Kàn le. Wǒ juéde zhè xiàng cuòshī yǒulìyú gǎishàn kōngqì zhìliàng.|I did. I think this measure will help improve air quality.
+A|可是 对 住 在 郊区 的 人 来说 ， 上班 就 更 不 方便 了 。|Kěshì duì zhù zài jiāoqū de rén láishuō, shàngbān jiù gèng bù fāngbiàn le.|But for people who live in the suburbs, getting to work will be even less convenient.
+B|政府 表示 会 增加 公交 线路 ， 地铁 也 会 延长 运营 时间 。|Zhèngfǔ biǎoshì huì zēngjiā gōngjiāo xiànlù, dìtiě yě huì yáncháng yùnyíng shíjiān.|The government says it will add bus routes, and the subway will run longer hours too.
+A|但愿 如此 。 不然 的话 ， 大家 肯定 会 抱怨 。|Dànyuàn rúcǐ. Bùrán dehuà, dàjiā kěndìng huì bàoyuàn.|Let's hope so. Otherwise everyone is bound to complain.
+B|任何 政策 都 有 利 有 弊 ， 关键 是 怎么 执行 。|Rènhé zhèngcè dōu yǒu lì yǒu bì, guānjiàn shì zěnme zhíxíng.|Every policy has its pros and cons. The key is how it is carried out.
+
+# 5 | A performance review
+A|小 王 ， 今天 我们 谈谈 你 这 半 年 的 工作 表现 。|Xiǎo Wáng, jīntiān wǒmen tántan nǐ zhè bàn nián de gōngzuò biǎoxiàn.|Xiao Wang, today let's talk about your performance at work over the past six months.
+B|好 的 ， 经理 。 我 很 想 听听 您 的 意见 。|Hǎo de, jīnglǐ. Wǒ hěn xiǎng tīngting nín de yìjiàn.|All right, manager. I'd really like to hear your opinion.
+A|总的来说 ， 你 很 主动 ， 完成 的 项目 也 得到 了 客户 的 肯定 。|Zǒngdeláishuō, nǐ hěn zhǔdòng, wánchéng de xiàngmù yě dédào le kèhù de kěndìng.|On the whole, you show a lot of initiative, and the projects you completed were well received by the clients.
+B|谢谢 。 不过 我 知道 自己 在 时间 安排 方面 还 有 不足 。|Xièxie. Búguò wǒ zhīdào zìjǐ zài shíjiān ānpái fāngmiàn hái yǒu bùzú.|Thank you. But I know I still have shortcomings when it comes to managing my time.
+A|确实 ， 有 两 份 报告 交 得 比较 晚 。 你 需要 学会 分配 任务 。|Quèshí, yǒu liǎng fèn bàogào jiāo de bǐjiào wǎn. Nǐ xūyào xuéhuì fēnpèi rènwu.|Indeed, two reports were handed in rather late. You need to learn to delegate tasks.
+B|我 明白 。 下 个 季度 我 会 制定 更 详细 的 计划 。|Wǒ míngbai. Xià ge jìdù wǒ huì zhìdìng gèng xiángxì de jìhuà.|I understand. Next quarter I will draw up a more detailed plan.
+A|很 好 。 只要 你 保持 现在 的 态度 ， 年底 升职 的 机会 很 大 。|Hěn hǎo. Zhǐyào nǐ bǎochí xiànzài de tàidu, niándǐ shēngzhí de jīhuì hěn dà.|Very good. As long as you keep up your current attitude, you have a good chance of promotion at the end of the year.
+
+# 6 | Debating a later retirement age
+A|你 对 延迟 退休 的 方案 怎么 看 ？ 我 认为 这 是 应对 人口 老龄化 的 必然 选择 。|Nǐ duì yánchí tuìxiū de fāng'àn zěnme kàn? Wǒ rènwéi zhè shì yìngduì rénkǒu lǎolínghuà de bìrán xuǎnzé.|What do you think of the plan to raise the retirement age? I believe it is the inevitable response to an ageing population.
+B|我 不 敢 苟同 。 这样 一 来 ， 年轻人 的 就业 压力 岂不是 更 大 了 ？|Wǒ bù gǎn gǒutóng. Zhèyàng yì lái, niánqīngrén de jiùyè yālì qǐbúshì gèng dà le?|I'm afraid I can't agree. Wouldn't that put young people under even more pressure to find jobs?
+A|未必 。 经验 丰富 的 老 员工 和 刚 毕业 的 新人 ， 竞争 的 并非 同 一 类 岗位 。|Wèibì. Jīngyàn fēngfù de lǎo yuángōng hé gāng bìyè de xīnrén, jìngzhēng de bìngfēi tóng yí lèi gǎngwèi.|Not necessarily. Experienced older staff and new graduates are not competing for the same kind of position.
+B|话 虽 如此 ， 可 从事 体力 劳动 的 人 身体 吃不消 ， 不 能 一概而论 。|Huà suī rúcǐ, kě cóngshì tǐlì láodòng de rén shēntǐ chībuxiāo, bù néng yígài'érlùn.|That may be so, but people who do manual labour can't cope physically. You can't treat everyone alike.
+A|所以 政策 应当 具有 弹性 ， 让 个人 根据 自身 情况 选择 退休 时间 。|Suǒyǐ zhèngcè yīngdāng jùyǒu tánxìng, ràng gèrén gēnjù zìshēn qíngkuàng xuǎnzé tuìxiū shíjiān.|That is why the policy should be flexible and let individuals choose when to retire according to their own circumstances.
+B|这 一 点 我 赞成 。 归根到底 ， 制度 的 设计 得 兼顾 公平 与 效率 。|Zhè yì diǎn wǒ zànchéng. Guīgēndàodǐ, zhìdù de shèjì děi jiāngù gōngpíng yǔ xiàolǜ.|On that point I agree. In the final analysis, the system has to be designed with both fairness and efficiency in mind.
+
+# 6 | Negotiating a supply contract
+A|贵 公司 的 报价 比 我们 的 预算 高出 百分之 十五 ， 恐怕 难以 接受 。|Guì gōngsī de bàojià bǐ wǒmen de yùsuàn gāochū bǎifēnzhī shíwǔ, kǒngpà nányǐ jiēshòu.|Your company's quotation is 15 percent above our budget. I'm afraid that is hard for us to accept.
+B|原材料 成本 不断 上涨 ， 这个 价格 已经 是 我们 的 底线 了 。|Yuáncáiliào chéngběn búduàn shàngzhǎng, zhège jiàgé yǐjīng shì wǒmen de dǐxiàn le.|The cost of raw materials keeps rising. This price is already our bottom line.
+A|倘若 我们 把 订货 量 翻 一 番 ， 贵 方 能否 作出 让步 ？|Tǎngruò wǒmen bǎ dìnghuò liàng fān yì fān, guì fāng néngfǒu zuòchū ràngbù?|If we were to double the size of our order, could your side make a concession?
+B|那 可以 考虑 降低 百分之 八 ， 前提 是 预付 三 成 货款 。|Nà kěyǐ kǎolǜ jiàngdī bǎifēnzhī bā, qiántí shì yùfù sān chéng huòkuǎn.|In that case we could consider a reduction of 8 percent, on condition that 30 percent of the payment is made in advance.
+A|预付 可以 ， 但 交货 期限 必须 写 进 合同 ， 逾期 要 承担 违约 责任 。|Yùfù kěyǐ, dàn jiāohuò qīxiàn bìxū xiě jìn hétong, yúqī yào chéngdān wéiyuē zérèn.|Advance payment is fine, but the delivery deadline must be written into the contract, and you would be liable for breach of contract if it is missed.
+B|合情合理 。 我 回去 向 总部 请示 一下 ， 争取 本 周 内 给 您 答复 。|Héqínghélǐ. Wǒ huíqù xiàng zǒngbù qǐngshì yíxià, zhēngqǔ běn zhōu nèi gěi nín dáfù.|That is fair and reasonable. I will go back and ask head office for instructions, and try to give you an answer within the week.
+A|好 ， 期待 我们 能 达成 双赢 的 协议 。|Hǎo, qīdài wǒmen néng dáchéng shuāngyíng de xiéyì.|Good. I look forward to our reaching a win-win agreement.
+
+# 6 | Formal feedback on a proposal
+A|李 主任 ， 关于 我 提交 的 市场 调研 方案 ， 想 请 您 提 些 意见 。|Lǐ zhǔrèn, guānyú wǒ tíjiāo de shìchǎng diàoyán fāng'àn, xiǎng qǐng nín tí xiē yìjiàn.|Director Li, I'd like to ask for your comments on the market research proposal I submitted.
+B|方案 的 框架 很 清晰 ， 数据 也 相当 充分 ， 看得出 你 下 了 不少 功夫 。|Fāng'àn de kuàngjià hěn qīngxī, shùjù yě xiāngdāng chōngfèn, kàndechū nǐ xià le bùshǎo gōngfu.|The framework of the proposal is clear and the data is quite thorough. I can tell you put a lot of effort into it.
+A|您 过奖 了 。 有 什么 欠缺 的 地方 ， 请 您 尽管 指出 。|Nín guòjiǎng le. Yǒu shénme qiànquē de dìfang, qǐng nín jǐnguǎn zhǐchū.|You flatter me. If anything is lacking, please don't hesitate to point it out.
+B|恕 我 直言 ， 结论 部分 略 显 草率 ， 缺乏 对 潜在 风险 的 评估 。|Shù wǒ zhíyán, jiélùn bùfen lüè xiǎn cǎoshuài, quēfá duì qiánzài fēngxiǎn de pínggū.|If I may be frank, the conclusion seems a little hasty and lacks an assessment of the potential risks.
+A|您 说 得 一针见血 。 我 会 补充 风险 分析 ， 并 附上 相应 的 对策 。|Nín shuō de yìzhēnjiànxiě. Wǒ huì bǔchōng fēngxiǎn fēnxī, bìng fùshàng xiāngyìng de duìcè.|You have hit the nail on the head. I will add a risk analysis and attach the corresponding countermeasures.
+B|另外 ， 预算 要 精打细算 ， 以免 审批 时 遇到 阻碍 。|Lìngwài, yùsuàn yào jīngdǎxìsuàn, yǐmiǎn shěnpī shí yùdào zǔ'ài.|Also, the budget needs to be calculated carefully, so that it does not run into obstacles at the approval stage.
+A|明白 。 我 修改 之后 尽快 呈报 给 您 ， 感谢 您 的 指点 。|Míngbai. Wǒ xiūgǎi zhīhòu jǐnkuài chéngbào gěi nín, gǎnxiè nín de zhǐdiǎn.|Understood. I will submit it to you as soon as I have revised it. Thank you for your guidance.
