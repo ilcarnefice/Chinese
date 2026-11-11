@@ -466,7 +466,7 @@ def pose(jaw=0.0, velum=1.0, ulip=(0, 0), llip=(0, 0), tongue=None, to=None, tur
 
 RIDGE_TONGUE = dict(turn=(-46, (530, 468), (586, 383)), to={"blade": (504, 373), "under2": (549, 486)},
                     tongue={"front": (0, -4)})
-PALATAL_TONGUE = {"dorsum": (292, 335), "mid": (372, 319), "front": (450, 318), "blade": (512, 343),
+PALATAL_TONGUE = {"dorsum": (292, 335), "mid": (372, 315), "front": (450, 311), "blade": (512, 337),
                   "pretip": (562, 408)}
 RETROFLEX_TONGUE = dict(turn=(-92, (530, 468), (548, 359)),
                         to={"blade": (470, 404), "front": (422, 398), "mid": (360, 372), "under2": (556, 470)})
@@ -493,7 +493,7 @@ POSES = {
     "rest": pose(velum=0, air="auto"),
     "lips": pose(contact=[(679, 472)], air=None),
     "lipsNasal": pose(velum=0, contact=[(679, 472)], air=None),
-    "lipTeeth": pose(jaw=-0.6, ulip=(2, -12), llip=(-35, -15), llip_at=(660, 478), llip_spread=(34.0, 22.0),
+    "lipTeeth": pose(jaw=-0.6, ulip=(2, -12), llip=(-35, -20), llip_at=(660, 478), llip_spread=(34.0, 22.0),
                      gap=[(621, 451)]),
     "ridge": pose(jaw=-0.3, **RIDGE_LIPS, **RIDGE_TONGUE, contact=[(587, 380)], air=None),
     "ridgeNasal": pose(jaw=-0.3, velum=0, **RIDGE_LIPS, **RIDGE_TONGUE, contact=[(587, 380)], air=None),
@@ -517,8 +517,8 @@ POSES = {
     "retroflexFric": pose(jaw=0.5, ulip=(5, -5), llip=(6, 10), turn=(-92, (530, 468), (546, 370)),
                           to=RETROFLEX_TONGUE["to"], gap=[(548, 359)]),
     "dental": pose(jaw=-1.5, **SPREAD_LIPS, **DENTAL_TONGUE, contact=[(604, 419)], air=None),
-    "dentalFric": pose(jaw=-1.5, **SPREAD_LIPS, turn=(-22, (530, 468), (598, 429)), to=DENTAL_TONGUE["to"],
-                       gap=[(605, 421)]),
+    "dentalFric": pose(jaw=-1.5, **SPREAD_LIPS, turn=(-22, (530, 468), (592, 432)), to=DENTAL_TONGUE["to"],
+                       gap=[(603, 427)]),
     "a": pose(jaw=7.0, ulip=(0, -5),
               tongue={"back": (-10, 8), "backtop": (-8, 16), "dorsum": (0, 18), "mid": (0, 14), "front": (0, 6),
                       "blade": (0, 2)}),
