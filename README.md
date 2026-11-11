@@ -7,7 +7,7 @@ in short game-like lessons.
 
 | Part | What you get |
 | --- | --- |
-| Learning path | All 5,001 words of HSK 1-6 in units. Each unit mixes vocabulary lessons of five words with grammar lessons and ends in a review; a level test lets you jump ahead. HSK 1 is arranged in themed units (Hello, People, Family, Numbers, ...) with each grammar formula placed after the words it uses; levels without an outline file follow word frequency |
+| Learning path | All 5,001 words of HSK 1-6 in units. Each unit mixes vocabulary lessons of five words with grammar lessons and ends in a review; a level test lets you jump ahead. HSK 1, 3 and 4 are arranged in themed units (Hello, People, Family, Numbers, ... in HSK 1, with each grammar formula placed after the words it uses); levels without an outline file follow word frequency |
 | Lessons | A new word is introduced with audio, meaning, its characters and examples, then drilled: meaning, characters, pinyin and tones, listening, pair matching, fill-the-gap and sentence building. A grammar lesson shows the formula as blocks with examples, then has you pick its key word and read and build sentences. Missed questions come back at the end. Pinyin above the characters can be switched on or off |
 | Word Map | 11,001 words (HSK plus 6,000 common everyday words) linked by their characters: a character sits in the middle and the words built from it branch out |
 | Sentence Map | About 24,300 sentences with pinyin and English, grouped by key word and graded by HSK level |

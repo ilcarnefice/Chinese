@@ -324,7 +324,7 @@ def jaw_shift(p, degrees):
 
 def upper_lip_weight(p):
     d2 = ((p - UPPER_LIP) ** 2).sum(axis=1)
-    return np.exp(-d2 / (2 * 28.0 ** 2)) * smoothstep(634, 654, p[:, 0])
+    return np.exp(-d2 / (2 * 38.0 ** 2)) * smoothstep(634, 654, p[:, 0])
 
 
 def lower_lip_weight(p, centre=LOWER_LIP, spread=(37.0, 37.0)):
@@ -487,7 +487,7 @@ def shifted(points, dx, dy, names=None):
 OPEN_LIPS = dict(ulip=(0, -5), llip=(0, 10))
 RIDGE_LIPS = dict(ulip=(0, -6), llip=(0, 14))
 SPREAD_LIPS = dict(ulip=(-3, -7), llip=(-4, 25))
-ROUND_LIPS = dict(ulip=(19, -4), llip=(21, 13))
+ROUND_LIPS = dict(ulip=(25, -3), llip=(27, 13))
 
 POSES = {
     "rest": pose(velum=0, air="auto"),
@@ -522,7 +522,7 @@ POSES = {
     "a": pose(jaw=7.0, ulip=(0, -5),
               tongue={"back": (-10, 8), "backtop": (-8, 16), "dorsum": (0, 18), "mid": (0, 14), "front": (0, 6),
                       "blade": (0, 2)}),
-    "o": pose(jaw=3.2, ulip=(12, 6), llip=(14, -13),
+    "o": pose(jaw=3.2, ulip=(17, 5), llip=(19, -13),
               tongue={"back": (-10, -8), "backtop": (-10, -22), "dorsum": (-8, -14), "mid": (-6, 4),
                       "front": (-6, 12), "blade": (-6, 12), "pretip": (-6, 6), "tip": (-8, 2)}),
     "e": pose(jaw=2.6, ulip=(0, -5),
@@ -534,7 +534,7 @@ POSES = {
     "schwa": pose(jaw=2.0, ulip=(0, -4)),
     "i": pose(jaw=-1.2, **SPREAD_LIPS, to=HIGH_FRONT, tongue={"back": (8, 4)}),
     "u": pose(jaw=-0.3, **ROUND_LIPS, to=HIGH_BACK),
-    "yu": pose(jaw=-1.0, ulip=(19, -4), llip=(21, 22), to=HIGH_FRONT, tongue={"back": (8, 4)}),
+    "yu": pose(jaw=-1.0, ulip=(25, -3), llip=(27, 22), to=HIGH_FRONT, tongue={"back": (8, 4)}),
     "er": pose(jaw=3.0, ulip=(0, -4), turn=(-80, (530, 468), (546, 404)),
                to={"blade": (474, 432), "front": (426, 412), "mid": (362, 376), "under2": (556, 505)}),
 }
