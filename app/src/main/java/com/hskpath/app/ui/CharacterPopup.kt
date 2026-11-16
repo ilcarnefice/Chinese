@@ -61,7 +61,7 @@ fun TipBlock(app: AppState, content: Content, character: String, modifier: Modif
                 for (part in tip.parts) {
                     val (label, color) = when (part.role) {
                         "meaning" -> "meaning" to Jade
-                        "sound" -> if (part == lostSound) "old sound" to MaterialTheme.colorScheme.onSurfaceVariant else "sound" to Sky
+                        "sound" -> if (part == lostSound) "part" to MaterialTheme.colorScheme.onSurfaceVariant else "sound" to Sky
                         "picture" -> "picture" to Tangerine
                         "simplified" -> "short form" to Grape
                         else -> "part" to MaterialTheme.colorScheme.onSurfaceVariant
@@ -77,7 +77,7 @@ fun TipBlock(app: AppState, content: Content, character: String, modifier: Modif
                     ) {
                         Text(part.char, fontSize = 28.sp)
                         Text(label, color = color, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        if (known != null && part.role == "sound") {
+                        if (known != null && part.role == "sound" && part != lostSound) {
                             Text(known.pinyin, fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
                         } else if (gloss.isNotEmpty()) {
                             Text(gloss, fontSize = 12.sp, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -88,10 +88,10 @@ fun TipBlock(app: AppState, content: Content, character: String, modifier: Modif
             }
         }
         if (lostSound != null && own != null) {
-            val part = content.lookup(lostSound.char)
-            Text("$character is read ${own.pinyin}" + (if (part != null) ", but ${lostSound.char} is read ${part.pinyin}" else "") +
-                ". Long ago they sounded alike; today they do not, so ${lostSound.char} is no help with the sound. " +
-                "Just remember the shape: " + tip.parts.joinToString(" + ") { it.char } + ".",
+            // The sound hint no longer works today, so it is left out: only what still helps is shown.
+            val meaning = tip.parts.firstOrNull { it.role == "meaning" }
+            val hint = meaning?.let { m -> content.tip(m.char)?.meaning?.takeIf { it.isNotBlank() }?.let { "${m.char} ($it) hints at the meaning. " } }.orEmpty()
+            Text(hint + "Remember the shape: " + tip.parts.joinToString(" + ") { it.char } + ".",
                 modifier = Modifier.padding(top = 8.dp))
         } else if (tip.note.isNotEmpty()) Text(tip.note, modifier = Modifier.padding(top = 8.dp))
         Text("meaning = hints at what it means · sound = hints at how it is said", fontSize = 12.sp,
