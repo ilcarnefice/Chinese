@@ -35,6 +35,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.hskpath.app.AppState
 import com.hskpath.core.Content
+import com.hskpath.core.Pinyin
 
 /**
  * How one character is built and how to remember it: its parts, each marked as
@@ -44,6 +45,14 @@ import com.hskpath.core.Content
 @Composable
 fun TipBlock(app: AppState, content: Content, character: String, modifier: Modifier = Modifier) {
     val tip = content.tip(character) ?: return
+    // A "sound" part was a hint thousands of years ago; many no longer sound like the character today.
+    val own = content.lookup(character)
+    fun rhyme(numbered: String) = Pinyin.base(numbered.substringBefore(' ')).dropWhile { it !in "aeiouü" }
+    fun stillSounds(part: String): Boolean {
+        val other = content.lookup(part) ?: return false
+        return own != null && rhyme(own.pinyinNumbered) == rhyme(other.pinyinNumbered)
+    }
+    val lostSound = tip.parts.firstOrNull { it.role == "sound" && !stillSounds(it.char) }
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Gold.copy(alpha = 0.12f)).padding(12.dp)) {
         Text("💡 How to remember $character", fontWeight = FontWeight.ExtraBold)
         if (tip.parts.isNotEmpty()) {
@@ -52,7 +61,7 @@ fun TipBlock(app: AppState, content: Content, character: String, modifier: Modif
                 for (part in tip.parts) {
                     val (label, color) = when (part.role) {
                         "meaning" -> "meaning" to Jade
-                        "sound" -> "sound" to Sky
+                        "sound" -> if (part == lostSound) "old sound" to MaterialTheme.colorScheme.onSurfaceVariant else "sound" to Sky
                         "picture" -> "picture" to Tangerine
                         "simplified" -> "short form" to Grape
                         else -> "part" to MaterialTheme.colorScheme.onSurfaceVariant
@@ -78,7 +87,15 @@ fun TipBlock(app: AppState, content: Content, character: String, modifier: Modif
                 }
             }
         }
-        if (tip.note.isNotEmpty()) Text(tip.note, modifier = Modifier.padding(top = 8.dp))
+        if (lostSound != null && own != null) {
+            val part = content.lookup(lostSound.char)
+            Text("$character is read ${own.pinyin}" + (if (part != null) ", but ${lostSound.char} is read ${part.pinyin}" else "") +
+                ". Long ago they sounded alike; today they do not, so ${lostSound.char} is no help with the sound. " +
+                "Just remember the shape: " + tip.parts.joinToString(" + ") { it.char } + ".",
+                modifier = Modifier.padding(top = 8.dp))
+        } else if (tip.note.isNotEmpty()) Text(tip.note, modifier = Modifier.padding(top = 8.dp))
+        Text("meaning = hints at what it means · sound = hints at how it is said", fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
     }
 }
 
